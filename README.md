@@ -1,6 +1,6 @@
 # P.A.R.A. Workspace
 
-Lokale Flutter-App 0.5 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS.
+Lokale Flutter-App 0.6 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS.
 Linux-/Android-Gerüste sind vorhanden; ihre Builds und Bedienung sind noch nicht geprüft.
 
 [Quellcode auf GitHub](https://github.com/marickheit/para-app)
@@ -31,6 +31,19 @@ Linux-/Android-Gerüste sind vorhanden; ihre Builds und Bedienung sind noch nich
 - **Verschieben:** Vorhandene Dateien/Ordner im Explorer ziehen oder per Rechtsklick/
   Drei-Punkte-Menü „Verschieben …“ wählen. Ziele können in anderen aktiven Ablagen
   liegen. Ordner nehmen ihre Inhalte mit; UUIDs und Links bleiben erhalten.
+- **Aufgabenangaben:** Mehrere Kontexte je Aufgabe über „Auswählen …“ zuordnen.
+  Zeitbedarf optional: 5/15/30/60/120 Minuten oder eigene positive Minuten.
+  Energie optional: Niedrig/Mittel/Hoch; „Keine Angabe“ bleibt ein eigener leerer Wert.
+  Kleine farbige Chips unter dem Aufgabentitel zeigen nur gesetzte Angaben.
+- **Aufgabenfilter:** Der Filterbutton neben der Listenüberschrift wählt Kontexte
+  (mindestens einer/alle), maximale Zeit und Energie. „Ohne Angaben einbeziehen“
+  ist standardmäßig an. Aktive Filter zeigen die Trefferzahl und lassen sich
+  zurücksetzen; die Projektgruppierung und Aufgabenstatus bleiben erhalten.
+- **Kontexte verwalten:** Menü → Einstellungen → Aufgaben / Kontexte. Namen/Farben
+  bearbeiten, neue Kontexte anlegen, mit Pfeilen sortieren oder deaktivieren.
+  Umbenennen erhält Zuordnungen; deaktivierte Kontexte bleiben an vorhandenen
+  Aufgaben sichtbar und filterbar. Endgültiges Entfernen von Kontextdefinitionen
+  ist nicht angeboten. Alte freie Kontexttexte werden als ganze Werte übernommen.
 - **Aufgaben:** Globale „Nächste Aktionen“ sind nach Projekt gruppiert, einschließlich
   Aufgaben in Unterordnern. Ohne Projekt separat. Rechtsklick/drei Punkte erlauben
   Erledigen, „Nicht mehr relevant“ und Wiederaufnehmen. Letzteres erhält den vorherigen
@@ -64,6 +77,16 @@ Linux-/Android-Gerüste sind vorhanden; ihre Builds und Bedienung sind noch nich
   neue Notizen ab Anlage. Noch ältere Texte und ungespeicherte Entwürfe werden nicht
   rekonstruiert. Kein automatisches Ausdünnen; endgültiges Entfernen des Inhalts
   entfernt auch seinen Verlauf. Textversionen ersetzen keine vollständige Sicherung.
+- **Arbeitsbereich:** Menü → Daten & Sicherung (oder Cmd+, auf dem Mac) öffnet
+  Einstellungen mit dem aktuellen Root. „Arbeitsbereich öffnen …“ lädt einen
+  vorhandenen Ordner samt Einstellungen. „An einen anderen Ort kopieren …“ kopiert
+  vollständig in einen leeren Zielordner, prüft die Kopie und öffnet sie; die Quelle
+  bleibt erhalten. „Neuen Arbeitsbereich anlegen …“ benötigt ebenfalls einen leeren
+  Zielordner. Bestände werden nicht zusammengeführt. Vor dem Wechsel offene Texte
+  speichern, verwerfen oder abbrechen. Die Auswahl bleibt über Neustarts erhalten.
+- **Gespeicherte Ansicht:** Geöffneter Inhalt, Navigation, Projekt-/Ordnerzustand und
+  Aufgabenfilter werden im jeweiligen Root gespeichert. Ungespeicherte Texte werden
+  weiterhin über den vorhandenen Speicher-/Wechselschutz behandelt.
 - **Sicherung:** Menü unten → Daten & Sicherung; alternativ den lokalen Statuspunkt
   anklicken. Der Datenpfad und der Sicherungsexport stehen dort bereit.
 
@@ -81,14 +104,14 @@ Linux-/Android-Gerüste sind vorhanden; ihre Builds und Bedienung sind noch nich
 - Der Suchindex wird beim Öffnen wieder aufgebaut und beim Speichern/Import aktualisiert.
 - Keine automatische Cloud-Synchronisierung, Wiederholungen oder Erinnerungen.
 
-## Lokal starten
+## Lokal entwickeln
 
 Voraussetzung: Flutter, Xcode und die macOS-Plattformwerkzeuge.
 
 ```sh
 flutter pub get
 flutter pub run build_runner build
-flutter run -d macos
+flutter run -d macos --dart-define=PARA_DATA_DIR="$HOME/Library/Containers/dev.para.paraWorkspace/Data/tmp/para-dev"
 ```
 
 Eigenständig startbare App bauen:
@@ -127,6 +150,21 @@ regulären Anwendungsdatenordner. Der tatsächliche Pfad steht in „Daten & Sic
 Ein anderer Datenordner kopiert oder konvertiert vorhandene Daten nicht automatisch.
 Den temporären Entwicklungsordner nicht für die dauerhafte eigene Ablage verwenden.
 
+Ohne festen Test-Datenpfad ist der Root über Einstellungen wählbar. Mit
+`PARA_DATA_DIR` sind Ordnerwechsel deaktiviert und der regulär gemerkte Root bleibt
+unverändert. Für eine isolierte Review mit funktionsfähiger Ordnerauswahl kann
+`PARA_CONFIG_DIR` einen eigenen Startkonfigurationsordner festlegen. Dessen
+Standard-Arbeitsbereich liegt dann ebenfalls in diesem getrennten Ordner.
+Das Werkzeug `tool/create_review_workspace.dart` legt ausschließlich in einem
+leeren Zielordner synthetische Beispieldaten und den passenden Startverweis an.
+
+Der [Arbeitsbereich](docs/ARBEITSBEREICHE.md) enthält Inhalte, Kontexte/Farben und
+Sitzungszustand in `workspace.sqlite`, Notizen unter `notes/`, Anhänge unter `files/`.
+Außerhalb liegen nur Startadresse und macOS-Ordnerfreigabe in
+`workspace-location.json` im Anwendungsdatenordner. Ist der zuletzt gewählte Root
+nicht verfügbar, bietet die App Wiederholen oder eine erneute Ordnerauswahl an.
+Sie legt dort keinen stillen Ersatzbestand an.
+
 ## Datenkompatibilität
 
 Bestehende Daten sollen bei der Weiterentwicklung erhalten bleiben. Neue
@@ -134,10 +172,12 @@ Versionen müssen ältere Arbeitsbereiche direkt lesen oder verlustfrei migriere
 das gilt auch für Links, Papierkorb und Textverlauf. Die verbindlichen
 Entwicklungsregeln stehen in [AGENTS.md](AGENTS.md).
 
-Aktuell: Schema 4, getestete Migrationen aus Schema 1–3 und vollständiger
-Sicherungsexport. Automatische Sicherungen vor Migrationen und eine geführte
-Wiederherstellung fehlen noch. Vor Updates daher manuell sichern; ein Rückfall
-auf eine alte App benötigt deren passenden Datenstand. [Details](docs/SICHERUNG.md).
+Aktuell: Schema 5, getestete Migrationen aus Schema 1–4 und vollständiger
+Sicherungsexport. Vor einer nötigen Datenmigration erstellt die App automatisch
+eine vollständige Rückfallkopie unter `.migration-backups/` im jeweiligen Root.
+Unbekannte neuere Datenformate und paralleles Öffnen werden abgefangen.
+Regelmäßige automatische Sicherungen und eine geführte Auswahl von Sicherungsständen
+fehlen noch. Ein Rückfall auf eine alte App benötigt deren passenden Datenstand. [Details](docs/SICHERUNG.md).
 
 Git versioniert Quellcode, Dokumentation und synthetische Prüfdaten. Lokale
 Arbeitsbereiche, Sicherungen und Build-Ergebnisse sind ausgeschlossen.

@@ -107,3 +107,15 @@ Diese Vorschläge sind keine beschlossenen Zusatzfunktionen.
 - Versionsverlauf über ein kleines Verlaufssymbol im Notiz-/MD-/TXT-Kopf.
   Auswahl mit Zeitstempel, Textvorschau und bestätigte Wiederherstellung als neuer
   Stand. Aktuelle Metadaten und jüngere Texte bleiben erhalten.
+
+## Ergänzung in Flutter 0.6
+
+- Kleine abgerundete, farbig umrandete Chips unter dem Aufgabentitel: mehrere
+  Kontexte, Zeit und Energie. Bei Platzmangel umbrechen, nur gesetzte Werte anzeigen.
+- Kontext-Mehrfachauswahl und optionale Zeit-/Energiefelder in den Aufgabendetails.
+  Kleiner Filterbutton in Aufgabenlisten; Projektgruppierung bleibt erhalten.
+- Menü → Einstellungen öffnet Kontextverwaltung (Name, Farbe, Reihenfolge,
+  aktiv/inaktiv). Daten & Sicherung enthält Öffnen, Kopieren und Neuanlegen
+  vollständiger Arbeitsbereiche. Cmd+, öffnet Einstellungen auf dem Mac.
+- Ein Arbeitsbereich bringt seinen gespeicherten Navigations-/Filterzustand mit.
+  Fenster-/Editorentwürfe ohne Speicherung werden nicht automatisch wiederhergestellt.

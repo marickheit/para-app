@@ -13,7 +13,8 @@
   unterscheiden. Bestätigte UI: einklappbare Symbolleiste mit benachbartem
   Projekt-/Datei-Explorer, eine gemeinsame Kopfzeile, Suche/Dateiwechsel auf Abruf
   und mehr Platz für den Editor. Papierkorb links unter „Alle Aufgaben“;
-  Textversionen über einen kleinen Verlaufsbutton im Dateikopf.
+  Textversionen über einen kleinen Verlaufsbutton im Dateikopf. Aufgaben zeigen
+  mehrere Kontext-, Zeit- und Energie-Chips unter dem Titel.
 - UI-Mocks enthalten Beispieldaten. Ihre Inhalte oder Klicks sind keine
   verbindlichen Produktentscheidungen.
 
@@ -43,6 +44,9 @@
   Arbeitsbereichen ausführen. Manuelle Entwicklungs-/Migrationstests über
   `--dart-define=PARA_DATA_DIR=...` auf einen eigenen beschreibbaren Datenordner
   richten; niemals den regulären Nutzerbestand als Testumgebung verwenden.
+- Inhalte und fachliche Einstellungen liegen gemeinsam im gewählten Root,
+  einschließlich Kontextdefinitionen und Sitzungszustand. Außerhalb nur Startverweis
+  und geräteabhängige Ordnerrechte merken; gewählte Roots über Updates erhalten.
 - Standard-Bundle-Kennung und regulären Datenpfad bei Updates stabil halten.
   Ein bewusst gewählter Test-Datenpfad ist keine Verlagerung der Nutzerdaten.
 - Nutzerdaten, lokale Sicherungen, Test-Arbeitsbereiche, Zugangsdaten und

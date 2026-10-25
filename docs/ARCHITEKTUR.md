@@ -25,6 +25,12 @@ an das Repository. Die Auswahl eines anderen Roots ist keine Datenmigration.
 Manuelle Entwicklungsstarts verwenden ebenfalls einen getrennten Root;
 Startbeispiel und macOS-Zugriffsgrenzen stehen in [README.md](../README.md).
 
+Arbeitsbereichsmodell in 0.6: Alle Inhalte und Arbeitsbereichseinstellungen liegen in
+einem wählbaren Root. Nur Startverweis auf den zuletzt geöffneten Arbeitsbereich
+und geräteabhängige Ordnerberechtigungen bleiben außerhalb. Sitzungszustand, Auswahl, Persistenz über Neustarts
+und Einstellungsübernahme sind implementiert;
+siehe [Arbeitsbereichskonzept](ARBEITSBEREICHE.md).
+
 Jeder Inhalt besitzt eine UUID, Art, Hauptablageort, Zeitstempel und Revision.
 Ordner können verschachtelt werden; zyklische Verschiebungen werden abgelehnt.
 Projekte benötigen Ergebnis und kalendarisches Fälligkeitsdatum. Ideen sind ein
@@ -43,8 +49,29 @@ Fehler angezeigt. Externe Bearbeitung während der Benutzung wird nicht live
 überwacht; beim erneuten Öffnen der App werden Such- und Linkindizes neu aufgebaut.
 
 Das Arbeitsverzeichnis ist derzeit für einen laufenden App-Prozess vorgesehen.
-Revisionen und Löschmarkierungen sind Grundlagen für spätere Erweiterungen,
-aber weder ein Mehrprozess-Lock noch ein fertiges Synchronisierungsprotokoll.
+Ein exklusiver Dateilock (`.para.lock`) und eine zusätzliche Sperre im Prozess
+verhindern paralleles Öffnen durch diese App-Version. Das ist kein Sync-Protokoll;
+ältere App-Versionen oder fremde Programme beachten diese Sperre nicht automatisch.
+
+## Aufgabenangaben und Einstellungen
+
+Schema 5 ergänzt `context_ids` (Liste stabiler Kontextkennungen), `estimated_minutes`
+und `energy` an Inhalten sowie `task_contexts` und `workspace_settings`. Freie
+bisherige Kontexttexte werden als ganze Werte übernommen, auch an archivierten
+und entfernten Inhalten. Die Textspalte `context` bleibt als abgeleitete Beschriftung
+für Suche und ältere Repository-Aufrufe erhalten. Umbenennen aktualisiert sie,
+ohne Zuordnungen oder Kontextkennungen zu ersetzen.
+
+Kontexte haben Namen, Farbe, Position und aktiv/inaktiv. Deaktivieren erhält
+vorhandene Zuordnungen; neue Zuordnungen zu inaktiven Kontexten werden abgelehnt.
+Text-/Metadatenänderungen verwenden weiterhin Revisions-/Hashschutz. Ein gezieltes
+Bearbeiten der Aufgabenangaben kann Zeit und Energie leeren; ältere Speicheraufrufe
+überschreiben diese neuen Felder nicht implizit.
+
+`workspace_settings` speichert `session.v1` mit Ansicht, Auswahl, Navigation,
+Ordnerzustand und Aufgabenfilter. UI-Änderungen werden verzögert gespeichert;
+vor Arbeitsbereichswechsel und regulärem Beenden wird ausstehender Zustand geschrieben.
+Ungespeicherte Editorentwürfe werden nicht als Sitzung serialisiert.
 
 ## Aufgabenabschluss
 
@@ -162,7 +189,13 @@ Textverlauf bleiben erhalten. Nur abgeleitete Indizes dürfen verworfen und neu
 aufgebaut werden. Unbekannte neuere Datenstände dürfen nicht durch Zurücksetzen
 behandelt werden. Diese Vorgaben stehen in [AGENTS.md](../AGENTS.md).
 
-Implementierter Stand: Schema 4 mit getesteten Migrationen von 1–3. Automatische
-Vorab-Sicherung, geführte Wiederherstellung und eine eigene Bedienung für
-Versionsinkompatibilität sind noch offene Arbeiten; die Vorgaben sind keine
-Zusicherung, dass diese Schutzabläufe bereits vollständig implementiert sind.
+Implementierter Stand: Schema 5 mit getesteten Migrationen von 1–4. Vor der
+Migration prüft `workspace_storage.dart` Version, Datenbank und Dateipfade, sperrt
+den Root und erstellt eine konsistente vollständige Rückfallkopie. Migrationen
+laufen in einer Datenbanktransaktion. Nicht unterstützte neuere Versionen werden
+vor ihrer Öffnung abgelehnt. `workspace_manager.dart` aktiviert eine neue Auswahl
+erst nach erfolgreichem Öffnen und atomarem Schreiben des lokalen Startverweises.
+Beim Kopieren werden Dateien gegen den Sicherungsschnappschuss per SHA-256 geprüft.
+
+Regelmäßige automatische Sicherungen, geführte Auswahl früherer Sicherungsstände
+und ein allgemeines Absturzjournal für alle Datei-/Datenbankänderungen bleiben offen.

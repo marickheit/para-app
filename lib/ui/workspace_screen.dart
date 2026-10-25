@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'dart:math' as math;
@@ -6,8 +7,10 @@ import 'dart:ui' show AppExitResponse;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:open_filex/open_filex.dart';
 import '../domain/workspace.dart';
+import '../services/workspace_manager.dart';
+import 'task_details.dart';
+import 'workspace_settings.dart';
 import '../services/workspace_importer.dart';
 import '../domain/archive.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -73,9 +76,11 @@ class WorkspaceScreen extends StatefulWidget {
     super.key,
     required this.repository,
     required this.dataDirectory,
+    this.workspaceManager,
   });
   final WorkspaceRepository repository;
   final String dataDirectory;
+  final WorkspaceManager? workspaceManager;
   @override
   State<WorkspaceScreen> createState() => _WorkspaceScreenState();
 }
@@ -83,6 +88,7 @@ class WorkspaceScreen extends StatefulWidget {
 class _WorkspaceScreenState extends State<WorkspaceScreen> {
   final _scaffold = GlobalKey<ScaffoldState>();
   static const _nativeMenu = MethodChannel('para.workspace/menu');
+  static _WorkspaceScreenState? _menuOwner;
   final _workspaceFocus = FocusNode(debugLabel: 'workspace-shortcuts');
   final _editor = GlobalKey<EntryEditorState>();
   final _collapsed = <String>{};
@@ -96,6 +102,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   late StreamSubscription<List<Entry>> _trashSubscription;
   late AppLifecycleListener _lifecycle;
   List<Entry> _entries = [];
+  List<TaskContext> _contexts = [];
+  late StreamSubscription<List<TaskContext>> _contextSubscription;
+  TaskFilter _taskFilter = const TaskFilter();
+  Timer? _sessionTimer;
+  bool _sessionLoaded = false;
+  String? _lastSavedSession;
   List<Entry> _trashEntries = [];
   bool _loading = true;
   bool _busy = false;
@@ -108,6 +120,110 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   bool _sidebarVisible = true;
   final _contentSelection = <String, String>{};
 
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    if (!mounted || !_sessionLoaded || _busy) return;
+    _sessionTimer?.cancel();
+    _sessionTimer = Timer(const Duration(milliseconds: 250), _flushSession);
+  }
+
+  Map<String, dynamic> _session() => {
+    'version': 1,
+    'view': _view.name,
+    'root': _rootId,
+    'selected': _selectedId,
+    'tab': _tab,
+    'railExpanded': _railExpanded,
+    'sidebarVisible': _sidebarVisible,
+    'collapsed': _collapsed.toList(),
+    'archiveCollapsed': _archiveCollapsed.toList(),
+    'expandedRoots': _expandedRoots.toList(),
+    'contentSelection': _contentSelection,
+    'filter': _taskFilter.toJson(),
+  };
+
+  Future<void> _flushSession() async {
+    _sessionTimer?.cancel();
+    if (!_sessionLoaded) return;
+    final encoded = jsonEncode(_session());
+    if (encoded == _lastSavedSession) return;
+    try {
+      await widget.repository.writeSetting('session.v1', encoded);
+      _lastSavedSession = encoded;
+    } catch (error) {
+      if (mounted) {
+        showMessage(
+          context,
+          'Die Ansicht konnte nicht gespeichert werden: ${errorLabel(error)}',
+        );
+      }
+    }
+  }
+
+  Future<void> _restoreSession() async {
+    try {
+      final stored = await widget.repository.readSetting('session.v1');
+      final entries = [
+        ...await widget.repository.getEntries(),
+        ...await widget.repository.getTrash(),
+      ];
+      if (!mounted) return;
+      if (stored != null) {
+        final data = jsonDecode(stored) as Map<String, dynamic>;
+        if (data['version'] != 1) {
+          throw const WorkspaceException(
+            'Unbekannte Version der gespeicherten Ansicht.',
+          );
+        }
+        setState(() {
+          _entries = entries.where((e) => !e.inTrash).toList();
+          _trashEntries = entries.where((e) => e.inTrash).toList();
+          _view =
+              WorkspaceView.values
+                  .where((e) => e.name == data['view'])
+                  .firstOrNull ??
+              WorkspaceView.inbox;
+          _rootId = entries.any((e) => e.id == data['root'] && !e.inTrash)
+              ? data['root'] as String?
+              : null;
+          _selectedId = entries.any((e) => e.id == data['selected'])
+              ? data['selected'] as String?
+              : null;
+          _tab = ['content', 'tasks', 'overview'].contains(data['tab'])
+              ? data['tab'] as String
+              : 'content';
+          _railExpanded = data['railExpanded'] == true;
+          _sidebarVisible = data['sidebarVisible'] != false;
+          _collapsed.addAll((data['collapsed'] as List? ?? []).cast<String>());
+          _archiveCollapsed.addAll(
+            (data['archiveCollapsed'] as List? ?? []).cast<String>(),
+          );
+          _expandedRoots.addAll(
+            (data['expandedRoots'] as List? ?? []).cast<String>(),
+          );
+          _contentSelection.addAll(
+            (data['contentSelection'] as Map? ?? {}).cast<String, String>(),
+          );
+          _taskFilter = TaskFilter.fromJson(
+            (data['filter'] as Map? ?? {}).cast<String, dynamic>(),
+          );
+          _loading = false;
+        });
+        _lastSavedSession = jsonEncode(_session());
+      }
+    } catch (error) {
+      if (mounted) {
+        showMessage(
+          context,
+          'Die gespeicherte Ansicht konnte nicht geladen werden. Inhalte bleiben erhalten.',
+        );
+      }
+    } finally {
+      _sessionLoaded = true;
+    }
+  }
+
   Entry? _find(String? id) =>
       [..._entries, ..._trashEntries].where((e) => e.id == id).firstOrNull;
   Entry? get _root => _find(_rootId);
@@ -115,8 +231,14 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   @override
   void initState() {
     super.initState();
+    _menuOwner = this;
     _nativeMenu.setMethodCallHandler((call) async {
       if (call.method == 'showSearch' && mounted) await _showSearch();
+      if (call.method == 'showSettings' &&
+          mounted &&
+          (ModalRoute.of(context)?.isCurrent ?? false)) {
+        await _showData();
+      }
     });
     _subscription = widget.repository.watchEntries().listen(
       (entries) {
@@ -145,6 +267,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         if (mounted) setState(() => _loadError = error);
       },
     );
+    _contextSubscription = widget.repository.watchContexts().listen((values) {
+      if (mounted) setState(() => _contexts = values);
+    });
+    _restoreSession();
     _lifecycle = AppLifecycleListener(
       onExitRequested: () async =>
           await _canLeave() ? AppExitResponse.exit : AppExitResponse.cancel,
@@ -153,7 +279,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 
   @override
   void dispose() {
-    _nativeMenu.setMethodCallHandler(null);
+    if (_menuOwner == this) {
+      _menuOwner = null;
+      _nativeMenu.setMethodCallHandler(null);
+    }
+    _sessionTimer?.cancel();
+    _contextSubscription.cancel();
     _workspaceFocus.dispose();
     _subscription.cancel();
     _trashSubscription.cancel();
@@ -170,8 +301,14 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     });
   }
 
-  Future<bool> _canLeave() async =>
-      !_busy && (await _editor.currentState?.canLeave() ?? true);
+  Future<bool> _canLeave() async {
+    if (_busy || !(await _editor.currentState?.canLeave() ?? true)) {
+      return false;
+    }
+    await _flushSession();
+    return true;
+  }
+
   Future<void> _refresh() async {
     final rows = await widget.repository.getEntries();
     final trash = await widget.repository.getTrash();
@@ -566,6 +703,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       context,
       kind,
       taskState: kind == EntryKind.task ? taskState : TaskState.inbox,
+      contexts: _contexts,
     );
     if (draft == null || !mounted) return;
     await _run('Inhalt wird angelegt …', () async {
@@ -1257,61 +1395,69 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     }
   }
 
-  Future<void> _showData() async {
+  Future<void> _showData({int tab = 0}) async {
     if (!await _canLeave() || !mounted) return;
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Daten & Sicherung'),
-        content: SizedBox(
-          width: 520,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Dein Arbeitsbereich wird vollständig lokal gespeichert.',
-              ),
-              const SizedBox(height: 16),
-              SelectableText(
-                widget.dataDirectory,
-                style: const TextStyle(fontSize: 12),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Eine Sicherung enthält die Datenbank, Markdown-Notizen und alle importierten Dateien. '
-                'Wähle dafür möglichst einen getrennten Speicherort.',
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              final result = await OpenFilex.open(widget.dataDirectory);
-              if (result.type != ResultType.done && context.mounted) {
-                showMessage(
-                  context,
-                  'Der Datenordner konnte nicht geöffnet werden.',
-                );
-              }
-            },
-            child: const Text('Datenordner öffnen'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Schließen'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _backup();
-            },
-            child: const Text('Sicherung erstellen'),
-          ),
-        ],
-      ),
+    final manager = widget.workspaceManager;
+    final action = await showWorkspaceSettings(
+      context,
+      widget.repository,
+      widget.dataDirectory,
+      canChangeRoot: manager != null && !manager.testOverride,
+      tab: tab,
     );
+    if (action == null || !mounted) return;
+    if (action == SettingsAction.backup) {
+      await _backup();
+      return;
+    }
+    if (manager == null) return;
+    try {
+      final selected = await manager.access.choose();
+      if (selected == null || !mounted) return;
+      final mode = action == SettingsAction.open
+          ? WorkspaceOpenMode.open
+          : action == SettingsAction.create
+          ? WorkspaceOpenMode.create
+          : WorkspaceOpenMode.copyCurrent;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(
+            action == SettingsAction.copy
+                ? 'Arbeitsbereich kopieren und öffnen?'
+                : action == SettingsAction.create
+                ? 'Neuen Arbeitsbereich anlegen?'
+                : 'Arbeitsbereich öffnen?',
+          ),
+          content: Text(
+            '${selected.path}\n\n${action == SettingsAction.copy
+                ? 'Alle Inhalte und Einstellungen werden vollständig kopiert und geprüft. Der bisherige Ordner bleibt als Rückfallkopie erhalten.'
+                : action == SettingsAction.create
+                ? 'Ein leerer Arbeitsbereich mit eigenen Einstellungen wird angelegt. Der bisherige Bestand bleibt erhalten.'
+                : 'Inhalte und Einstellungen dieses Ordners werden geladen. Der bisherige Bestand bleibt erhalten; beide werden nicht zusammengeführt.'}',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Abbrechen'),
+            ),
+            FilledButton(
+              key: const ValueKey('confirm-workspace-change'),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Fortfahren'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+      await _flushSession();
+      await _run(
+        'Arbeitsbereich wird vorbereitet …',
+        () => manager.switchTo(selected, mode),
+      );
+    } catch (error) {
+      if (mounted) showMessage(context, errorLabel(error));
+    }
   }
 
   List<Entry> _rowsFor(WorkspaceView view) => _entries.where((e) {
@@ -1540,16 +1686,17 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(LucideIcons.database, size: 19),
                 title: const Text('Daten & Sicherung'),
-                subtitle: const Text('Lokaler Arbeitsbereich und Sicherung'),
+                subtitle: const Text(
+                  'Arbeitsbereiche öffnen, kopieren und sichern',
+                ),
                 onTap: () => Navigator.pop(context, true),
               ),
-              const SizedBox(height: 12),
-              Text(
-                'Weitere Menüpunkte sind noch nicht festgelegt.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: WorkspaceColors(context).soft,
-                ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(LucideIcons.settings, size: 19),
+                title: const Text('Einstellungen'),
+                subtitle: const Text('Aufgaben und Kontexte'),
+                onTap: () => Navigator.pop(context, false),
               ),
             ],
           ),
@@ -1562,7 +1709,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         ],
       ),
     );
-    if (data == true && mounted) await _showData();
+    if (data != null && mounted) await _showData(tab: data ? 0 : 1);
   }
 
   Widget _sidebar() => Row(
@@ -2712,10 +2859,16 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                         color: closed ? c.soft : c.ink,
                       ),
                     ),
-                    if (task.context.isNotEmpty)
-                      Text(
-                        task.context,
-                        style: TextStyle(fontSize: 11, color: c.soft),
+                    if (task.contextIds.isNotEmpty ||
+                        task.context.isNotEmpty ||
+                        task.estimatedMinutes != null ||
+                        task.energy != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: TaskMetadataChips(
+                          entry: task,
+                          contexts: _contexts,
+                        ),
                       ),
                     if (closed)
                       Text(
@@ -2748,6 +2901,16 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   }
 
   Widget _taskList(List<Entry> tasks) {
+    final total = tasks.length;
+    tasks = tasks
+        .where(
+          (e) => _taskFilter.matches(
+            contexts: e.contextIds,
+            minutes: e.estimatedMinutes,
+            energy: e.energy,
+          ),
+        )
+        .toList();
     final c = WorkspaceColors(context), global = _taskNavigation;
     String group(Entry task) => global
         ? ancestorsOf(
@@ -2804,6 +2967,23 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                   ),
                 ),
               ),
+              IconButton(
+                key: const ValueKey('task-filter'),
+                tooltip: 'Aufgaben filtern',
+                isSelected: _taskFilter.active,
+                onPressed: () async {
+                  if (!await _canLeave() || !context.mounted) return;
+                  final filter = await showTaskFilterDialog(
+                    context,
+                    _contexts,
+                    _taskFilter,
+                  );
+                  if (filter != null && mounted) {
+                    setState(() => _taskFilter = filter);
+                  }
+                },
+                icon: const Icon(LucideIcons.listFilter, size: 17),
+              ),
               if (_root == null || !isArchived(_root!, _entries))
                 TextButton.icon(
                   onPressed: () => _create(EntryKind.task),
@@ -2812,6 +2992,32 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 ),
             ],
           ),
+          if (_taskFilter.active)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Wrap(
+                spacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    '${tasks.length} von $total Aufgaben · Filter aktiv',
+                    style: TextStyle(fontSize: 11, color: c.soft),
+                  ),
+                  TextButton(
+                    onPressed: () =>
+                        setState(() => _taskFilter = const TaskFilter()),
+                    child: const Text('Zurücksetzen'),
+                  ),
+                ],
+              ),
+            ),
+          if (tasks.isEmpty && _taskFilter.active)
+            const Padding(
+              padding: EdgeInsets.only(top: 24),
+              child: Text(
+                'Keine passenden Aufgaben. Filter anpassen oder zurücksetzen.',
+              ),
+            ),
           const SizedBox(height: 22),
           for (final title in groups) ...[
             Padding(
@@ -2890,6 +3096,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   @override
   Widget build(BuildContext context) => CallbackShortcuts(
     bindings: {
+      const SingleActivator(LogicalKeyboardKey.comma, meta: true): _showData,
       const SingleActivator(LogicalKeyboardKey.keyF, meta: true): _showSearch,
       const SingleActivator(LogicalKeyboardKey.keyF, control: true):
           _showSearch,

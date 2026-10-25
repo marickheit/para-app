@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -9,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../domain/workspace.dart';
 import 'common.dart';
 import 'dialogs.dart';
+import 'task_details.dart';
 import 'note_history.dart';
 
 class EntryEditor extends StatefulWidget {
@@ -44,6 +46,9 @@ class EntryEditorState extends State<EntryEditor> {
   String _bodyHash = '';
   int _revision = 0;
   bool _dirty = false;
+  List<TaskContext> _contexts = [];
+  TaskDetailsValue _taskDetails = const TaskDetailsValue();
+  StreamSubscription<List<TaskContext>>? _contextSubscription;
   bool _loading = true;
   bool _saving = false;
   bool _preview = true;
@@ -62,6 +67,9 @@ class EntryEditorState extends State<EntryEditor> {
   @override
   void initState() {
     super.initState();
+    _contextSubscription = widget.repository.watchContexts().listen((values) {
+      if (mounted) setState(() => _contexts = values);
+    });
     _load();
   }
 
@@ -103,6 +111,11 @@ class EntryEditorState extends State<EntryEditor> {
         _context.text = entry.context;
         _due = entry.dueDate;
         _taskState = entry.taskState;
+        _taskDetails = TaskDetailsValue(
+          contextIds: entry.contextIds,
+          minutes: entry.estimatedMinutes,
+          energy: entry.energy,
+        );
         _bodyHash = snapshot.hash;
         _revision = entry.revision;
         _preview =
@@ -126,6 +139,7 @@ class EntryEditorState extends State<EntryEditor> {
 
   @override
   void dispose() {
+    _contextSubscription?.cancel();
     _title.dispose();
     _bodyFocus.dispose();
     _body.dispose();
@@ -155,6 +169,12 @@ class EntryEditorState extends State<EntryEditor> {
           dueDate: _due,
           taskState: _taskState,
           context: _context.text,
+          contextIds: widget.entry.kind == EntryKind.task
+              ? _taskDetails.contextIds
+              : null,
+          estimatedMinutes: _taskDetails.minutes,
+          energy: _taskDetails.energy,
+          updateTaskDetails: widget.entry.kind == EntryKind.task,
         ),
       );
       final latest = (await widget.repository.getEntries()).firstWhere(
@@ -382,14 +402,14 @@ class EntryEditorState extends State<EntryEditor> {
               }),
       ),
       const SizedBox(height: 16),
-      TextField(
-        controller: _context,
+      TaskDetailsFields(
+        definitions: _contexts,
+        value: _taskDetails,
         readOnly: _locked,
-        onChanged: _changed,
-        decoration: const InputDecoration(
-          labelText: 'Kontext',
-          hintText: 'z. B. Telefon, Computer, Zu Hause',
-        ),
+        onChanged: (value) => setState(() {
+          _taskDetails = value;
+          _dirty = true;
+        }),
       ),
       const SizedBox(height: 14),
     ],

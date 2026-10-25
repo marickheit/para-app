@@ -9,6 +9,7 @@ import 'desktop_features.dart';
 import 'compact_explorer_features.dart';
 import 'target_features.dart';
 import 'recovery_features.dart';
+import 'workspace_settings_features.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -16,6 +17,7 @@ void main() {
   registerCompactExplorerTests();
   registerTargetFeatureTests();
   registerRecoveryFeatureTests();
+  registerWorkspaceSettingsTests();
   testWidgets(
     'project content, stable links, task switch, save and reopening',
     (tester) async {

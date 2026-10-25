@@ -9,6 +9,7 @@ import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 import '../domain/workspace.dart';
 import 'database.dart';
+import 'workspace_storage.dart';
 import '../services/file_formats.dart';
 
 class LocalWorkspaceRepository implements WorkspaceRepository {
@@ -17,9 +18,12 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
     this.database,
     this._now,
     this._pdfTextExtractor,
+    this._lease,
   );
   final Future<String?> Function(String)? _pdfTextExtractor;
   final Directory root;
+  final WorkspaceLease _lease;
+  bool _closed = false;
   final WorkspaceDatabase database;
   final DateTime Function() _now;
   final _uuid = const Uuid();
@@ -29,27 +33,33 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
     Directory root, {
     DateTime Function()? now,
     Future<String?> Function(String)? pdfTextExtractor,
+    bool create = true,
   }) async {
-    await Directory(p.join(root.path, 'notes')).create(recursive: true);
-    await Directory(p.join(root.path, 'files')).create(recursive: true);
-    final db = WorkspaceDatabase(
-      NativeDatabase.createInBackground(
-        File(p.join(root.path, 'workspace.sqlite')),
-      ),
-    );
-    final repo = LocalWorkspaceRepository._(
-      root,
-      db,
-      now ?? DateTime.now,
-      pdfTextExtractor,
-    );
+    final lease = await WorkspaceStorage.acquire(root, create: create);
+    root = lease.root;
+    WorkspaceDatabase? db;
     try {
+      await Directory(p.join(root.path, 'notes')).create(recursive: true);
+      await Directory(p.join(root.path, 'files')).create(recursive: true);
+      db = WorkspaceDatabase(
+        NativeDatabase.createInBackground(
+          File(p.join(root.path, 'workspace.sqlite')),
+        ),
+      );
+      final repo = LocalWorkspaceRepository._(
+        root,
+        db,
+        now ?? DateTime.now,
+        pdfTextExtractor,
+        lease,
+      );
       await repo._recoverPurges();
       await repo._backfillArchives();
       await repo._rebuildIndex();
       return repo;
     } catch (_) {
-      await db.close();
+      await db?.close();
+      await lease.close();
       rethrow;
     }
   }
@@ -60,6 +70,174 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
     _pending = next.then<void>((_) {}, onError: (Object _, StackTrace _) {});
     return next;
   }
+
+  TaskContext _contextDefinition(TaskContextRow row) => TaskContext(
+    id: row.id,
+    name: row.name,
+    color: row.color,
+    active: row.active,
+    position: row.position,
+  );
+  SimpleSelectStatement<TaskContexts, TaskContextRow> _contextQuery() =>
+      database.select(database.taskContexts)..orderBy([
+        (e) => OrderingTerm.asc(e.position),
+        (e) => OrderingTerm.asc(e.name),
+      ]);
+  @override
+  Stream<List<TaskContext>> watchContexts() => _contextQuery().watch().map(
+    (rows) => rows.map(_contextDefinition).toList(),
+  );
+  @override
+  Future<List<TaskContext>> getContexts() async =>
+      (await _contextQuery().get()).map(_contextDefinition).toList();
+
+  @override
+  Future<TaskContext> saveContext({
+    String? id,
+    required String name,
+    required int color,
+    bool active = true,
+    int? position,
+  }) => _write(() async {
+    final title = _title(name), all = await getContexts();
+    if (color < 0 || color > 0xffffffff) {
+      throw const WorkspaceException('Ungültige Kontextfarbe.');
+    }
+    final currentName = all.where((e) => e.id == id).firstOrNull?.name;
+    if (currentName != title &&
+        all.any(
+          (e) => e.id != id && e.name.toLowerCase() == title.toLowerCase(),
+        )) {
+      throw const WorkspaceException(
+        'Ein Kontext mit diesem Namen ist bereits vorhanden.',
+      );
+    }
+    if (id != null && !all.any((e) => e.id == id)) {
+      throw const WorkspaceException('Der Kontext wurde nicht gefunden.');
+    }
+    final contextId = id ?? _uuid.v4();
+    await database.transaction(() async {
+      if (id == null) {
+        await database
+            .into(database.taskContexts)
+            .insert(
+              TaskContextsCompanion.insert(
+                id: contextId,
+                name: title,
+                color: color,
+                active: Value(active),
+                position: all.length,
+              ),
+            );
+      } else {
+        await (database.update(
+          database.taskContexts,
+        )..where((e) => e.id.equals(id))).write(
+          TaskContextsCompanion(
+            name: Value(title),
+            color: Value(color),
+            active: Value(active),
+          ),
+        );
+      }
+      if (position != null) {
+        final order = all
+            .where((e) => e.id != contextId)
+            .map((e) => e.id)
+            .toList();
+        order.insert(position.clamp(0, order.length), contextId);
+        for (var i = 0; i < order.length; i++) {
+          await (database.update(database.taskContexts)
+                ..where((e) => e.id.equals(order[i])))
+              .write(TaskContextsCompanion(position: Value(i)));
+        }
+      }
+      if (id != null && all.firstWhere((e) => e.id == id).name != title) {
+        final definitions = {for (final e in await getContexts()) e.id: e.name};
+        for (final row in await database.select(database.entries).get()) {
+          final ids = (jsonDecode(row.contextIds) as List).cast<String>();
+          if (!ids.contains(id)) continue;
+          await (database.update(
+            database.entries,
+          )..where((e) => e.id.equals(row.id))).write(
+            EntriesCompanion(
+              context: Value(ids.map((id) => definitions[id]!).join(', ')),
+              revision: Value(row.revision + 1),
+              updatedAt: Value(_now().toUtc()),
+            ),
+          );
+        }
+      }
+    });
+    return (await getContexts()).firstWhere((e) => e.id == contextId);
+  });
+
+  Future<(List<String>, String)> _taskContextSelection(
+    EntryDraft draft, {
+    EntryRow? previous,
+  }) async {
+    final all = await getContexts();
+    var ids = draft.contextIds?.toSet().toList();
+    if (ids == null) {
+      if (previous != null && draft.context == previous.context) {
+        ids = (jsonDecode(previous.contextIds) as List).cast<String>();
+      } else if (draft.context.trim().isEmpty) {
+        ids = [];
+      } else {
+        final name = draft.context.trim();
+        var definition = all.where((e) => e.name == name).firstOrNull;
+        if (definition == null) {
+          final id = _uuid.v4();
+          await database
+              .into(database.taskContexts)
+              .insert(
+                TaskContextsCompanion.insert(
+                  id: id,
+                  name: name,
+                  color: contextColors[all.length % contextColors.length],
+                  position: all.length,
+                ),
+              );
+          definition = TaskContext(
+            id: id,
+            name: name,
+            color: contextColors[all.length % contextColors.length],
+          );
+          all.add(definition);
+        }
+        ids = [definition.id];
+      }
+    }
+    final prior = previous == null
+        ? <String>[]
+        : (jsonDecode(previous.contextIds) as List).cast<String>();
+    for (final id in ids) {
+      final definition = all.where((e) => e.id == id).firstOrNull;
+      if (definition == null || !definition.active && !prior.contains(id)) {
+        throw const WorkspaceException(
+          'Ein gewählter Kontext ist nicht verfügbar. Bitte Auswahl aktualisieren.',
+        );
+      }
+    }
+    return (
+      ids,
+      ids.map((id) => all.firstWhere((e) => e.id == id).name).join(', '),
+    );
+  }
+
+  @override
+  Future<String?> readSetting(String key) async => (await (database.select(
+    database.workspaceSettings,
+  )..where((e) => e.key.equals(key))).getSingleOrNull())?.value;
+  @override
+  Future<void> writeSetting(String key, String value) => _write(() async {
+    await database
+        .into(database.workspaceSettings)
+        .insert(
+          WorkspaceSettingsCompanion.insert(key: key, value: value),
+          mode: InsertMode.insertOrReplace,
+        );
+  });
 
   Entry _entry(EntryRow row) => Entry(
     id: row.id,
@@ -78,6 +256,9 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
         ? null
         : TaskState.values.byName(row.previousTaskState!),
     context: row.context,
+    contextIds: (jsonDecode(row.contextIds) as List).cast<String>(),
+    estimatedMinutes: row.estimatedMinutes,
+    energy: row.energy == null ? null : EnergyLevel.values.byName(row.energy!),
     goal: row.goal,
     dueDate: row.dueDate == null ? null : DateTime.parse(row.dueDate!),
     revision: row.revision,
@@ -530,6 +711,11 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
 
   void _validateDraft(EntryKind kind, EntryDraft draft) {
     _title(draft.title);
+    if (draft.estimatedMinutes != null && draft.estimatedMinutes! <= 0) {
+      throw const WorkspaceException(
+        'Bitte eine positive Minutenzahl eingeben.',
+      );
+    }
     if (kind == EntryKind.project) {
       if (draft.dueDate == null || draft.goal.trim().isEmpty) {
         throw const WorkspaceException(
@@ -620,6 +806,7 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
     }
     _validateDraft(kind, draft);
     final location = await _location(kind, section, parentId);
+    final details = await _taskContextSelection(draft);
     final id = _uuid.v4();
     final now = DateTime.now().toUtc();
     await _writeBody(id, draft.body);
@@ -636,7 +823,10 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
                 parentId: Value(parentId),
                 goal: Value(draft.goal.trim()),
                 dueDate: Value(_date(draft.dueDate)),
-                context: Value(draft.context.trim()),
+                context: Value(details.$2),
+                contextIds: Value(jsonEncode(details.$1)),
+                estimatedMinutes: Value(draft.estimatedMinutes),
+                energy: Value(draft.energy?.name),
                 taskState: Value(draft.taskState.name),
                 searchText: Value(draft.body),
                 createdAt: now,
@@ -706,6 +896,12 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
         'Archivierte Inhalte sind schreibgeschützt.',
       );
     }
+    final taskDetails =
+        draft.updateTaskDetails ||
+            draft.contextIds != null ||
+            draft.context != row.context
+        ? await _taskContextSelection(draft, previous: row)
+        : null;
     final filename = row.kind == EntryKind.file.name
         ? draft.title == row.title
               ? row.fileName!
@@ -767,7 +963,18 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
             fileName: filename != null ? Value(filename) : const Value.absent(),
             goal: Value(draft.goal.trim()),
             dueDate: Value(_date(draft.dueDate)),
-            context: Value(draft.context.trim()),
+            context: taskDetails == null
+                ? const Value.absent()
+                : Value(taskDetails.$2),
+            contextIds: taskDetails == null
+                ? const Value.absent()
+                : Value(jsonEncode(taskDetails.$1)),
+            estimatedMinutes: draft.updateTaskDetails
+                ? Value(draft.estimatedMinutes)
+                : const Value.absent(),
+            energy: draft.updateTaskDetails
+                ? Value(draft.energy?.name)
+                : const Value.absent(),
             taskState: Value(draft.taskState.name),
             previousTaskState: Value(_previousState(row, draft.taskState)),
             fileSize: row.kind == EntryKind.file.name && writeBody
@@ -1202,7 +1409,7 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
           'format': 'para-workspace',
           'version': 2,
           'schemaVersion': database.schemaVersion,
-          'appVersion': '0.5.0+5',
+          'appVersion': workspaceAppVersion,
           'createdAt': DateTime.now().toUtc().toIso8601String(),
         }),
         flush: true,
@@ -1224,8 +1431,14 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
 
   @override
   Future<void> close() async {
+    if (_closed) return;
+    _closed = true;
     await _pending;
-    await database.close();
+    try {
+      await database.close();
+    } finally {
+      await _lease.close();
+    }
   }
 }
 

@@ -179,6 +179,11 @@ void main() {
       try {
         legacy.execute('ALTER TABLE entries DROP COLUMN archived_at');
         legacy.execute('ALTER TABLE entries DROP COLUMN archive_location');
+        legacy.execute('DROP TABLE task_contexts');
+        legacy.execute('DROP TABLE workspace_settings');
+        legacy.execute('ALTER TABLE entries DROP COLUMN context_ids');
+        legacy.execute('ALTER TABLE entries DROP COLUMN estimated_minutes');
+        legacy.execute('ALTER TABLE entries DROP COLUMN energy');
         legacy.execute('DROP TABLE note_versions');
         legacy.execute('ALTER TABLE entries DROP COLUMN trash_batch_id');
         legacy.execute('ALTER TABLE entries DROP COLUMN trash_location');

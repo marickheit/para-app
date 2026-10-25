@@ -42,10 +42,14 @@ in [AGENTS.md](../AGENTS.md) festgehalten.
 Der Arbeitsbereich liegt außerhalb des App-Pakets im Anwendungsdatenordner.
 Beim Ersetzen der App sollen Bundle-Kennung und Datenpfad gleich bleiben;
 dadurch wird derselbe Arbeitsbereich weiterverwendet. Datenbankänderungen werden
-beim Öffnen migriert. Migrationen aus Schema 1, 2 und 3 sind getestet.
+beim Öffnen migriert. Migrationen aus Schema 1, 2, 3 und 4 sind getestet.
 
-Eine automatische Sicherung vor Migrationen, regelmäßige automatische Sicherungen,
-eine geführte Wiederherstellung und ein automatischer App-Updater fehlen derzeit.
+Vor einer nötigen Datenmigration wird automatisch eine vollständige Rückfallkopie
+unter `.migration-backups/Schema-…` im jeweiligen Root angelegt. Datenbank, Notizen,
+Dateien und darin gespeicherte Einstellungen bleiben im alten Format erhalten.
+Erst nach erfolgreicher Sicherung beginnt die transaktionale Schemaänderung.
+Regelmäßige automatische Sicherungen, eine geführte Auswahl alter Sicherungsstände
+und ein automatischer App-Updater fehlen derzeit.
 Vor einem Versionswechsel deshalb eine vollständige Sicherung exportieren und
 die bisherige App-Version aufbewahren. Ein Rückfall auf eine ältere App benötigt
 den dazu passenden Datenstand; ein neuerer Arbeitsbereich ist nicht automatisch
@@ -53,4 +57,15 @@ mit älteren App-Versionen verträglich.
 
 Eine endgültige Entfernung im Arbeitsbereich entfernt auch den dortigen Textverlauf,
 aber keine Kopien aus bereits vorhandenen Sicherungen. Eine Sicherung aus Version 0.5
-benötigt eine App mit Unterstützung für Schema 4 oder neuer.
+benötigt eine App mit Unterstützung für Schema 4 oder neuer; Sicherungen aus 0.6
+benötigen Unterstützung für Schema 5.
+
+## Arbeitsbereichseinstellungen und Sitzungszustand
+
+Der wählbare Root enthält in 0.6 Inhalte und Arbeitsbereichseinstellungen zusammen.
+Vollständige Sicherungen schließen Kontexte, Farben und gespeicherte Sitzungsdaten
+in `workspace.sqlite` ein. Der lokale Verweis auf den zuletzt geöffneten Root und
+macOS-Ordnerrechte werden am Zielrechner neu gesetzt. Über „Arbeitsbereich öffnen …“
+lässt sich ein vollständiger Sicherungsordner als eigener Arbeitsbereich laden.
+Vor einem weiteren Bearbeiten vorzugsweise eine Kopie des Sicherungsordners öffnen,
+damit der Sicherungsstand selbst unverändert bleibt. [Arbeitsbereiche](ARBEITSBEREICHE.md).

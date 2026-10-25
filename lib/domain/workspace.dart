@@ -1,3 +1,6 @@
+import 'task_details.dart';
+export 'task_details.dart';
+
 enum EntryKind { project, area, resource, folder, note, task, file, idea }
 
 enum ParaSection { inbox, projects, areas, resources }
@@ -69,6 +72,9 @@ class Entry {
     this.trashBatchId,
     this.trashLocation,
     this.trashArchived = false,
+    this.contextIds = const [],
+    this.estimatedMinutes,
+    this.energy,
   });
   final String id;
   final String title;
@@ -94,6 +100,9 @@ class Entry {
   final String? trashLocation;
   final bool trashArchived;
   bool get inTrash => deletedAt != null;
+  final List<String> contextIds;
+  final int? estimatedMinutes;
+  final EnergyLevel? energy;
 }
 
 class NoteVersion {
@@ -171,6 +180,10 @@ class EntryDraft {
     this.dueDate,
     this.taskState = TaskState.inbox,
     this.context = '',
+    this.contextIds,
+    this.estimatedMinutes,
+    this.energy,
+    this.updateTaskDetails = false,
   });
   final String title;
   final String body;
@@ -178,6 +191,10 @@ class EntryDraft {
   final DateTime? dueDate;
   final TaskState taskState;
   final String context;
+  final List<String>? contextIds;
+  final int? estimatedMinutes;
+  final EnergyLevel? energy;
+  final bool updateTaskDetails;
 }
 
 class WorkspaceException implements Exception {
@@ -242,6 +259,17 @@ bool belongsTo(Entry entry, String parentId, List<Entry> entries) =>
 
 /// This application boundary is also usable by a future MCP adapter.
 abstract class WorkspaceRepository {
+  Stream<List<TaskContext>> watchContexts();
+  Future<List<TaskContext>> getContexts();
+  Future<TaskContext> saveContext({
+    String? id,
+    required String name,
+    required int color,
+    bool active = true,
+    int? position,
+  });
+  Future<String?> readSetting(String key);
+  Future<void> writeSetting(String key, String value);
   Stream<List<Entry>> watchEntries();
   Future<List<Entry>> getEntries();
   Stream<List<Entry>> watchTrash();

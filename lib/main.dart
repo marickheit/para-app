@@ -4,22 +4,23 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'app.dart';
 import 'services/pdf_content.dart';
-import 'data/local_workspace_repository.dart';
+import 'services/workspace_manager.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     const override = String.fromEnvironment('PARA_DATA_DIR');
-    final root = override.isNotEmpty
-        ? Directory(override)
-        : Directory(
-            p.join((await getApplicationSupportDirectory()).path, 'workspace'),
-          );
-    final repository = await LocalWorkspaceRepository.open(
-      root,
+    const configOverride = String.fromEnvironment('PARA_CONFIG_DIR');
+    final configuration = configOverride.isEmpty
+        ? await getApplicationSupportDirectory()
+        : Directory(configOverride);
+    final manager = WorkspaceManager(
+      configurationDirectory: configuration,
+      defaultRoot: Directory(p.join(configuration.path, 'workspace')),
+      overrideRoot: override.isEmpty ? null : Directory(override),
       pdfTextExtractor: extractPdfText,
     );
-    runApp(ParaApp(repository: repository, dataDirectory: root.path));
+    runApp(WorkspaceHost(manager: manager));
   } catch (error) {
     runApp(
       MaterialApp(

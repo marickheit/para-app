@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'domain/workspace.dart';
 import 'ui/workspace_screen.dart';
+import 'services/workspace_manager.dart';
 
 class ParaApp extends StatelessWidget {
   const ParaApp({
     super.key,
     required this.repository,
     required this.dataDirectory,
+    this.workspaceManager,
   });
   final WorkspaceRepository repository;
   final String dataDirectory;
+  final WorkspaceManager? workspaceManager;
 
   ThemeData _theme(Brightness brightness) {
     final dark = brightness == Brightness.dark;
@@ -107,6 +110,116 @@ class ParaApp extends StatelessWidget {
     localizationsDelegates: GlobalMaterialLocalizations.delegates,
     theme: _theme(Brightness.light),
     darkTheme: _theme(Brightness.dark),
-    home: WorkspaceScreen(repository: repository, dataDirectory: dataDirectory),
+    home: WorkspaceScreen(
+      repository: repository,
+      dataDirectory: dataDirectory,
+      workspaceManager: workspaceManager,
+    ),
+  );
+}
+
+class WorkspaceHost extends StatefulWidget {
+  const WorkspaceHost({super.key, required this.manager});
+  final WorkspaceManager manager;
+  @override
+  State<WorkspaceHost> createState() => _WorkspaceHostState();
+}
+
+class _WorkspaceHostState extends State<WorkspaceHost> {
+  Object? _selectionError;
+  @override
+  void initState() {
+    super.initState();
+    widget.manager.initialize();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: widget.manager,
+    builder: (context, _) {
+      final manager = widget.manager, repository = manager.repository;
+      if (repository != null) {
+        return ParaApp(
+          key: ValueKey(repository.root.path),
+          repository: repository,
+          dataDirectory: repository.root.path,
+          workspaceManager: manager,
+        );
+      }
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          useMaterial3: true,
+          colorSchemeSeed: const Color(0xff35624a),
+        ),
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(28),
+              child: manager.loading
+                  ? const CircularProgressIndicator()
+                  : ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 620),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.folder_off_outlined, size: 36),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Arbeitsbereich nicht verfügbar',
+                            style: TextStyle(fontSize: 22),
+                          ),
+                          const SizedBox(height: 12),
+                          SelectableText(
+                            '${_selectionError ?? manager.error ?? ''}',
+                          ),
+                          if (manager.location != null)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: SelectableText(manager.location!.path),
+                            ),
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 8,
+                            children: [
+                              OutlinedButton(
+                                onPressed: () {
+                                  setState(() => _selectionError = null);
+                                  manager.initialize();
+                                },
+                                child: const Text('Erneut versuchen'),
+                              ),
+                              if (!manager.testOverride)
+                                FilledButton(
+                                  onPressed: () async {
+                                    try {
+                                      final chosen = await manager.access
+                                          .choose();
+                                      if (chosen != null) {
+                                        await manager.switchTo(
+                                          chosen,
+                                          WorkspaceOpenMode.open,
+                                        );
+                                      }
+                                    } catch (error) {
+                                      if (mounted) {
+                                        setState(() => _selectionError = error);
+                                      }
+                                    }
+                                  },
+                                  child: const Text(
+                                    'Arbeitsbereich auswählen …',
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+          ),
+        ),
+      );
+    },
   );
 }

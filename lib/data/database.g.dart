@@ -148,6 +148,38 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, EntryRow> {
     requiredDuringInsert: false,
     defaultValue: const Constant(''),
   );
+  static const VerificationMeta _contextIdsMeta = const VerificationMeta(
+    'contextIds',
+  );
+  @override
+  late final GeneratedColumn<String> contextIds = GeneratedColumn<String>(
+    'context_ids',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
+  static const VerificationMeta _estimatedMinutesMeta = const VerificationMeta(
+    'estimatedMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> estimatedMinutes = GeneratedColumn<int>(
+    'estimated_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _energyMeta = const VerificationMeta('energy');
+  @override
+  late final GeneratedColumn<String> energy = GeneratedColumn<String>(
+    'energy',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _goalMeta = const VerificationMeta('goal');
   @override
   late final GeneratedColumn<String> goal = GeneratedColumn<String>(
@@ -299,6 +331,9 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, EntryRow> {
     taskState,
     previousTaskState,
     context,
+    contextIds,
+    estimatedMinutes,
+    energy,
     goal,
     dueDate,
     fileName,
@@ -405,6 +440,27 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, EntryRow> {
       context.handle(
         _contextMeta,
         this.context.isAcceptableOrUnknown(data['context']!, _contextMeta),
+      );
+    }
+    if (data.containsKey('context_ids')) {
+      context.handle(
+        _contextIdsMeta,
+        contextIds.isAcceptableOrUnknown(data['context_ids']!, _contextIdsMeta),
+      );
+    }
+    if (data.containsKey('estimated_minutes')) {
+      context.handle(
+        _estimatedMinutesMeta,
+        estimatedMinutes.isAcceptableOrUnknown(
+          data['estimated_minutes']!,
+          _estimatedMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('energy')) {
+      context.handle(
+        _energyMeta,
+        energy.isAcceptableOrUnknown(data['energy']!, _energyMeta),
       );
     }
     if (data.containsKey('goal')) {
@@ -549,6 +605,18 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, EntryRow> {
         DriftSqlType.string,
         data['${effectivePrefix}context'],
       )!,
+      contextIds: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}context_ids'],
+      )!,
+      estimatedMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}estimated_minutes'],
+      ),
+      energy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}energy'],
+      ),
       goal: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}goal'],
@@ -619,6 +687,9 @@ class EntryRow extends DataClass implements Insertable<EntryRow> {
   final String taskState;
   final String? previousTaskState;
   final String context;
+  final String contextIds;
+  final int? estimatedMinutes;
+  final String? energy;
   final String goal;
   final String? dueDate;
   final String? fileName;
@@ -644,6 +715,9 @@ class EntryRow extends DataClass implements Insertable<EntryRow> {
     required this.taskState,
     this.previousTaskState,
     required this.context,
+    required this.contextIds,
+    this.estimatedMinutes,
+    this.energy,
     required this.goal,
     this.dueDate,
     this.fileName,
@@ -680,6 +754,13 @@ class EntryRow extends DataClass implements Insertable<EntryRow> {
       map['previous_task_state'] = Variable<String>(previousTaskState);
     }
     map['context'] = Variable<String>(context);
+    map['context_ids'] = Variable<String>(contextIds);
+    if (!nullToAbsent || estimatedMinutes != null) {
+      map['estimated_minutes'] = Variable<int>(estimatedMinutes);
+    }
+    if (!nullToAbsent || energy != null) {
+      map['energy'] = Variable<String>(energy);
+    }
     map['goal'] = Variable<String>(goal);
     if (!nullToAbsent || dueDate != null) {
       map['due_date'] = Variable<String>(dueDate);
@@ -729,6 +810,13 @@ class EntryRow extends DataClass implements Insertable<EntryRow> {
           ? const Value.absent()
           : Value(previousTaskState),
       context: Value(context),
+      contextIds: Value(contextIds),
+      estimatedMinutes: estimatedMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(estimatedMinutes),
+      energy: energy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(energy),
       goal: Value(goal),
       dueDate: dueDate == null && nullToAbsent
           ? const Value.absent()
@@ -776,6 +864,9 @@ class EntryRow extends DataClass implements Insertable<EntryRow> {
         json['previousTaskState'],
       ),
       context: serializer.fromJson<String>(json['context']),
+      contextIds: serializer.fromJson<String>(json['contextIds']),
+      estimatedMinutes: serializer.fromJson<int?>(json['estimatedMinutes']),
+      energy: serializer.fromJson<String?>(json['energy']),
       goal: serializer.fromJson<String>(json['goal']),
       dueDate: serializer.fromJson<String?>(json['dueDate']),
       fileName: serializer.fromJson<String?>(json['fileName']),
@@ -806,6 +897,9 @@ class EntryRow extends DataClass implements Insertable<EntryRow> {
       'taskState': serializer.toJson<String>(taskState),
       'previousTaskState': serializer.toJson<String?>(previousTaskState),
       'context': serializer.toJson<String>(context),
+      'contextIds': serializer.toJson<String>(contextIds),
+      'estimatedMinutes': serializer.toJson<int?>(estimatedMinutes),
+      'energy': serializer.toJson<String?>(energy),
       'goal': serializer.toJson<String>(goal),
       'dueDate': serializer.toJson<String?>(dueDate),
       'fileName': serializer.toJson<String?>(fileName),
@@ -834,6 +928,9 @@ class EntryRow extends DataClass implements Insertable<EntryRow> {
     String? taskState,
     Value<String?> previousTaskState = const Value.absent(),
     String? context,
+    String? contextIds,
+    Value<int?> estimatedMinutes = const Value.absent(),
+    Value<String?> energy = const Value.absent(),
     String? goal,
     Value<String?> dueDate = const Value.absent(),
     Value<String?> fileName = const Value.absent(),
@@ -863,6 +960,11 @@ class EntryRow extends DataClass implements Insertable<EntryRow> {
         ? previousTaskState.value
         : this.previousTaskState,
     context: context ?? this.context,
+    contextIds: contextIds ?? this.contextIds,
+    estimatedMinutes: estimatedMinutes.present
+        ? estimatedMinutes.value
+        : this.estimatedMinutes,
+    energy: energy.present ? energy.value : this.energy,
     goal: goal ?? this.goal,
     dueDate: dueDate.present ? dueDate.value : this.dueDate,
     fileName: fileName.present ? fileName.value : this.fileName,
@@ -898,6 +1000,13 @@ class EntryRow extends DataClass implements Insertable<EntryRow> {
           ? data.previousTaskState.value
           : this.previousTaskState,
       context: data.context.present ? data.context.value : this.context,
+      contextIds: data.contextIds.present
+          ? data.contextIds.value
+          : this.contextIds,
+      estimatedMinutes: data.estimatedMinutes.present
+          ? data.estimatedMinutes.value
+          : this.estimatedMinutes,
+      energy: data.energy.present ? data.energy.value : this.energy,
       goal: data.goal.present ? data.goal.value : this.goal,
       dueDate: data.dueDate.present ? data.dueDate.value : this.dueDate,
       fileName: data.fileName.present ? data.fileName.value : this.fileName,
@@ -936,6 +1045,9 @@ class EntryRow extends DataClass implements Insertable<EntryRow> {
           ..write('taskState: $taskState, ')
           ..write('previousTaskState: $previousTaskState, ')
           ..write('context: $context, ')
+          ..write('contextIds: $contextIds, ')
+          ..write('estimatedMinutes: $estimatedMinutes, ')
+          ..write('energy: $energy, ')
           ..write('goal: $goal, ')
           ..write('dueDate: $dueDate, ')
           ..write('fileName: $fileName, ')
@@ -966,6 +1078,9 @@ class EntryRow extends DataClass implements Insertable<EntryRow> {
     taskState,
     previousTaskState,
     context,
+    contextIds,
+    estimatedMinutes,
+    energy,
     goal,
     dueDate,
     fileName,
@@ -995,6 +1110,9 @@ class EntryRow extends DataClass implements Insertable<EntryRow> {
           other.taskState == this.taskState &&
           other.previousTaskState == this.previousTaskState &&
           other.context == this.context &&
+          other.contextIds == this.contextIds &&
+          other.estimatedMinutes == this.estimatedMinutes &&
+          other.energy == this.energy &&
           other.goal == this.goal &&
           other.dueDate == this.dueDate &&
           other.fileName == this.fileName &&
@@ -1022,6 +1140,9 @@ class EntriesCompanion extends UpdateCompanion<EntryRow> {
   final Value<String> taskState;
   final Value<String?> previousTaskState;
   final Value<String> context;
+  final Value<String> contextIds;
+  final Value<int?> estimatedMinutes;
+  final Value<String?> energy;
   final Value<String> goal;
   final Value<String?> dueDate;
   final Value<String?> fileName;
@@ -1048,6 +1169,9 @@ class EntriesCompanion extends UpdateCompanion<EntryRow> {
     this.taskState = const Value.absent(),
     this.previousTaskState = const Value.absent(),
     this.context = const Value.absent(),
+    this.contextIds = const Value.absent(),
+    this.estimatedMinutes = const Value.absent(),
+    this.energy = const Value.absent(),
     this.goal = const Value.absent(),
     this.dueDate = const Value.absent(),
     this.fileName = const Value.absent(),
@@ -1075,6 +1199,9 @@ class EntriesCompanion extends UpdateCompanion<EntryRow> {
     this.taskState = const Value.absent(),
     this.previousTaskState = const Value.absent(),
     this.context = const Value.absent(),
+    this.contextIds = const Value.absent(),
+    this.estimatedMinutes = const Value.absent(),
+    this.energy = const Value.absent(),
     this.goal = const Value.absent(),
     this.dueDate = const Value.absent(),
     this.fileName = const Value.absent(),
@@ -1107,6 +1234,9 @@ class EntriesCompanion extends UpdateCompanion<EntryRow> {
     Expression<String>? taskState,
     Expression<String>? previousTaskState,
     Expression<String>? context,
+    Expression<String>? contextIds,
+    Expression<int>? estimatedMinutes,
+    Expression<String>? energy,
     Expression<String>? goal,
     Expression<String>? dueDate,
     Expression<String>? fileName,
@@ -1134,6 +1264,9 @@ class EntriesCompanion extends UpdateCompanion<EntryRow> {
       if (taskState != null) 'task_state': taskState,
       if (previousTaskState != null) 'previous_task_state': previousTaskState,
       if (context != null) 'context': context,
+      if (contextIds != null) 'context_ids': contextIds,
+      if (estimatedMinutes != null) 'estimated_minutes': estimatedMinutes,
+      if (energy != null) 'energy': energy,
       if (goal != null) 'goal': goal,
       if (dueDate != null) 'due_date': dueDate,
       if (fileName != null) 'file_name': fileName,
@@ -1163,6 +1296,9 @@ class EntriesCompanion extends UpdateCompanion<EntryRow> {
     Value<String>? taskState,
     Value<String?>? previousTaskState,
     Value<String>? context,
+    Value<String>? contextIds,
+    Value<int?>? estimatedMinutes,
+    Value<String?>? energy,
     Value<String>? goal,
     Value<String?>? dueDate,
     Value<String?>? fileName,
@@ -1190,6 +1326,9 @@ class EntriesCompanion extends UpdateCompanion<EntryRow> {
       taskState: taskState ?? this.taskState,
       previousTaskState: previousTaskState ?? this.previousTaskState,
       context: context ?? this.context,
+      contextIds: contextIds ?? this.contextIds,
+      estimatedMinutes: estimatedMinutes ?? this.estimatedMinutes,
+      energy: energy ?? this.energy,
       goal: goal ?? this.goal,
       dueDate: dueDate ?? this.dueDate,
       fileName: fileName ?? this.fileName,
@@ -1244,6 +1383,15 @@ class EntriesCompanion extends UpdateCompanion<EntryRow> {
     }
     if (context.present) {
       map['context'] = Variable<String>(context.value);
+    }
+    if (contextIds.present) {
+      map['context_ids'] = Variable<String>(contextIds.value);
+    }
+    if (estimatedMinutes.present) {
+      map['estimated_minutes'] = Variable<int>(estimatedMinutes.value);
+    }
+    if (energy.present) {
+      map['energy'] = Variable<String>(energy.value);
     }
     if (goal.present) {
       map['goal'] = Variable<String>(goal.value);
@@ -1302,6 +1450,9 @@ class EntriesCompanion extends UpdateCompanion<EntryRow> {
           ..write('taskState: $taskState, ')
           ..write('previousTaskState: $previousTaskState, ')
           ..write('context: $context, ')
+          ..write('contextIds: $contextIds, ')
+          ..write('estimatedMinutes: $estimatedMinutes, ')
+          ..write('energy: $energy, ')
           ..write('goal: $goal, ')
           ..write('dueDate: $dueDate, ')
           ..write('fileName: $fileName, ')
@@ -1990,12 +2141,575 @@ class NoteVersionsCompanion extends UpdateCompanion<NoteVersionRow> {
   }
 }
 
+class $TaskContextsTable extends TaskContexts
+    with TableInfo<$TaskContextsTable, TaskContextRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TaskContextsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<int> color = GeneratedColumn<int>(
+    'color',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _activeMeta = const VerificationMeta('active');
+  @override
+  late final GeneratedColumn<bool> active = GeneratedColumn<bool>(
+    'active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, color, active, position];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'task_contexts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TaskContextRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_colorMeta);
+    }
+    if (data.containsKey('active')) {
+      context.handle(
+        _activeMeta,
+        active.isAcceptableOrUnknown(data['active']!, _activeMeta),
+      );
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TaskContextRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TaskContextRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}color'],
+      )!,
+      active: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}active'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
+    );
+  }
+
+  @override
+  $TaskContextsTable createAlias(String alias) {
+    return $TaskContextsTable(attachedDatabase, alias);
+  }
+}
+
+class TaskContextRow extends DataClass implements Insertable<TaskContextRow> {
+  final String id;
+  final String name;
+  final int color;
+  final bool active;
+  final int position;
+  const TaskContextRow({
+    required this.id,
+    required this.name,
+    required this.color,
+    required this.active,
+    required this.position,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['color'] = Variable<int>(color);
+    map['active'] = Variable<bool>(active);
+    map['position'] = Variable<int>(position);
+    return map;
+  }
+
+  TaskContextsCompanion toCompanion(bool nullToAbsent) {
+    return TaskContextsCompanion(
+      id: Value(id),
+      name: Value(name),
+      color: Value(color),
+      active: Value(active),
+      position: Value(position),
+    );
+  }
+
+  factory TaskContextRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TaskContextRow(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      color: serializer.fromJson<int>(json['color']),
+      active: serializer.fromJson<bool>(json['active']),
+      position: serializer.fromJson<int>(json['position']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'color': serializer.toJson<int>(color),
+      'active': serializer.toJson<bool>(active),
+      'position': serializer.toJson<int>(position),
+    };
+  }
+
+  TaskContextRow copyWith({
+    String? id,
+    String? name,
+    int? color,
+    bool? active,
+    int? position,
+  }) => TaskContextRow(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    color: color ?? this.color,
+    active: active ?? this.active,
+    position: position ?? this.position,
+  );
+  TaskContextRow copyWithCompanion(TaskContextsCompanion data) {
+    return TaskContextRow(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      color: data.color.present ? data.color.value : this.color,
+      active: data.active.present ? data.active.value : this.active,
+      position: data.position.present ? data.position.value : this.position,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TaskContextRow(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('color: $color, ')
+          ..write('active: $active, ')
+          ..write('position: $position')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, color, active, position);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TaskContextRow &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.color == this.color &&
+          other.active == this.active &&
+          other.position == this.position);
+}
+
+class TaskContextsCompanion extends UpdateCompanion<TaskContextRow> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<int> color;
+  final Value<bool> active;
+  final Value<int> position;
+  final Value<int> rowid;
+  const TaskContextsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.color = const Value.absent(),
+    this.active = const Value.absent(),
+    this.position = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TaskContextsCompanion.insert({
+    required String id,
+    required String name,
+    required int color,
+    this.active = const Value.absent(),
+    required int position,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name),
+       color = Value(color),
+       position = Value(position);
+  static Insertable<TaskContextRow> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<int>? color,
+    Expression<bool>? active,
+    Expression<int>? position,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (color != null) 'color': color,
+      if (active != null) 'active': active,
+      if (position != null) 'position': position,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TaskContextsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? name,
+    Value<int>? color,
+    Value<bool>? active,
+    Value<int>? position,
+    Value<int>? rowid,
+  }) {
+    return TaskContextsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      color: color ?? this.color,
+      active: active ?? this.active,
+      position: position ?? this.position,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<int>(color.value);
+    }
+    if (active.present) {
+      map['active'] = Variable<bool>(active.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TaskContextsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('color: $color, ')
+          ..write('active: $active, ')
+          ..write('position: $position, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $WorkspaceSettingsTable extends WorkspaceSettings
+    with TableInfo<$WorkspaceSettingsTable, WorkspaceSettingRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WorkspaceSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _keyMeta = const VerificationMeta('key');
+  @override
+  late final GeneratedColumn<String> key = GeneratedColumn<String>(
+    'key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valueMeta = const VerificationMeta('value');
+  @override
+  late final GeneratedColumn<String> value = GeneratedColumn<String>(
+    'value',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [key, value];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'workspace_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WorkspaceSettingRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('key')) {
+      context.handle(
+        _keyMeta,
+        key.isAcceptableOrUnknown(data['key']!, _keyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_keyMeta);
+    }
+    if (data.containsKey('value')) {
+      context.handle(
+        _valueMeta,
+        value.isAcceptableOrUnknown(data['value']!, _valueMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_valueMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {key};
+  @override
+  WorkspaceSettingRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WorkspaceSettingRow(
+      key: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}key'],
+      )!,
+      value: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}value'],
+      )!,
+    );
+  }
+
+  @override
+  $WorkspaceSettingsTable createAlias(String alias) {
+    return $WorkspaceSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class WorkspaceSettingRow extends DataClass
+    implements Insertable<WorkspaceSettingRow> {
+  final String key;
+  final String value;
+  const WorkspaceSettingRow({required this.key, required this.value});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['key'] = Variable<String>(key);
+    map['value'] = Variable<String>(value);
+    return map;
+  }
+
+  WorkspaceSettingsCompanion toCompanion(bool nullToAbsent) {
+    return WorkspaceSettingsCompanion(key: Value(key), value: Value(value));
+  }
+
+  factory WorkspaceSettingRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WorkspaceSettingRow(
+      key: serializer.fromJson<String>(json['key']),
+      value: serializer.fromJson<String>(json['value']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'key': serializer.toJson<String>(key),
+      'value': serializer.toJson<String>(value),
+    };
+  }
+
+  WorkspaceSettingRow copyWith({String? key, String? value}) =>
+      WorkspaceSettingRow(key: key ?? this.key, value: value ?? this.value);
+  WorkspaceSettingRow copyWithCompanion(WorkspaceSettingsCompanion data) {
+    return WorkspaceSettingRow(
+      key: data.key.present ? data.key.value : this.key,
+      value: data.value.present ? data.value.value : this.value,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WorkspaceSettingRow(')
+          ..write('key: $key, ')
+          ..write('value: $value')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(key, value);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WorkspaceSettingRow &&
+          other.key == this.key &&
+          other.value == this.value);
+}
+
+class WorkspaceSettingsCompanion extends UpdateCompanion<WorkspaceSettingRow> {
+  final Value<String> key;
+  final Value<String> value;
+  final Value<int> rowid;
+  const WorkspaceSettingsCompanion({
+    this.key = const Value.absent(),
+    this.value = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WorkspaceSettingsCompanion.insert({
+    required String key,
+    required String value,
+    this.rowid = const Value.absent(),
+  }) : key = Value(key),
+       value = Value(value);
+  static Insertable<WorkspaceSettingRow> custom({
+    Expression<String>? key,
+    Expression<String>? value,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (key != null) 'key': key,
+      if (value != null) 'value': value,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WorkspaceSettingsCompanion copyWith({
+    Value<String>? key,
+    Value<String>? value,
+    Value<int>? rowid,
+  }) {
+    return WorkspaceSettingsCompanion(
+      key: key ?? this.key,
+      value: value ?? this.value,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (key.present) {
+      map['key'] = Variable<String>(key.value);
+    }
+    if (value.present) {
+      map['value'] = Variable<String>(value.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WorkspaceSettingsCompanion(')
+          ..write('key: $key, ')
+          ..write('value: $value, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$WorkspaceDatabase extends GeneratedDatabase {
   _$WorkspaceDatabase(QueryExecutor e) : super(e);
   $WorkspaceDatabaseManager get managers => $WorkspaceDatabaseManager(this);
   late final $EntriesTable entries = $EntriesTable(this);
   late final $EntryLinksTable entryLinks = $EntryLinksTable(this);
   late final $NoteVersionsTable noteVersions = $NoteVersionsTable(this);
+  late final $TaskContextsTable taskContexts = $TaskContextsTable(this);
+  late final $WorkspaceSettingsTable workspaceSettings =
+      $WorkspaceSettingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2004,6 +2718,8 @@ abstract class _$WorkspaceDatabase extends GeneratedDatabase {
     entries,
     entryLinks,
     noteVersions,
+    taskContexts,
+    workspaceSettings,
   ];
 }
 
@@ -2021,6 +2737,9 @@ typedef $$EntriesTableCreateCompanionBuilder =
       Value<String> taskState,
       Value<String?> previousTaskState,
       Value<String> context,
+      Value<String> contextIds,
+      Value<int?> estimatedMinutes,
+      Value<String?> energy,
       Value<String> goal,
       Value<String?> dueDate,
       Value<String?> fileName,
@@ -2049,6 +2768,9 @@ typedef $$EntriesTableUpdateCompanionBuilder =
       Value<String> taskState,
       Value<String?> previousTaskState,
       Value<String> context,
+      Value<String> contextIds,
+      Value<int?> estimatedMinutes,
+      Value<String?> energy,
       Value<String> goal,
       Value<String?> dueDate,
       Value<String?> fileName,
@@ -2204,6 +2926,21 @@ class $$EntriesTableFilterComposer
 
   ColumnFilters<String> get context => $composableBuilder(
     column: $table.context,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get contextIds => $composableBuilder(
+    column: $table.contextIds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get estimatedMinutes => $composableBuilder(
+    column: $table.estimatedMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get energy => $composableBuilder(
+    column: $table.energy,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2430,6 +3167,21 @@ class $$EntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get contextIds => $composableBuilder(
+    column: $table.contextIds,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get estimatedMinutes => $composableBuilder(
+    column: $table.estimatedMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get energy => $composableBuilder(
+    column: $table.energy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get goal => $composableBuilder(
     column: $table.goal,
     builder: (column) => ColumnOrderings(column),
@@ -2561,6 +3313,19 @@ class $$EntriesTableAnnotationComposer
 
   GeneratedColumn<String> get context =>
       $composableBuilder(column: $table.context, builder: (column) => column);
+
+  GeneratedColumn<String> get contextIds => $composableBuilder(
+    column: $table.contextIds,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get estimatedMinutes => $composableBuilder(
+    column: $table.estimatedMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get energy =>
+      $composableBuilder(column: $table.energy, builder: (column) => column);
 
   GeneratedColumn<String> get goal =>
       $composableBuilder(column: $table.goal, builder: (column) => column);
@@ -2750,6 +3515,9 @@ class $$EntriesTableTableManager
                 Value<String> taskState = const Value.absent(),
                 Value<String?> previousTaskState = const Value.absent(),
                 Value<String> context = const Value.absent(),
+                Value<String> contextIds = const Value.absent(),
+                Value<int?> estimatedMinutes = const Value.absent(),
+                Value<String?> energy = const Value.absent(),
                 Value<String> goal = const Value.absent(),
                 Value<String?> dueDate = const Value.absent(),
                 Value<String?> fileName = const Value.absent(),
@@ -2776,6 +3544,9 @@ class $$EntriesTableTableManager
                 taskState: taskState,
                 previousTaskState: previousTaskState,
                 context: context,
+                contextIds: contextIds,
+                estimatedMinutes: estimatedMinutes,
+                energy: energy,
                 goal: goal,
                 dueDate: dueDate,
                 fileName: fileName,
@@ -2804,6 +3575,9 @@ class $$EntriesTableTableManager
                 Value<String> taskState = const Value.absent(),
                 Value<String?> previousTaskState = const Value.absent(),
                 Value<String> context = const Value.absent(),
+                Value<String> contextIds = const Value.absent(),
+                Value<int?> estimatedMinutes = const Value.absent(),
+                Value<String?> energy = const Value.absent(),
                 Value<String> goal = const Value.absent(),
                 Value<String?> dueDate = const Value.absent(),
                 Value<String?> fileName = const Value.absent(),
@@ -2830,6 +3604,9 @@ class $$EntriesTableTableManager
                 taskState: taskState,
                 previousTaskState: previousTaskState,
                 context: context,
+                contextIds: contextIds,
+                estimatedMinutes: estimatedMinutes,
+                energy: energy,
                 goal: goal,
                 dueDate: dueDate,
                 fileName: fileName,
@@ -3692,6 +4469,368 @@ typedef $$NoteVersionsTableProcessedTableManager =
       NoteVersionRow,
       PrefetchHooks Function({bool entryId})
     >;
+typedef $$TaskContextsTableCreateCompanionBuilder =
+    TaskContextsCompanion Function({
+      required String id,
+      required String name,
+      required int color,
+      Value<bool> active,
+      required int position,
+      Value<int> rowid,
+    });
+typedef $$TaskContextsTableUpdateCompanionBuilder =
+    TaskContextsCompanion Function({
+      Value<String> id,
+      Value<String> name,
+      Value<int> color,
+      Value<bool> active,
+      Value<int> position,
+      Value<int> rowid,
+    });
+
+class $$TaskContextsTableFilterComposer
+    extends Composer<_$WorkspaceDatabase, $TaskContextsTable> {
+  $$TaskContextsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get active => $composableBuilder(
+    column: $table.active,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TaskContextsTableOrderingComposer
+    extends Composer<_$WorkspaceDatabase, $TaskContextsTable> {
+  $$TaskContextsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get active => $composableBuilder(
+    column: $table.active,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TaskContextsTableAnnotationComposer
+    extends Composer<_$WorkspaceDatabase, $TaskContextsTable> {
+  $$TaskContextsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<int> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<bool> get active =>
+      $composableBuilder(column: $table.active, builder: (column) => column);
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+}
+
+class $$TaskContextsTableTableManager
+    extends
+        RootTableManager<
+          _$WorkspaceDatabase,
+          $TaskContextsTable,
+          TaskContextRow,
+          $$TaskContextsTableFilterComposer,
+          $$TaskContextsTableOrderingComposer,
+          $$TaskContextsTableAnnotationComposer,
+          $$TaskContextsTableCreateCompanionBuilder,
+          $$TaskContextsTableUpdateCompanionBuilder,
+          (
+            TaskContextRow,
+            BaseReferences<
+              _$WorkspaceDatabase,
+              $TaskContextsTable,
+              TaskContextRow
+            >,
+          ),
+          TaskContextRow,
+          PrefetchHooks Function()
+        > {
+  $$TaskContextsTableTableManager(
+    _$WorkspaceDatabase db,
+    $TaskContextsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TaskContextsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TaskContextsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TaskContextsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<int> color = const Value.absent(),
+                Value<bool> active = const Value.absent(),
+                Value<int> position = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TaskContextsCompanion(
+                id: id,
+                name: name,
+                color: color,
+                active: active,
+                position: position,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String name,
+                required int color,
+                Value<bool> active = const Value.absent(),
+                required int position,
+                Value<int> rowid = const Value.absent(),
+              }) => TaskContextsCompanion.insert(
+                id: id,
+                name: name,
+                color: color,
+                active: active,
+                position: position,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TaskContextsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$WorkspaceDatabase,
+      $TaskContextsTable,
+      TaskContextRow,
+      $$TaskContextsTableFilterComposer,
+      $$TaskContextsTableOrderingComposer,
+      $$TaskContextsTableAnnotationComposer,
+      $$TaskContextsTableCreateCompanionBuilder,
+      $$TaskContextsTableUpdateCompanionBuilder,
+      (
+        TaskContextRow,
+        BaseReferences<_$WorkspaceDatabase, $TaskContextsTable, TaskContextRow>,
+      ),
+      TaskContextRow,
+      PrefetchHooks Function()
+    >;
+typedef $$WorkspaceSettingsTableCreateCompanionBuilder =
+    WorkspaceSettingsCompanion Function({
+      required String key,
+      required String value,
+      Value<int> rowid,
+    });
+typedef $$WorkspaceSettingsTableUpdateCompanionBuilder =
+    WorkspaceSettingsCompanion Function({
+      Value<String> key,
+      Value<String> value,
+      Value<int> rowid,
+    });
+
+class $$WorkspaceSettingsTableFilterComposer
+    extends Composer<_$WorkspaceDatabase, $WorkspaceSettingsTable> {
+  $$WorkspaceSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$WorkspaceSettingsTableOrderingComposer
+    extends Composer<_$WorkspaceDatabase, $WorkspaceSettingsTable> {
+  $$WorkspaceSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$WorkspaceSettingsTableAnnotationComposer
+    extends Composer<_$WorkspaceDatabase, $WorkspaceSettingsTable> {
+  $$WorkspaceSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get key =>
+      $composableBuilder(column: $table.key, builder: (column) => column);
+
+  GeneratedColumn<String> get value =>
+      $composableBuilder(column: $table.value, builder: (column) => column);
+}
+
+class $$WorkspaceSettingsTableTableManager
+    extends
+        RootTableManager<
+          _$WorkspaceDatabase,
+          $WorkspaceSettingsTable,
+          WorkspaceSettingRow,
+          $$WorkspaceSettingsTableFilterComposer,
+          $$WorkspaceSettingsTableOrderingComposer,
+          $$WorkspaceSettingsTableAnnotationComposer,
+          $$WorkspaceSettingsTableCreateCompanionBuilder,
+          $$WorkspaceSettingsTableUpdateCompanionBuilder,
+          (
+            WorkspaceSettingRow,
+            BaseReferences<
+              _$WorkspaceDatabase,
+              $WorkspaceSettingsTable,
+              WorkspaceSettingRow
+            >,
+          ),
+          WorkspaceSettingRow,
+          PrefetchHooks Function()
+        > {
+  $$WorkspaceSettingsTableTableManager(
+    _$WorkspaceDatabase db,
+    $WorkspaceSettingsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WorkspaceSettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WorkspaceSettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WorkspaceSettingsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> key = const Value.absent(),
+                Value<String> value = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WorkspaceSettingsCompanion(
+                key: key,
+                value: value,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String key,
+                required String value,
+                Value<int> rowid = const Value.absent(),
+              }) => WorkspaceSettingsCompanion.insert(
+                key: key,
+                value: value,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$WorkspaceSettingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$WorkspaceDatabase,
+      $WorkspaceSettingsTable,
+      WorkspaceSettingRow,
+      $$WorkspaceSettingsTableFilterComposer,
+      $$WorkspaceSettingsTableOrderingComposer,
+      $$WorkspaceSettingsTableAnnotationComposer,
+      $$WorkspaceSettingsTableCreateCompanionBuilder,
+      $$WorkspaceSettingsTableUpdateCompanionBuilder,
+      (
+        WorkspaceSettingRow,
+        BaseReferences<
+          _$WorkspaceDatabase,
+          $WorkspaceSettingsTable,
+          WorkspaceSettingRow
+        >,
+      ),
+      WorkspaceSettingRow,
+      PrefetchHooks Function()
+    >;
 
 class $WorkspaceDatabaseManager {
   final _$WorkspaceDatabase _db;
@@ -3702,4 +4841,8 @@ class $WorkspaceDatabaseManager {
       $$EntryLinksTableTableManager(_db, _db.entryLinks);
   $$NoteVersionsTableTableManager get noteVersions =>
       $$NoteVersionsTableTableManager(_db, _db.noteVersions);
+  $$TaskContextsTableTableManager get taskContexts =>
+      $$TaskContextsTableTableManager(_db, _db.taskContexts);
+  $$WorkspaceSettingsTableTableManager get workspaceSettings =>
+      $$WorkspaceSettingsTableTableManager(_db, _db.workspaceSettings);
 }

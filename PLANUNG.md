@@ -1,6 +1,6 @@
 # P.A.R.A. – Produktstand
 
-Stand: 25. Oktober 2026 · lokale Mac-App 0.5.
+Stand: 25. Oktober 2026 · lokale Mac-App 0.6.
 
 ## Ziel und Grundregeln
 
@@ -52,11 +52,24 @@ Stand: 25. Oktober 2026 · lokale Mac-App 0.5.
   bleiben im Verlauf. Alte Texte lassen sich als neuer Stand zurückholen, jüngere
   Texte bleiben erhalten. Vorhandene ältere Stände werden nicht rückwirkend rekonstruiert.
 
+- **Arbeitsbereiche und Einstellungen:** Vollständigen Root über Einstellungen öffnen,
+  neu anlegen oder vollständig kopieren. Quelle beim Kopieren erhalten. Auswahl und
+  macOS-Ordnerfreigabe über Neustarts merken; nur Startverweis liegt außerhalb des Roots.
+  Navigation, geöffneter Inhalt und Filter liegen im Arbeitsbereich.
+- **Aufgabenangaben:** Mehrere gleichberechtigte Kontexte, optionale Bearbeitungszeit
+  und Energie. Kleine farbige Chips unter dem Titel, kombinierbare Listenfilter.
+  Kontextnamen, Farben, Reihenfolge und Aktivierung in Einstellungen verwalten;
+  bestehende freie Kontexttexte verlustfrei übernehmen.
+- **Übernahme älterer Daten:** Schema 5 migriert Formate 1–4 nach vollständiger
+  automatischer Rückfallkopie. Neuere unbekannte Formate ablehnen, aktuellen
+  Mehrprozess-Zugriff sperren; unvollständige Übernahmen nicht aktivieren.
+
 ## Offen / später
 
+- Projektprüfung und Wochenrückblick bleiben nicht ausgewählte GTD-Vorschläge.
 - Live Preview/Autosave, Rückgängig, Mehrfachauswahl und weitere Textformate sind
   unbestätigte Vorschläge, keine bereits umgesetzten Funktionen.
-- Wochenrückblick, wiederkehrende Aufgaben, externe Dateiverweise.
+- Wiederkehrende Aufgaben, externe Dateiverweise.
 - Große Backups, selektive Verfügbarkeit, Cloud-Anbieter, Konfliktauflösung, MCP.
 - Linux-/Android-Build und native Bedienung auf diesen Systemen noch nicht geprüft.
 

@@ -1,4 +1,8 @@
 import 'package:drift/drift.dart';
+import 'dart:convert';
+import 'package:uuid/uuid.dart';
+import '../domain/task_details.dart';
+import '../domain/workspace_format.dart';
 part 'database.g.dart';
 
 @DataClassName('EntryRow')
@@ -15,6 +19,9 @@ class Entries extends Table {
   TextColumn get taskState => text().withDefault(const Constant('inbox'))();
   TextColumn get previousTaskState => text().nullable()();
   TextColumn get context => text().withDefault(const Constant(''))();
+  TextColumn get contextIds => text().withDefault(const Constant('[]'))();
+  IntColumn get estimatedMinutes => integer().nullable()();
+  TextColumn get energy => text().nullable()();
   TextColumn get goal => text().withDefault(const Constant(''))();
   // A due date is a calendar day, stored without a timezone.
   TextColumn get dueDate => text().nullable()();
@@ -53,30 +60,100 @@ class EntryLinks extends Table {
   Set<Column<Object>> get primaryKey => {sourceId, targetId};
 }
 
-@DriftDatabase(tables: [Entries, EntryLinks, NoteVersions])
+@DataClassName('TaskContextRow')
+class TaskContexts extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  IntColumn get color => integer()();
+  BoolColumn get active => boolean().withDefault(const Constant(true))();
+  IntColumn get position => integer()();
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+@DataClassName('WorkspaceSettingRow')
+class WorkspaceSettings extends Table {
+  TextColumn get key => text()();
+  TextColumn get value => text()();
+  @override
+  Set<Column<Object>> get primaryKey => {key};
+}
+
+@DriftDatabase(
+  tables: [Entries, EntryLinks, NoteVersions, TaskContexts, WorkspaceSettings],
+)
 class WorkspaceDatabase extends _$WorkspaceDatabase {
   WorkspaceDatabase(super.executor);
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => workspaceSchemaVersion;
+  Future<void> _initialContexts() async {
+    final names = <String, String>{};
+    for (final row in await customSelect(
+      "SELECT DISTINCT context FROM entries WHERE context <> ''",
+    ).get()) {
+      final name = row.read<String>('context');
+      names[name] = const Uuid().v4();
+    }
+    for (final name in ['Zuhause', 'Unterwegs', 'Arbeit']) {
+      if (!names.keys.any(
+        (value) => value.toLowerCase() == name.toLowerCase(),
+      )) {
+        names[name] = const Uuid().v4();
+      }
+    }
+    var position = 0;
+    for (final pair in names.entries) {
+      await into(taskContexts).insert(
+        TaskContextsCompanion.insert(
+          id: pair.value,
+          name: pair.key,
+          color: contextColors[position % contextColors.length],
+          position: position++,
+        ),
+      );
+      await customStatement(
+        'UPDATE entries SET context_ids = ? WHERE context = ?',
+        [
+          jsonEncode([pair.value]),
+          pair.key,
+        ],
+      );
+    }
+  }
+
   @override
   MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (migrator) async {
+      await migrator.createAll();
+      await _initialContexts();
+    },
     onUpgrade: (migrator, from, to) async {
-      if (from < 2) {
-        await migrator.addColumn(entries, entries.archivedAt);
-        await migrator.addColumn(entries, entries.archiveLocation);
-        await customStatement(
-          'UPDATE entries SET archived_at = updated_at WHERE archived = 1',
-        );
-      }
-      if (from < 3) {
-        await migrator.addColumn(entries, entries.previousTaskState);
-      }
-      if (from < 4) {
-        await migrator.addColumn(entries, entries.trashBatchId);
-        await migrator.addColumn(entries, entries.trashLocation);
-        await migrator.addColumn(entries, entries.trashArchived);
-        await migrator.createTable(noteVersions);
-      }
+      await transaction(() async {
+        if (from < 2) {
+          await migrator.addColumn(entries, entries.archivedAt);
+          await migrator.addColumn(entries, entries.archiveLocation);
+          await customStatement(
+            'UPDATE entries SET archived_at = updated_at WHERE archived = 1',
+          );
+        }
+        if (from < 3) {
+          await migrator.addColumn(entries, entries.previousTaskState);
+        }
+        if (from < 4) {
+          await migrator.addColumn(entries, entries.trashBatchId);
+          await migrator.addColumn(entries, entries.trashLocation);
+          await migrator.addColumn(entries, entries.trashArchived);
+          await migrator.createTable(noteVersions);
+        }
+        if (from < 5) {
+          await migrator.addColumn(entries, entries.contextIds);
+          await migrator.addColumn(entries, entries.estimatedMinutes);
+          await migrator.addColumn(entries, entries.energy);
+          await migrator.createTable(taskContexts);
+          await migrator.createTable(workspaceSettings);
+          await _initialContexts();
+        }
+      });
     },
     beforeOpen: (_) async {
       await customStatement('PRAGMA foreign_keys = ON');

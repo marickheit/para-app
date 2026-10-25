@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../domain/workspace.dart';
 import 'common.dart';
+import 'task_details.dart';
 
 Future<EntryDraft?> showEntryDialog(
   BuildContext context,
@@ -9,6 +10,7 @@ Future<EntryDraft?> showEntryDialog(
   EntryDraft? initialDraft,
   String? heading,
   String? submitLabel,
+  List<TaskContext> contexts = const [],
 }) => showDialog<EntryDraft>(
   context: context,
   builder: (_) => _EntryDialog(
@@ -17,6 +19,7 @@ Future<EntryDraft?> showEntryDialog(
     initialDraft: initialDraft,
     heading: heading,
     submitLabel: submitLabel,
+    contexts: contexts,
   ),
 );
 
@@ -27,12 +30,14 @@ class _EntryDialog extends StatefulWidget {
     this.initialDraft,
     this.heading,
     this.submitLabel,
+    required this.contexts,
   });
   final EntryKind kind;
   final TaskState taskState;
   final EntryDraft? initialDraft;
   final String? heading;
   final String? submitLabel;
+  final List<TaskContext> contexts;
   @override
   State<_EntryDialog> createState() => _EntryDialogState();
 }
@@ -47,6 +52,11 @@ class _EntryDialogState extends State<_EntryDialog> {
   late TaskState _taskState = widget.taskState;
   late DateTime? _due = widget.initialDraft?.dueDate;
   bool _missingDate = false;
+  late TaskDetailsValue _details = TaskDetailsValue(
+    contextIds: widget.initialDraft?.contextIds ?? [],
+    minutes: widget.initialDraft?.estimatedMinutes,
+    energy: widget.initialDraft?.energy,
+  );
   @override
   void dispose() {
     _title.dispose();
@@ -88,6 +98,10 @@ class _EntryDialogState extends State<_EntryDialog> {
         dueDate: _due,
         taskState: _taskState,
         context: _context.text.trim(),
+        contextIds: widget.kind == EntryKind.task ? _details.contextIds : null,
+        estimatedMinutes: _details.minutes,
+        energy: _details.energy,
+        updateTaskDetails: widget.kind == EntryKind.task,
       ),
     );
   }
@@ -176,12 +190,10 @@ class _EntryDialogState extends State<_EntryDialog> {
                   onChanged: (value) => setState(() => _taskState = value!),
                 ),
                 const SizedBox(height: 16),
-                TextField(
-                  controller: _context,
-                  decoration: const InputDecoration(
-                    labelText: 'Kontext (optional)',
-                    hintText: 'z. B. Telefon, Zu Hause, Computer',
-                  ),
+                TaskDetailsFields(
+                  definitions: widget.contexts,
+                  value: _details,
+                  onChanged: (value) => setState(() => _details = value),
                 ),
               ],
               if (widget.kind == EntryKind.idea) ...[

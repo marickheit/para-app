@@ -1,96 +1,72 @@
 # Arbeitsstand
 
-Stand: 25. Oktober 2026 · Version 0.5.0+5.
+Stand: 25. Oktober 2026 · Version 0.6.0+6, nach Review freigegeben.
 
-## Fertig
+## Implementiert
 
-Die bestätigte Symbolleisten-/Explorer-Vorlage ist in Flutter umgesetzt:
-56/164-Pixel-Navigation, vollständiger Projekt-/Ordnerbaum, kompakte Kopfzeile,
-Editor mit MD/TXT und Metadaten, gemeinsame Kontextaktionen, Import/Verschieben,
-projektweise nächste Aktionen, „Nicht mehr relevant“ mit Wiederaufnahme,
-Dateivorschauen und schwebende Suche. Menü unten führt zu Daten & Sicherung.
-Papierkorb steht links unter den Aufgaben; Notizen und bearbeitbare MD/TXT haben einen Versionsverlauf.
+- Bestätigtes Flutter-Grundlayout mit Symbolleiste, Explorer, Editor und Suche.
+- Dateien/Notizen bearbeiten, importieren, verschieben und verknüpfen; unterstützte
+  Vorschauen, Archiv, Papierkorb und Textverlauf gemäß README.md.
+- GTD-Listen mit projektweisen nächsten Aktionen und getrenntem Aufgabenabschluss.
+- Mehrere gleichberechtigte Kontexte, optionale Minuten und Energie je Aufgabe;
+  kleine farbige Chips und kombinierbare Filter mit Projektgruppierung.
+- Kontextverwaltung im Arbeitsbereich: Name, Farbe, Sortierung, aktiv/inaktiv.
+  Vorhandene freie Kontexttexte werden verlustfrei übernommen.
+- Arbeitsbereiche in Einstellungen öffnen, leer anlegen und vollständig kopieren.
+  Quelle bleibt beim Kopieren erhalten; Ziel wird geprüft. Auswahl über Neustarts
+  merken, macOS-Ordnerrechte erhalten, fehlende Roots ohne stillen Ersatz melden.
+- Inhalte, Kontexte und gespeicherte Navigation/Filter liegen im Root. Nur lokaler
+  Startverweis und Ordnerrechte liegen außerhalb. Test-Overrides bleiben getrennt.
+- Schema 5: Vor älteren Datenformaten vollständige Rückfallkopie, transaktionale
+  Migration aus 1–4, Sperre paralleler App-Öffnungen und Ablehnung neuerer Formate.
 
-[Bestätigte Anforderungen](UI_UMZUG.md) · [Abgeschlossener Umzugsplan](FLUTTER_UMZUG_PLAN.md).
-Die [Mockup-Quelle](mockups/para-zieloberflaeche.html) bleibt die Gestaltungsreferenz.
+[Umsetzungsumfang und Prüfschritte](UMSETZUNG_0_6.md) ·
+[Arbeitsbereiche](ARBEITSBEREICHE.md) · [Aufgabenangaben](GTD_AUSBAU.md).
 
 ## Prüfstand
 
-- Codeprüfung ohne Beanstandungen; 44 Fach-/Widgettests erfolgreich.
-- Zehn native Mac-Bedienprüfungen erfolgreich; TXT-/PDF-Ablauf zusätzlich am
-  endgültigen Dateicode geprüft. Testdaten liegen in getrennten temporären Arbeitsbereichen.
-- Release-Build erstellt; Oberfläche mit realen Flutter-Vergleichsbildern geprüft.
-- Geprüft: Schema-1-/Schema-2-/Schema-3-Migration, dauerhafte Aufgabenabschlüsse und deren
-  Wiederaufnahme, MD-/TXT-Speichern und Wiederöffnen, Revisions-/Hashkonflikte,
-  Dateiumbenennung einschließlich älterer Anzeigenamen und stabile Links.
-- Geprüft: nativer desktop_drop-Kanal mit echten lokalen Dateien, rekursiver Import,
-  präzise Drop-Ziele, interner Maus-Drag von Dateien und Ordnern, andere Ablagen,
-  gemeinsame Rechtsklick-/Drei-Punkte-Aktionen, Projektumwandlung und Archiv-Rückholung.
-- Geprüft: 56/164-Pixel-Navigation ohne Verlust offener Änderungen, Suchabbruch,
-  unscharfe Namen versus Inhaltssuche, Tastaturauswahl, Cmd+F auch nach PDF-Wechsel,
-  echte PDF-Darstellung/-Textextraktion, Dateiinfos, Menü und 390-Pixel-Ansicht.
-- Native Oberfläche mit Testdaten geprüft; Nutzerinhalte wurden nicht mit
-  Beispieldaten ergänzt. Vor dem Versionswechsel wurde eine vollständige lokale
-  Rückfallkopie des Arbeitsbereichs und der bisherigen App erstellt.
-- Release 0.5 gestartet; Schema-Übernahme, unveränderte Dateiinhalte und bestehende
-  Metadaten gegen die Rückfallkopie geprüft. Kleiner Versionsbutton und
-  Öffnen/Schließen des Verlaufsfensters auch in der Release-App geprüft.
-- Vergleichsbilder: [Papierkorb](pruefungen/para-0.5-trash.png),
-  [Versionsverlauf](pruefungen/para-0.5-note-history.png).
+- 59 Fach-/Widgettests erfolgreich, Codeprüfung ohne Beanstandungen.
+- 13 native Mac-Bedienprüfungen erfolgreich: bisherige Editor-/Datei-/Archiv-/
+  Papierkorbfunktionen und neue Aufgabenangaben, Filter und Kontextverwaltung.
+- Geprüft: alte Schemas 1–4, vollständige Sicherung/Rückholung mit Links,
+  Papierkorb, Textversionen, Kontextdefinitionen und gespeicherten Einstellungen.
+- Geprüft: Kopieren/Öffnen/Neuanlage, getrennte Inhalte und Einstellungen,
+  Neustart mit gewähltem Root und Ansicht, Wiederaufnahme nach fehlendem Ordner,
+  Abbruch, belegte/verschachtelte Ziele und unveränderte bisherige Auswahl bei Fehlern.
+- Geprüft: neue/unbekannte Datenformate ablehnen, zweite App-Öffnung sperren,
+  Fehler beim Schreiben der lokalen Startkonfiguration, unvollständige Übernahme.
+- Geprüft: nativer macOS-Ordnerkanal und ungültige Freigabedaten. Reale Vergleichsbilder
+  aus getrennten Arbeitsbereichen; reguläre Nutzerdaten nicht für Tests verwenden.
+- Zusätzlich manuell geprüft: Cmd+, öffnet Einstellungen; echter Ordnerdialog,
+  Kopie in externen Ordner und erneutes Laden nach vollständigem App-Neustart ohne
+  erneute Freigabe. Danach wieder den dauerhaften Review-Arbeitsbereich geöffnet.
+- Vergleich des regulären Bestands: alle 17 zuvor erfassten Dateien und die
+  ursprüngliche Startauswahl unverändert; ursprünglicher Bestand weiterhin Schema 4.
 
-## Daten und Grenzen
+Vergleichsbilder: [Aufgaben-Chips](pruefungen/para-0.6-task-chips.png),
+[Kontextverwaltung](pruefungen/para-0.6-context-settings.png),
+[Arbeitsbereichseinstellungen](pruefungen/para-0.6-workspace-settings.png).
 
-Schema 4 ergänzt Papierkorbgruppen und Textversionen; Migrationen aus Schema 1–3
-erhalten bestehende Inhalte und Kennungen.
+## Zur Review
 
-Schema 3 ergänzt den vorherigen Aufgabenstatus. UUIDs, Dateien, Notizen, Links
-und Archivherkunft bleiben erhalten. Bei alten erledigten Aufgaben ohne bekannte
-Historie ist der Wiederaufnahmestatus „Nächste Aktion“.
+Eine gesonderte Review-Version verwendet `PARA_CONFIG_DIR` mit synthetischen Daten.
+Ihre Ordnerauswahl und Einstellungen bleiben beim Neustart erhalten; reguläre
+Nutzerdaten und deren Startauswahl werden dadurch nicht verwendet oder verändert.
+Die bisherige App ist als lokale Rückfallkopie aufbewahrt.
 
-Text-/PDF-Suchumfang, Encoding- und Vorschaugrenzen stehen in [README.md](../README.md).
-Autosave, Live Preview, Mehrfachauswahl und Rückgängig bleiben unbestätigte Vorschläge.
-Linux/Android, Cloud-Sync und MCP sind noch nicht geprüft beziehungsweise umgesetzt.
+Zu prüfen: Chips und Aufgabenbearbeitung, Filter einschließlich fehlender Angaben,
+Kontextfarben/-namen/-reihenfolge sowie Öffnen/Kopieren/Neuanlage eines Arbeitsbereichs.
+Das genaue Erscheinungsbild kann im Review angepasst werden.
+[Review-Anleitung](REVIEW_0_6.md).
 
-## Papierkorb und Textversionen: umgesetzt
+## Weitere offene Arbeit
 
-- [x] Schema 4: Papierkorbgruppen und Herkunft, Textversionen mit stabiler Reihenfolge.
-- [x] „In Papierkorb“ in gemeinsamen Menüs; links direkt unter „Alle Aufgaben“.
-- [x] Schreibgeschützte Vorschau, Ordner auf-/zuklappen, Wiederherstellung zum
-  ursprünglichen Ort oder einem anderen zulässigen Ziel. UUIDs und Status bleiben.
-- [x] Separat entfernte Kinder bleiben bei der Rückholung ihres Ordners im Papierkorb.
-- [x] „Papierkorb leeren“ und einzelne endgültige Entfernung mit Bestätigung,
-  Umfang und Rückverweisen. Keine automatische Leerung.
-- [x] Textstände bei gespeicherten Änderungen an Notizen und bearbeitbaren MD/TXT,
-  Vorschau und Wiederherstellung als neuer Textstand; aktuelle Metadaten bleiben.
-- [x] Linkindex und vollständige Sicherung enthalten Papierkorbinhalte und Historie.
-- [x] Migration, Wiederöffnen, Textkonflikte, unabhängige Sicherungsrückholung,
-  fehlgeschlagene und unterbrochene endgültige Entfernung geprüft.
-- [x] Native Bedienung: Textwiederherstellung, Schutz ungespeicherter Entwürfe,
-  Links in den Papierkorb, Zielauswahl bei fehlendem Elternort, Abbruch und Leeren.
+- Regelmäßige automatische Sicherungen, geführte Auswahl älterer Sicherungsstände,
+  allgemeiner Wiederanlauf für sämtliche Datei-/Datenbankänderungen, App-Updater.
+- Wochenrückblick, Projektprüfung, Wiederholungen und externe Dateiverweise sind
+  weitere Vorschläge und nicht Teil dieser Umsetzung.
+- Autosave, Live Preview, Mehrfachauswahl und Rückgängig bleiben offen.
+- Linux/Android, Cloud-Sync und MCP sind nicht als funktionsfähig geprüft.
 
-Textversionen entstehen bei gespeicherten Textänderungen; beim ersten Ändern eines
-älteren Inhalts wird auch dessen bisheriger Stand gesichert. Es gibt keinen
-rückwirkenden Verlauf und keine automatische Bereinigung. Endgültiges Entfernen
-eines Inhalts entfernt auch dessen Verlauf; exportierte Sicherungen bleiben erhalten.
-
-## Offen: Verlässlicher Alltagseinsatz
-
-Verlustfreie Übernahme älterer Daten und getrennte Test-Arbeitsbereiche sind
-verbindliche Anforderungen in [AGENTS.md](../AGENTS.md). Der konfigurierbare
-Datenroot `PARA_DATA_DIR` und temporäre Test-Repositories sind bereits vorhanden;
-der manuelle Entwicklungsstart ist in README.md beschrieben.
-
-Noch offene Schutzfunktionen vor weiteren Komfortfunktionen:
-
-1. Versionsverträglichkeit vor dem Öffnen prüfen; vollständige automatische
-   Sicherung vor Datenmigrationen und nachvollziehbarer Rückfall auf die passende App-Version samt Sicherung.
-2. Geführte Wiederherstellung mit Integritätsprüfung, unveränderter Rückfallkopie
-   und regelmäßige versionierte Sicherungen; Wiederherstellung getrennt testen.
-3. Prozessübergreifende Sperre des Arbeitsbereichs und Wiederanlauf nach
-   unterbrochenen Datei-/Datenbankoperationen. Fehlerfälle wie voller Datenträger,
-   fehlende Dateien und abgebrochene Migrationen gezielt prüfen.
-
-Vorhandene Migrationstests und ein unabhängig wieder geöffneter Sicherungsexport
-prüfen reguläre Abläufe. Sie ersetzen keine Prüfung der genannten Ausfälle.
-Ein automatischer App-Updater bleibt ein zusätzlicher Vorschlag.
-Sicherungsmanifeste enthalten bereits App- und Schemaversion.
+[Bedienung und Formatgrenzen](../README.md) · [Architektur](ARCHITEKTUR.md) ·
+[Sicherung](SICHERUNG.md) · [UI-Anforderungen](UI_UMZUG.md).
