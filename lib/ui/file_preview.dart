@@ -11,8 +11,18 @@ import '../services/file_formats.dart';
 import 'common.dart';
 import 'workspace_style.dart';
 
+class FilePreviewMemory {
+  final transforms = <String, Matrix4>{};
+}
+
 class FilePreview extends StatefulWidget {
-  const FilePreview({super.key, required this.entry, required this.repository});
+  const FilePreview({
+    super.key,
+    required this.entry,
+    required this.repository,
+    this.memory,
+  });
+  final FilePreviewMemory? memory;
   final Entry entry;
   final WorkspaceRepository repository;
   @override
@@ -20,6 +30,15 @@ class FilePreview extends StatefulWidget {
 }
 
 class _FilePreviewState extends State<FilePreview> {
+  final _pdf = PdfViewerController();
+  @override
+  void dispose() {
+    if (_pdf.isReady) {
+      widget.memory?.transforms[widget.entry.id] = _pdf.value.clone();
+    }
+    super.dispose();
+  }
+
   late Future<String> _path = widget.repository.filePath(widget.entry.id);
   @override
   void didUpdateWidget(covariant FilePreview oldWidget) {
@@ -98,20 +117,35 @@ class _FilePreviewState extends State<FilePreview> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              height: 520,
-              decoration: BoxDecoration(
-                border: Border.all(color: WorkspaceColors(context).line),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: PdfViewer.file(
-                path,
-                passwordProvider: () => null,
-                params: PdfViewerParams(
-                  backgroundColor: WorkspaceColors(context).sidebar,
-                  errorBannerBuilder: (context, error, stack, documentRef) =>
-                      _fallback('Die PDF-Vorschau ist nicht verfügbar.'),
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: WorkspaceColors(context).line),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: PdfViewer.file(
+                  path,
+                  controller: _pdf,
+                  passwordProvider: () => null,
+                  params: PdfViewerParams(
+                    sizeDelegateProvider: PdfViewerSizeDelegateProviderLegacy(
+                      calculateInitialZoom:
+                          (document, controller, fit, cover) =>
+                              controller.viewSize.width /
+                              (document.pages.first.width + 16),
+                    ),
+                    onViewerReady: (_, controller) {
+                      final remembered =
+                          widget.memory?.transforms[widget.entry.id];
+                      if (remembered != null) {
+                        controller.goTo(remembered, duration: Duration.zero);
+                      }
+                    },
+                    backgroundColor: WorkspaceColors(context).sidebar,
+                    errorBannerBuilder: (context, error, stack, documentRef) =>
+                        _fallback('Die PDF-Vorschau ist nicht verfügbar.'),
+                  ),
                 ),
               ),
             ),
@@ -145,7 +179,6 @@ class _FilePreviewState extends State<FilePreview> {
           child: ext == '.svg'
               ? SvgPicture.file(
                   File(path),
-                  height: 330,
                   fit: BoxFit.contain,
                   errorBuilder: (_, _, _) =>
                       _fallback('Die Bildvorschau ist nicht verfügbar.'),
@@ -153,7 +186,6 @@ class _FilePreviewState extends State<FilePreview> {
               : Image.file(
                   File(path),
                   fit: BoxFit.contain,
-                  height: 330,
                   errorBuilder: (_, _, _) =>
                       _fallback('Die Bildvorschau ist nicht verfügbar.'),
                 ),
@@ -177,49 +209,54 @@ class _FilePreviewState extends State<FilePreview> {
                 .map((r) => r.length)
                 .reduce((a, b) => a > b ? a : b)
                 .clamp(1, 20);
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    horizontalMargin: 8,
-                    columnSpacing: 22,
-                    headingRowHeight: 35,
-                    columns: List.generate(
-                      columns,
-                      (i) => DataColumn(
-                        label: Text(i < rows.first.length ? rows.first[i] : ''),
-                      ),
-                    ),
-                    rows: rows
-                        .skip(1)
-                        .map(
-                          (row) => DataRow(
-                            cells: List.generate(
-                              columns,
-                              (i) =>
-                                  DataCell(Text(i < row.length ? row[i] : '')),
-                            ),
+            return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      horizontalMargin: 8,
+                      columnSpacing: 22,
+                      headingRowHeight: 35,
+                      columns: List.generate(
+                        columns,
+                        (i) => DataColumn(
+                          label: Text(
+                            i < rows.first.length ? rows.first[i] : '',
                           ),
-                        )
-                        .toList(),
+                        ),
+                      ),
+                      rows: rows
+                          .skip(1)
+                          .map(
+                            (row) => DataRow(
+                              cells: List.generate(
+                                columns,
+                                (i) => DataCell(
+                                  Text(i < row.length ? row[i] : ''),
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Tabellenvorschau · bis zu 200 Zeilen / 20 Spalten',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: WorkspaceColors(context).soft,
+                  const SizedBox(height: 8),
+                  Text(
+                    'Tabellenvorschau · bis zu 200 Zeilen / 20 Spalten',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: WorkspaceColors(context).soft,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             );
           },
         );
       }
-      return _fallback();
+      return SingleChildScrollView(child: _fallback());
     },
   );
 }

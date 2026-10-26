@@ -1,11 +1,11 @@
 # Kritische Bewertung der Zieloberfläche
 
-Stand: 25. Oktober 2026. Kritische Bewertung der Referenz und ihrer Flutter-Umsetzung.
+Stand: 26. Oktober 2026 · Flutter 0.9.0. Kritische Bewertung der Referenz und ihrer Flutter-Umsetzung.
 Optionale Vorschläge sind keine weitere Funktionsfreigabe. Verbindliche Anforderungen stehen im [UI-Umzug](UI_UMZUG.md).
 
 ## Bewusste Gegenprüfung
 
-| Risiko / Gegenbeispiel | Behandlung in der Vorlage | Stand in Flutter 0.4 |
+| Risiko / Gegenbeispiel | Behandlung in der Vorlage | Stand in Flutter |
 | --- | --- | --- |
 | Beim Dateiwechsel geht ein noch nicht gespeicherter Text verloren | Weiter bearbeiten, Verwerfen und Speichern & wechseln geprüft | Über echte Speicher-/Wechselabläufe geprüft |
 | „Neu“ erzeugt Inhalte im falschen Ordner | „Neu in: …“ nennt das Ziel; Kontextaktion verwendet ihren Container | Zielanzeige und Container-Kontext vorhanden |
@@ -21,8 +21,10 @@ Optionale Vorschläge sind keine weitere Funktionsfreigabe. Verbindliche Anforde
 - Die sichtbaren Drei-Punkte-Menüs verbessern die Auffindbarkeit, nehmen aber
   Breite. Lange Dateinamen umbrechen früher. Eine reale Fensterprüfung mit vielen
   langen Namen ist wichtiger als nur die leere Beispielansicht.
-- Zwei Navigationsspalten kosten weiterhin Platz, vor allem mit eingeblendeten
-  Namen. Die passende Breite muss am echten Editor überprüft werden.
+- Zwei Navigationsspalten kosten Platz, vor allem mit eingeblendeten Namen.
+  Seit 0.9.0 lassen sich Explorer-Breite und Fokusmodus B direkt einstellen;
+  eine Mindestbreite für den Inhalt begrenzt den Explorer am schmalen Fenster.
+  Tabs und ein kompakter Dateikopf schaffen mehr Platz für Dateien.
 - Der MD-Editor zeigt Quelltext oder Vorschau. Ein vollständiger Obsidian-artiger
   Live-Preview-Editor mit eingebetteten Links/Dateien ist damit noch nicht entschieden.
 - Die Formulierungen für „Erledigt“ und „Nicht mehr relevant“ sind verständlich;
@@ -30,18 +32,18 @@ Optionale Vorschläge sind keine weitere Funktionsfreigabe. Verbindliche Anforde
   sind umgesetzt; ein zusätzlicher Verlauf ist nicht beschlossen.
 - Echte PDF-Vorschau, Dateitextsuche, Import und Speicherung wurden getrennt in
   Flutter geprüft. Format-/Größenlimits bleiben bewusst sichtbar dokumentiert.
-- Das Menüfenster enthält Daten & Sicherung. Weitere Einstellungen wurden nicht
-  ergänzt, nur um das Menü zu füllen.
+- Das Menüfenster enthält Daten & Sicherung und Einstellungen. Zusätzliche
+  Einträge erst bei einem konkreten Bedarf ergänzen.
 
 ## Optionale Vorschläge zur nächsten Iteration
 
 1. Rückgängig für Verschieben/Import, mit einem kurzen Hinweis auf das Ziel.
-2. Explorer unabhängig von der Symbolleiste ausblenden und seine Breite direkt
-   ziehen können; das schafft bei langen Schreibphasen mehr Platz.
+2. Splits und Tabgruppen erst bei Bedarf ergänzen. Explorer-Ausblenden und
+   ziehbare Breite sind bereits in 0.9.0 umgesetzt; [Prüfungen](DATEI_TABS_UMSETZUNGSPLAN.md).
 3. Mehrfachauswahl und Sammelaktionen erst ergänzen, wenn der Einzelablauf stabil ist.
 4. Live Preview / Autosave ausdrücklich gegen den bestehenden Speicherablauf abwägen.
 5. Cmd+F als globale Suche ist bestätigt; eine spätere Dokumentsuche braucht eine
    klare Abgrenzung und ein zusätzliches Kürzel.
-6. Weitere Menüinhalte erst bei konkretem Bedarf ergänzen; Daten & Sicherung ist vorhanden.
+6. Weitere Menüinhalte erst bei konkretem Bedarf ergänzen; Daten & Sicherung und Einstellungen sind vorhanden.
 
 Diese Punkte sind Vorschläge und werden erst nach Auswahl zu Anforderungen.

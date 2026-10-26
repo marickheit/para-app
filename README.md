@@ -1,13 +1,27 @@
 # P.A.R.A. Workspace
 
-Lokale Flutter-App 0.8.1 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS.
-Linux-x64-Release-Build und ein nativer Bedientest sind geprüft; die vollständige
-Linux-Bedienung und Android sind noch nicht geprüft.
+Lokale Flutter-App 0.9.0 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS.
+Linux-x64-Release und 27 native Bedienabläufe für Oberfläche, Arbeitsbereiche
+und Anlage sind geprüft. Die neue native macOS-Abnahme und Android sind offen.
 
 [Quellcode auf GitHub](https://github.com/marickheit/para-app)
 
 ## Benutzen
 
+- **Dateitabs:** Dateien und Notizen öffnen oben als Tabs, auch über Projekte hinweg.
+  Ein Explorer-Klick öffnet einen kursiven Vorschautab; eine weitere neue Datei
+  ersetzt ihn. Doppelklick, „Tab behalten“ unter „Offene Dateien“ oder Bearbeiten
+  behält den Tab. Suche/Links/Neuanlage öffnen dauerhafte Tabs. Kreuz, mittlere
+  Maustaste oder Cmd/Ctrl+W schließen die aktive Datei; ungespeicherte Änderungen
+  bleiben geschützt. Die Liste „Offene Dateien“ erreicht auch viele Tabs.
+- **Dateifläche:** Text und Vorschauen nutzen die verfügbare Fläche. „Lesebreite“
+  begrenzt Text auf Wunsch auf 760 Pixel; „Volle Breite“ hebt das wieder auf.
+  PDF hat einen eigenen Scroll-/Zoombereich, Bilder werden proportional eingepasst.
+- **Explorer-Breite und Fokus:** Rechte Kante des Dateibaums ziehen (220–520 Pixel,
+  abhängig von der Fensterbreite). Doppelklick setzt auf 270 Pixel zurück; am
+  fokussierten Griff ändern Links/Rechts um 10 Pixel, Home setzt zurück.
+  Der Button neben den Tabs blendet nur den Explorer aus/ein (Fokusmodus);
+  Symbolleiste und Dateitabs bleiben erreichbar. Gewählte Breite wird gemerkt.
 - **Navigation:** Oben links die Symbolleiste um Namen erweitern oder einklappen.
   Inbox, Projekte, Bereiche, Ressourcen und Archiv öffnen den jeweiligen Explorer.
   „Alle Aufgaben“ öffnet die GTD-Ansichten, darunter steht der Papierkorb. Cmd/Ctrl+\ blendet die ganze Navigation
@@ -102,8 +116,9 @@ Linux-Bedienung und Android sind noch nicht geprüft.
   bleibt erhalten. „Neuen Arbeitsbereich anlegen …“ benötigt ebenfalls einen leeren
   Zielordner. Bestände werden nicht zusammengeführt. Vor dem Wechsel offene Texte
   speichern, verwerfen oder abbrechen. Die Auswahl bleibt über Neustarts erhalten.
-- **Gespeicherte Ansicht:** Geöffneter Inhalt, Navigation, Projekt-/Ordnerzustand und
-  Aufgabenfilter werden im jeweiligen Root gespeichert. Ungespeicherte Texte werden
+- **Gespeicherte Ansicht:** Dauerhafte Dateitabs und ihre Reihenfolge, Navigation,
+  Projekt-/Ordnerzustand, Aufgabenfilter, Explorer-Breite und Fokus-/Lesebreite
+  werden im jeweiligen Root gespeichert. Vorschautabs werden nicht wieder geöffnet. Ungespeicherte Texte werden
   weiterhin über den vorhandenen Speicher-/Wechselschutz behandelt.
 - **Sicherung:** Menü unten → Daten & Sicherung; alternativ den lokalen Statuspunkt
   anklicken. Der Datenpfad und der Sicherungsexport stehen dort bereit.
@@ -279,3 +294,6 @@ Arbeitsbereiche, Sicherungen und Build-Ergebnisse sind ausgeschlossen.
 
 [Produktstand](PLANUNG.md) · [UI-Anforderungen](docs/UI_UMZUG.md) ·
 [Umsetzungsplan](docs/UMSETZUNGSPLAN.md) · [Architektur](docs/ARCHITEKTUR.md)
+
+[Dateitabs, Fokus und verstellbarer Explorer: Umsetzung und Prüfungen](docs/DATEI_TABS_UMSETZUNGSPLAN.md).
+Die [Designstudie](docs/mockups/DATEI_TABS.md) enthält Beispieldaten; Splits wie C bleiben zurückgestellt.

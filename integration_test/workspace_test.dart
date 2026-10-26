@@ -91,7 +91,7 @@ void main() {
           find.byKey(const ValueKey('markdown-body')),
           'Neue Gedanken.',
         );
-        await tester.tap(find.widgetWithText(TextButton, 'Aufgaben'));
+        await tester.tap(find.byKey(ValueKey('tree-entry-${project.id}')));
         await tester.pumpAndSettle();
         expect(find.text('Änderungen speichern?'), findsOneWidget);
         await tester.tap(
@@ -102,6 +102,8 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect((await repo.readNote(target.id)).text, 'Neue Gedanken.');
+        await tester.tap(find.widgetWithText(TextButton, 'Aufgaben'));
+        await tester.pumpAndSettle();
         await tester.tap(find.byType(Checkbox).first);
         await tester.pumpAndSettle();
         expect(

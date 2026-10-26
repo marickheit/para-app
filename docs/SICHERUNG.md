@@ -107,3 +107,19 @@ MCP-Erweiterung 0.8.1 verwendet dieselben Repository-Speicherfunktionen und Sche
 keine zusätzliche Migration. Bereiche, Ressourcensammlungen und Ordner sowie deren
 Texte/Links werden wie per App angelegte Inhalte gesichert. Gezielte Textänderungen
 verwenden den bestehenden Textverlauf, soweit der jeweilige Inhalt ihn unterstützt.
+
+## Dateitabs und Sitzungsübernahme ab 0.9.0
+
+Sitzungsformat 2 (`session.v2`) speichert dauerhafte Dateitabs, Explorer-Breite,
+Fokus- und Lesebreite gemeinsam mit der bisherigen Ansicht im Root. Schema 6 und
+Sicherungsformat 3 bleiben erhalten. Vor Übernahme von `session.v1` legt die App
+einen vollständigen konsistenten Export unter `.migration-backups/PARA-Sicherung-…`
+im Root an. Dieser interne Übernahmepfad ist die einzige Ausnahme vom externen
+Zielordner für normale Sicherungsexporte. Der alte Sitzungswert bleibt erhalten;
+fehlgeschlagene oder unbekannte Formate werden nicht überschrieben.
+
+Die Rückfallkopie enthält auch Texte, Anhänge, Papierkorb, Links und Textversionen.
+Rückholung durch Kopieren und unabhängiges Öffnen geprüft; normale Exporte enthalten
+auch die neue Sitzung. Bereits vorhandene `.migration-backups` werden nicht erneut
+in Exporte hineinkopiert. Vorschautabs und ungespeicherte Entwürfe sind keine
+Sicherungsinhalte. Rückfall mit passender alter App und deren Sicherungsstand.

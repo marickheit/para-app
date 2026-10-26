@@ -337,6 +337,9 @@ abstract class WorkspaceRepository {
   Future<List<Entry>> backlinks(String id);
   Future<List<Entry>> outgoingLinks(String id);
   Future<String> filePath(String id);
-  Future<String> exportBackup(String destinationDirectory);
+  Future<String> exportBackup(
+    String destinationDirectory, {
+    bool forSessionMigration = false,
+  });
   Future<void> close();
 }

@@ -14,6 +14,11 @@ import 'dialogs.dart';
 import 'task_details.dart';
 import 'note_history.dart';
 
+class EditorViewMemory {
+  final views = <String, ({bool preview, double offset})>{};
+  final previews = FilePreviewMemory();
+}
+
 class EntryEditor extends StatefulWidget {
   const EntryEditor({
     super.key,
@@ -24,6 +29,10 @@ class EntryEditor extends StatefulWidget {
     this.onBack,
     this.busy = false,
     this.actionMenu,
+    this.memory,
+    this.readable = false,
+    this.onToggleReadable,
+    this.onEditorState,
   });
   final Entry entry;
   final List<Entry> entries;
@@ -32,11 +41,16 @@ class EntryEditor extends StatefulWidget {
   final VoidCallback? onBack;
   final bool busy;
   final Widget? actionMenu;
+  final EditorViewMemory? memory;
+  final bool readable;
+  final VoidCallback? onToggleReadable;
+  final void Function(String id, bool dirty, bool editing)? onEditorState;
   @override
   State<EntryEditor> createState() => EntryEditorState();
 }
 
 class EntryEditorState extends State<EntryEditor> {
+  final _scroll = ScrollController();
   final _title = TextEditingController();
   final _body = TextEditingController();
   final _bodyFocus = FocusNode();
@@ -88,11 +102,29 @@ class EntryEditorState extends State<EntryEditor> {
       _loading ||
       widget.busy ||
       _mcpGuard.isWriting(widget.entry.id);
-  void _reportEditor() => _mcpGuard.report(
-    this,
-    widget.entry.id,
-    blocked: _dirty || _loading || _saving,
-  );
+  void _reportEditor() {
+    _mcpGuard.report(
+      this,
+      widget.entry.id,
+      blocked: _dirty || _loading || _saving,
+    );
+    final id = widget.entry.id,
+        dirty = _dirty,
+        editing = !_preview && !_loading;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && widget.entry.id == id) {
+        widget.onEditorState?.call(id, dirty, editing);
+      }
+    });
+  }
+
+  void _remember(String id) {
+    widget.memory?.views[id] = (
+      preview: _preview,
+      offset: _scroll.hasClients ? _scroll.offset : 0,
+    );
+  }
+
   void _mcpChanged() {
     if (mounted) setState(() {});
   }
@@ -112,7 +144,12 @@ class EntryEditorState extends State<EntryEditor> {
   @override
   void didUpdateWidget(covariant EntryEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.entry.id != widget.entry.id) _dirty = false;
+    if (oldWidget.entry.id != widget.entry.id) {
+      _remember(oldWidget.entry.id);
+      _loadingValue = true;
+      _editRequested = false;
+      _dirty = false;
+    }
     if (oldWidget.entry.id != widget.entry.id ||
         (!_dirty && !_saving && widget.entry.revision > _revision)) {
       _load();
@@ -167,6 +204,20 @@ class EntryEditorState extends State<EntryEditor> {
             (snapshot.text.isNotEmpty ||
                 entry.kind == EntryKind.file ||
                 _readOnly);
+        final remembered = widget.memory?.views[id];
+        if (remembered != null && !_editRequested && !_readOnly) {
+          _preview = remembered.preview;
+        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && widget.entry.id == id && _scroll.hasClients) {
+            _scroll.jumpTo(
+              (remembered?.offset ?? 0).clamp(
+                0.0,
+                _scroll.position.maxScrollExtent,
+              ),
+            );
+          }
+        });
         _showInfo = false;
         _dirty = false;
         _loading = false;
@@ -185,6 +236,8 @@ class EntryEditorState extends State<EntryEditor> {
 
   @override
   void dispose() {
+    _remember(widget.entry.id);
+    _scroll.dispose();
     _mcpGuard.removeListener(_mcpChanged);
     _mcpGuard.remove(this);
     _contextSubscription?.cancel();
@@ -274,7 +327,8 @@ class EntryEditorState extends State<EntryEditor> {
     if (result == 'save') return save();
     if (result == 'discard') {
       _dirty = false;
-      return true;
+      await _load();
+      return _error == null;
     }
     return false;
   }
@@ -507,6 +561,7 @@ class EntryEditorState extends State<EntryEditor> {
     }
     if (!_loading && _bodyEditable && !_readOnly) {
       setState(() => _preview = false);
+      _reportEditor();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _bodyFocus.requestFocus();
       });
@@ -673,6 +728,16 @@ class EntryEditorState extends State<EntryEditor> {
     final document =
         entry.kind == EntryKind.note || entry.kind == EntryKind.file;
     final actions = <Widget>[
+      if (document && _bodyEditable && widget.onToggleReadable != null)
+        TextButton.icon(
+          key: const ValueKey('readable-toggle'),
+          onPressed: widget.onToggleReadable,
+          icon: const Icon(LucideIcons.moveHorizontal, size: 15),
+          label: Text(
+            widget.readable ? 'Volle Breite' : 'Lesebreite',
+            style: const TextStyle(fontSize: 11),
+          ),
+        ),
       if (document && _bodyEditable)
         IconButton(
           key: const ValueKey('note-history'),
@@ -692,6 +757,7 @@ class EntryEditorState extends State<EntryEditor> {
               : () => setState(() {
                   _editRequested = _preview;
                   _preview = !_preview;
+                  _reportEditor();
                 }),
           icon: Icon(_preview ? LucideIcons.pencil : LucideIcons.eye, size: 15),
           label: Text(
@@ -716,106 +782,138 @@ class EntryEditorState extends State<EntryEditor> {
           icon: const Icon(LucideIcons.link, size: 15),
         ),
     ];
-    return SingleChildScrollView(
-      key: const ValueKey('entry-editor-scroll'),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 760),
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              MediaQuery.sizeOf(context).width < 650 ? 20 : 34,
-              29,
-              MediaQuery.sizeOf(context).width < 650 ? 20 : 34,
-              28,
-            ),
-            child: LayoutBuilder(
-              builder: (context, bounds) => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      if (widget.onBack != null)
-                        IconButton(
-                          onPressed: widget.onBack,
-                          tooltip: 'Zurück zu den Inhalten',
-                          icon: const Icon(LucideIcons.arrowLeft, size: 16),
-                        ),
-                      Icon(fileIcon(entry), size: 16, color: colors.soft),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: document
-                            ? Text(
-                                entryFileLabel(entry),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              )
-                            : TextField(
-                                key: const ValueKey('entry-title'),
-                                controller: _title,
-                                readOnly: _locked,
-                                onChanged: _changed,
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                minLines: 1,
-                                maxLines: 3,
-                              ),
-                      ),
-                      if (bounds.maxWidth > 490) ...actions,
-                      IconButton(
-                        key: const ValueKey('file-info'),
-                        tooltip: 'Dateiinformationen',
-                        isSelected: _showInfo,
-                        onPressed: () => setState(() => _showInfo = !_showInfo),
-                        icon: Icon(
-                          LucideIcons.info,
-                          size: 15,
-                          color: colors.soft,
-                        ),
-                      ),
-                      if (widget.actionMenu != null) widget.actionMenu!,
-                    ],
+    final path = [
+      entry.section.label,
+      ...ancestorsOf(entry, widget.entries).reversed.map((e) => e.title),
+    ].join(' / ');
+    final header = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: colors.line)),
+      ),
+      child: LayoutBuilder(
+        builder: (context, bounds) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                if (widget.onBack != null && !document)
+                  IconButton(
+                    onPressed: widget.onBack,
+                    tooltip: 'Zurück zu den Inhalten',
+                    icon: const Icon(LucideIcons.arrowLeft, size: 16),
                   ),
-                  if (bounds.maxWidth <= 490 && actions.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Wrap(
-                        spacing: 4,
-                        runSpacing: 4,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: actions,
-                      ),
-                    ),
-                  if (_readOnly)
-                    Text(
-                      entry.inTrash
-                          ? 'Im Papierkorb · schreibgeschützt'
-                          : 'Archiviert',
+                Expanded(
+                  child: Tooltip(
+                    message: path,
+                    child: Text(
+                      document ? path : entry.kind.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontSize: 11, color: colors.soft),
                     ),
-                  const SizedBox(height: 22),
-                  if (_showInfo) _metadata(),
-                  ..._detailFields(),
-                  _bodyView(),
-                  _linkRelations(),
-                ],
+                  ),
+                ),
+                if (bounds.maxWidth > 620) ...actions,
+                IconButton(
+                  key: const ValueKey('file-info'),
+                  tooltip: 'Dateiinformationen',
+                  isSelected: _showInfo,
+                  onPressed: () => setState(() => _showInfo = !_showInfo),
+                  icon: Icon(LucideIcons.info, size: 15, color: colors.soft),
+                ),
+                if (widget.actionMenu != null) widget.actionMenu!,
+              ],
+            ),
+            if (bounds.maxWidth <= 620 && actions.isNotEmpty)
+              Wrap(
+                spacing: 4,
+                runSpacing: 2,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: actions,
+              ),
+            if (_readOnly)
+              Text(
+                entry.inTrash
+                    ? 'Im Papierkorb · schreibgeschützt'
+                    : 'Archiviert · schreibgeschützt',
+                style: TextStyle(fontSize: 11, color: colors.soft),
+              ),
+          ],
+        ),
+      ),
+    );
+    final binary = entry.kind == EntryKind.file && !_bodyEditable;
+    final content = binary
+        ? FilePreview(
+            key: ValueKey(entry.id),
+            entry: entry,
+            repository: widget.repository,
+            memory: widget.memory?.previews,
+          )
+        : SingleChildScrollView(
+            key: const ValueKey('entry-editor-scroll'),
+            controller: _scroll,
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: !document || widget.readable
+                      ? 760
+                      : double.infinity,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (entry.kind != EntryKind.file) ...[
+                        TextField(
+                          key: const ValueKey('entry-title'),
+                          controller: _title,
+                          readOnly: _locked,
+                          onChanged: _changed,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          minLines: 1,
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 18),
+                      ],
+                      ..._detailFields(),
+                      _bodyView(),
+                      _linkRelations(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        header,
+        if (_showInfo)
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 180),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: _metadata(),
               ),
             ),
           ),
-        ),
-      ),
+        Expanded(child: content),
+      ],
     );
   }
 }

@@ -21,6 +21,9 @@ import 'common.dart';
 import 'dialogs.dart';
 import 'entry_editor.dart';
 import 'workspace_search.dart';
+import 'document_tabs.dart';
+import 'explorer_resize.dart';
+import '../services/workspace_session.dart';
 
 enum WorkspaceView {
   inbox,
@@ -105,6 +108,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   late StreamSubscription<List<TaskContext>> _contextSubscription;
   TaskFilter _taskFilter = const TaskFilter();
   Timer? _sessionTimer;
+  Timer? _documentRefreshTimer;
   bool _sessionLoaded = false;
   String? _lastSavedSession;
   List<Entry> _trashEntries = [];
@@ -117,21 +121,42 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   String? _selectedId;
   String _tab = 'content';
   bool _sidebarVisible = true;
+  bool _explorerVisible = true, _readable = false, _resizing = false;
+  bool _sessionBlocked = false, _navigationPending = false;
+  double _explorerWidth = 270;
+  final _documents = DocumentTabs();
+  final _editorMemory = EditorViewMemory();
+  final _tabScroll = ScrollController();
+  final _explorerScroll = ScrollController();
+  final _tabKeys = <String, GlobalKey>{};
+  final _tabFocus = <String, FocusNode>{};
+  bool _documentDirty = false;
+  String? _lastDocumentTapId;
+  DateTime? _lastDocumentTapAt;
+  bool get _hasDocument => _selected != null && _isDocument(_selected!);
+  bool _isDocument(Entry entry) =>
+      entry.kind == EntryKind.note || entry.kind == EntryKind.file;
   final _contentSelection = <String, String>{};
 
   @override
   void setState(VoidCallback fn) {
     super.setState(fn);
-    if (!mounted || !_sessionLoaded || _busy) return;
+    if (!mounted || !_sessionLoaded || _busy || _resizing || _sessionBlocked) {
+      return;
+    }
     _sessionTimer?.cancel();
     _sessionTimer = Timer(const Duration(milliseconds: 250), _flushSession);
   }
 
   Map<String, dynamic> _session() => {
-    'version': 1,
+    'version': 2,
+    'documentTabs': _documents.persistent,
+    'explorerWidth': _explorerWidth,
+    'explorerVisible': _explorerVisible,
+    'readable': _readable,
     'view': _view.name,
     'root': _rootId,
-    'selected': _selectedId,
+    'selected': _selectedId == _documents.preview ? null : _selectedId,
     'tab': _tab,
     'railExpanded': _railExpanded,
     'sidebarVisible': _sidebarVisible,
@@ -144,11 +169,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 
   Future<void> _flushSession() async {
     _sessionTimer?.cancel();
-    if (!_sessionLoaded) return;
+    if (!_sessionLoaded || _sessionBlocked || _resizing) return;
     final encoded = jsonEncode(_session());
     if (encoded == _lastSavedSession) return;
     try {
-      await widget.repository.writeSetting('session.v1', encoded);
+      await widget.repository.writeSetting('session.v2', encoded);
       _lastSavedSession = encoded;
     } catch (error) {
       if (mounted) {
@@ -162,19 +187,16 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 
   Future<void> _restoreSession() async {
     try {
-      final stored = await widget.repository.readSetting('session.v1');
+      final data = await WorkspaceSession.load(
+        widget.repository,
+        widget.dataDirectory,
+      );
       final entries = [
         ...await widget.repository.getEntries(),
         ...await widget.repository.getTrash(),
       ];
       if (!mounted) return;
-      if (stored != null) {
-        final data = jsonDecode(stored) as Map<String, dynamic>;
-        if (data['version'] != 1) {
-          throw const WorkspaceException(
-            'Unbekannte Version der gespeicherten Ansicht.',
-          );
-        }
+      if (data != null) {
         setState(() {
           _entries = entries.where((e) => !e.inTrash).toList();
           _trashEntries = entries.where((e) => e.inTrash).toList();
@@ -193,6 +215,29 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               ? data['tab'] as String
               : 'content';
           _railExpanded = data['railExpanded'] == true;
+          _explorerVisible = data['explorerVisible'] != false;
+          _explorerWidth = (data['explorerWidth'] as num?)?.toDouble() ?? 270;
+          _readable = data['readable'] == true;
+          final valid = {for (final e in entries.where(_isDocument)) e.id};
+          final savedTabs =
+              (data['documentTabs'] as List?)?.cast<String>() ??
+              (_selected != null && _isDocument(_selected!)
+                  ? [_selectedId!]
+                  : <String>[]);
+          _documents.ids.addAll(savedTabs.where(valid.contains).toSet());
+          if (_hasDocument && !_documents.ids.contains(_selectedId)) {
+            _documents.open(_selectedId!);
+          }
+          if (savedTabs.any((id) => !valid.contains(id))) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                showMessage(
+                  context,
+                  'Einige offene Dateien sind nicht mehr vorhanden.',
+                );
+              }
+            });
+          }
           _sidebarVisible = data['sidebarVisible'] != false;
           _collapsed.addAll((data['collapsed'] as List? ?? []).cast<String>());
           _archiveCollapsed.addAll(
@@ -209,17 +254,24 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
           );
           _loading = false;
         });
+        if (_hasDocument) _revealDocument(_selectedId!);
+        _lastSavedSession = null;
+        await widget.repository.writeSetting(
+          'session.v2',
+          jsonEncode(_session()),
+        );
         _lastSavedSession = jsonEncode(_session());
       }
     } catch (error) {
+      _sessionBlocked = true;
       if (mounted) {
         showMessage(
           context,
-          'Die gespeicherte Ansicht konnte nicht geladen werden. Inhalte bleiben erhalten.',
+          'Die gespeicherte Ansicht konnte nicht geladen werden. Inhalte bleiben erhalten; die Ansicht wird nicht überschrieben.',
         );
       }
     } finally {
-      _sessionLoaded = true;
+      if (mounted) setState(() => _sessionLoaded = true);
     }
   }
 
@@ -232,6 +284,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     super.initState();
     _menuOwner = this;
     _nativeMenu.setMethodCallHandler((call) async {
+      if (call.method == 'closeDocument' && mounted) {
+        if (!(ModalRoute.of(context)?.isCurrent ?? true)) return true;
+        if (!_hasDocument) return false;
+        await _closeDocument(_selectedId!);
+        return true;
+      }
       if (call.method == 'showSearch' && mounted) await _showSearch();
       if (call.method == 'showSettings' &&
           mounted &&
@@ -247,6 +305,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
             _loading = false;
             _loadError = null;
           });
+          _queueDocumentRefresh();
         }
       },
       onError: (Object error) {
@@ -260,7 +319,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     );
     _trashSubscription = widget.repository.watchTrash().listen(
       (entries) {
-        if (mounted) setState(() => _trashEntries = entries);
+        if (mounted) {
+          setState(() => _trashEntries = entries);
+          _queueDocumentRefresh();
+        }
       },
       onError: (Object error) {
         if (mounted) setState(() => _loadError = error);
@@ -288,6 +350,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     _sessionTimer?.cancel();
     _contextSubscription.cancel();
     _workspaceFocus.dispose();
+    _tabScroll.dispose();
+    for (final focus in _tabFocus.values) {
+      focus.dispose();
+    }
+    _explorerScroll.dispose();
+    _documentRefreshTimer?.cancel();
     _subscription.cancel();
     _trashSubscription.cancel();
     _dropController.dispose();
@@ -304,11 +372,20 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   }
 
   Future<bool> _canLeave() async {
-    if (_busy || !(await _editor.currentState?.canLeave() ?? true)) {
+    if (!_sessionLoaded ||
+        _busy ||
+        _navigationPending ||
+        !(ModalRoute.of(context)?.isCurrent ?? true)) {
       return false;
     }
-    await _flushSession();
-    return true;
+    _navigationPending = true;
+    try {
+      if (!(await _editor.currentState?.canLeave() ?? true)) return false;
+      await _flushSession();
+      return mounted;
+    } finally {
+      _navigationPending = false;
+    }
   }
 
   Future<void> _refresh() async {
@@ -354,12 +431,22 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     _focusWorkspace();
   }
 
-  Future<void> _open(Entry entry, {bool guarded = true}) async {
-    if (guarded && !await _canLeave()) return;
+  Future<void> _open(
+    Entry entry, {
+    bool guarded = true,
+    bool preview = false,
+  }) async {
+    final sameDocument = _hasDocument && _selectedId == entry.id;
+    if (guarded && !sameDocument && !await _canLeave()) return;
     if (!mounted) return;
     _scaffold.currentState?.closeDrawer();
-    _focusWorkspace();
+    if (!sameDocument) _focusWorkspace();
     final current = _find(entry.id) ?? entry;
+    if (_isDocument(current)) {
+      _documents.open(current.id, temporary: preview);
+      if (!sameDocument) _documentDirty = false;
+      _revealDocument(current.id);
+    }
     if (current.inTrash) {
       setState(() {
         _rootId = null;
@@ -463,6 +550,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   }
 
   Future<void> _select(Entry? entry) async {
+    if (entry != null && _isDocument(entry)) {
+      await _open(entry);
+      return;
+    }
     if (!await _canLeave() || !mounted) return;
     if (entry != null) _scaffold.currentState?.closeDrawer();
     setState(() {
@@ -491,6 +582,16 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 
         return CallbackShortcuts(
           bindings: {
+            if (_hasDocument &&
+                (ModalRoute.of(context)?.isCurrent ?? true)) ...{
+              const SingleActivator(LogicalKeyboardKey.keyW, meta: true): () =>
+                  _closeDocument(_selectedId!),
+              const SingleActivator(
+                LogicalKeyboardKey.keyW,
+                control: true,
+              ): () =>
+                  _closeDocument(_selectedId!),
+            },
             const SingleActivator(LogicalKeyboardKey.keyS, meta: true): () =>
                 key.currentState?.save(),
             const SingleActivator(LogicalKeyboardKey.keyS, control: true): () =>
@@ -567,12 +668,15 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     setState(() {
       _tab = tab;
       _selectedId = selection?.id;
+      if (selection != null && _isDocument(selection)) {
+        _documents.open(selection.id);
+      }
     });
     _focusWorkspace();
   }
 
   Future<void> _showSearch({bool filesOnly = false}) async {
-    if (_busy || _loading) return;
+    if (_busy || _loading || !_sessionLoaded) return;
     _scaffold.currentState?.closeDrawer();
     final result = await showWorkspaceSearch(
       context,
@@ -589,7 +693,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   }
 
   void _toggleSidebar() {
-    if (MediaQuery.sizeOf(context).width < 760) {
+    if (MediaQuery.sizeOf(context).width <
+        (_railExpanded ? 164 : 56) + 220 + 8 + 480) {
       _scaffold.currentState?.openDrawer();
     } else {
       setState(() => _sidebarVisible = !_sidebarVisible);
@@ -1806,6 +1911,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 : _view == WorkspaceView.archive
                 ? _archiveTree()
                 : ListView(
+                    controller: _explorerScroll,
                     padding: const EdgeInsets.fromLTRB(10, 0, 10, 14),
                     children: _taskNavigation
                         ? [
@@ -1953,7 +2059,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                   if (container) {
                     await _tapContainer(entry);
                   } else {
-                    await _open(entry);
+                    await _tapDocument(entry);
                   }
                 },
                 child: Padding(
@@ -2120,6 +2226,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   };
 
   bool get _canCreate =>
+      _sessionLoaded &&
       !_busy &&
       !{
         WorkspaceView.archive,
@@ -2315,6 +2422,303 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     );
   }
 
+  Widget _documentContent() {
+    if (_selected!.inTrash) return _trashView();
+    final editor = _editorFor(_selected!);
+    final location = _creationLocation(EntryKind.file);
+    return _dropRegion(
+      'document-content',
+      DropDestination(location.$1, location.$2, 'Dateien hinzufügen'),
+      editor,
+      priority: 0,
+    );
+  }
+
+  void _queueDocumentRefresh() {
+    _documentRefreshTimer?.cancel();
+    _documentRefreshTimer = Timer(const Duration(milliseconds: 100), () async {
+      if (!mounted || !_sessionLoaded || _navigationPending) return;
+      final entries = await widget.repository.getEntries();
+      final trash = await widget.repository.getTrash();
+      if (!mounted) return;
+      final valid = {...entries, ...trash}.map((e) => e.id).toSet();
+      final removed = _documents.ids
+          .where((id) => !valid.contains(id))
+          .toList();
+      if (removed.isEmpty) return;
+      String? next;
+      setState(() {
+        for (final id in removed) {
+          final neighbor = _documents.close(id);
+          if (_selectedId == id) {
+            _selectedId = null;
+            next = neighbor;
+          }
+        }
+      });
+      if (next != null && _find(next) != null) {
+        await _open(_find(next)!, guarded: false);
+      }
+    });
+  }
+
+  Future<void> _tapDocument(Entry entry) async {
+    final now = DateTime.now();
+    final keep =
+        _lastDocumentTapId == entry.id &&
+        _lastDocumentTapAt != null &&
+        now.difference(_lastDocumentTapAt!) < const Duration(milliseconds: 300);
+    _lastDocumentTapId = entry.id;
+    _lastDocumentTapAt = now;
+    await _open(entry, preview: !keep);
+  }
+
+  Future<void> _stepDocument(String id) async {
+    await _open(_find(id)!, preview: true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _selectedId == id) _tabFocus[id]?.requestFocus();
+    });
+  }
+
+  void _revealDocument(String id) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = _tabKeys[id]?.currentContext;
+      if (mounted && context != null) {
+        Scrollable.ensureVisible(
+          context,
+          alignment: .5,
+          duration: const Duration(milliseconds: 100),
+        );
+      }
+    });
+  }
+
+  Future<void> _closeDocument(String id) async {
+    if (_busy || !(ModalRoute.of(context)?.isCurrent ?? true)) return;
+    final active = _hasDocument && _selectedId == id;
+    if (active && !await _canLeave()) return;
+    if (!mounted) return;
+    final next = _documents.close(id);
+    _tabKeys.remove(id);
+    if (active) {
+      if (next != null && _find(next) != null) {
+        await _open(_find(next)!, guarded: false);
+      } else {
+        setState(() {
+          _selectedId = null;
+          _tab = _root != null && _root!.kind != EntryKind.folder
+              ? 'overview'
+              : 'content';
+          _documentDirty = false;
+        });
+      }
+    } else {
+      setState(() {});
+    }
+  }
+
+  Widget _documentStrip({required bool wide, required bool sidebarShown}) {
+    final c = WorkspaceColors(context);
+    final active = _hasDocument ? _selectedId : null;
+    final visible = _documents.ids.where((id) => _find(id) != null).toList();
+    return Container(
+      key: const ValueKey('document-tabs'),
+      height: 42,
+      decoration: BoxDecoration(
+        color: c.sidebar,
+        border: Border(bottom: BorderSide(color: c.line)),
+      ),
+      child: Row(
+        children: [
+          if (!sidebarShown)
+            IconButton(
+              key: const ValueKey('sidebar-toggle'),
+              tooltip: wide ? 'Seitenleiste einblenden' : 'Navigation öffnen',
+              onPressed: _toggleSidebar,
+              icon: const Icon(LucideIcons.panelLeftOpen, size: 17),
+            ),
+          if (sidebarShown)
+            IconButton(
+              key: const ValueKey('explorer-toggle'),
+              tooltip: _explorerVisible
+                  ? 'Explorer ausblenden'
+                  : 'Explorer einblenden',
+              onPressed: () =>
+                  setState(() => _explorerVisible = !_explorerVisible),
+              icon: Icon(
+                _explorerVisible
+                    ? LucideIcons.panelLeftClose
+                    : LucideIcons.panelLeftOpen,
+                size: 17,
+              ),
+            ),
+          Expanded(
+            child: SingleChildScrollView(
+              controller: _tabScroll,
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final id in visible)
+                    Builder(
+                      builder: (context) {
+                        final entry = _find(id)!;
+                        final path = [
+                          entry.section.label,
+                          ...ancestorsOf(entry, [
+                            ..._entries,
+                            ..._trashEntries,
+                          ]).reversed.map((e) => e.title),
+                          entryFileLabel(entry),
+                        ].join(' / ');
+                        return Listener(
+                          onPointerDown: (e) {
+                            if (e.buttons == 4) _closeDocument(id);
+                          },
+                          child: Container(
+                            key: _tabKeys.putIfAbsent(id, () => GlobalKey()),
+                            width: 190,
+                            decoration: BoxDecoration(
+                              color: active == id ? c.paper : null,
+                              border: Border(
+                                top: BorderSide(
+                                  color: active == id
+                                      ? c.accent
+                                      : Colors.transparent,
+                                  width: 2,
+                                ),
+                                right: BorderSide(color: c.line),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Tooltip(
+                                    message: path,
+                                    child: Focus(
+                                      focusNode: _tabFocus.putIfAbsent(
+                                        id,
+                                        () => FocusNode(),
+                                      ),
+                                      onKeyEvent: (_, event) {
+                                        if (event is KeyUpEvent ||
+                                            ![
+                                              LogicalKeyboardKey.arrowLeft,
+                                              LogicalKeyboardKey.arrowRight,
+                                            ].contains(event.logicalKey)) {
+                                          return KeyEventResult.ignored;
+                                        }
+                                        final index = visible.indexOf(id);
+                                        final step =
+                                            event.logicalKey ==
+                                                LogicalKeyboardKey.arrowRight
+                                            ? 1
+                                            : -1;
+                                        final next =
+                                            visible[(index +
+                                                    step +
+                                                    visible.length) %
+                                                visible.length];
+                                        _stepDocument(next);
+                                        return KeyEventResult.handled;
+                                      },
+                                      child: InkWell(
+                                        key: ValueKey('document-tab-$id'),
+                                        onTap: () => _tapDocument(entry),
+                                        child: Semantics(
+                                          selected: active == id,
+                                          button: true,
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 9,
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  fileIcon(entry),
+                                                  size: 14,
+                                                  color: c.soft,
+                                                ),
+                                                const SizedBox(width: 7),
+                                                Expanded(
+                                                  child: Text(
+                                                    '${entryFileLabel(entry)}${active == id && _documentDirty ? ' ●' : ''}',
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      fontStyle:
+                                                          _documents.preview ==
+                                                              id
+                                                          ? FontStyle.italic
+                                                          : FontStyle.normal,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  key: ValueKey('close-document-$id'),
+                                  tooltip: '${entryFileLabel(entry)} schließen',
+                                  onPressed: () => _closeDocument(id),
+                                  icon: const Icon(LucideIcons.x, size: 13),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ),
+          if (visible.isNotEmpty)
+            PopupMenuButton<String>(
+              tooltip: 'Offene Dateien',
+              icon: const Icon(LucideIcons.chevronDown, size: 16),
+              onSelected: (value) {
+                if (value == 'keep') {
+                  setState(() => _documents.keep(active!));
+                } else {
+                  final entry = _find(value);
+                  if (entry != null) _open(entry, preview: true);
+                }
+              },
+              itemBuilder: (_) => [
+                if (active != null && _documents.preview == active)
+                  const PopupMenuItem(
+                    value: 'keep',
+                    child: Text('Tab behalten'),
+                  ),
+                for (final id in visible)
+                  PopupMenuItem(
+                    value: id,
+                    child: Text(
+                      '${entryFileLabel(_find(id)!)} · ${_find(id)!.section.label}',
+                      maxLines: 2,
+                    ),
+                  ),
+              ],
+            ),
+          IconButton(
+            tooltip: 'Datei wechseln',
+            onPressed: () => _showSearch(filesOnly: true),
+            icon: const Icon(LucideIcons.plus, size: 17),
+          ),
+          if (sidebarShown && !_explorerVisible) _newMenu(),
+        ],
+      ),
+    );
+  }
+
   Widget _workspaceHeader({
     required bool wide,
     required bool sidebarShown,
@@ -2322,6 +2726,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   }) {
     final c = WorkspaceColors(context), root = _root;
     final selected = _selected;
+    if (_hasDocument) return const SizedBox.shrink();
     final archivedRoot =
         _view != WorkspaceView.trash &&
             selected != null &&
@@ -2402,17 +2807,6 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               : null;
           return Row(
             children: [
-              if (!sidebarShown) ...[
-                IconButton(
-                  key: const ValueKey('sidebar-toggle'),
-                  tooltip: !wide
-                      ? 'Navigation öffnen'
-                      : 'Seitenleiste einblenden',
-                  onPressed: _toggleSidebar,
-                  icon: const Icon(LucideIcons.panelLeftOpen, size: 18),
-                ),
-                const SizedBox(width: 5),
-              ],
               Expanded(
                 child: bounds.maxWidth < 440 && controls != null
                     ? Column(
@@ -2445,7 +2839,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
             entryFileLabel(entry),
           ].join(' / ');
     return Container(
-      height: 37,
+      height: 26,
       width: double.infinity,
       alignment: Alignment.centerLeft,
       padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -2518,6 +2912,19 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       repository: widget.repository,
       busy: _busy,
       onOpen: _open,
+      memory: _editorMemory,
+      readable: _readable,
+      onToggleReadable: () => setState(() => _readable = !_readable),
+      onEditorState: (id, dirty, editing) {
+        if (!mounted || _selectedId != id) return;
+        if (_documentDirty != dirty ||
+            ((editing || dirty) && _documents.preview == id)) {
+          setState(() {
+            _documentDirty = dirty;
+            if (editing || dirty) _documents.keep(id);
+          });
+        }
+      },
       onBack: onBack,
       actionMenu: _entryMenu(entry),
     ),
@@ -3220,8 +3627,21 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       autofocus: true,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final wide = constraints.maxWidth >= 760;
+          final railWidth = _railExpanded ? 164.0 : 56.0;
+          final wide = constraints.maxWidth >= railWidth + 220 + 8 + 480;
           final sidebarShown = wide && _sidebarVisible;
+          final double explorerWidth = _explorerWidth
+              .clamp(
+                220.0,
+                math.max(
+                  220.0,
+                  math.min(520.0, constraints.maxWidth - railWidth - 8 - 480),
+                ),
+              )
+              .toDouble();
+          final navigationWidth = sidebarShown
+              ? railWidth + (_explorerVisible ? explorerWidth + 8 : 0)
+              : 0.0;
           return Scaffold(
             key: _scaffold,
             drawer: wide
@@ -3234,6 +3654,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               controller: _dropController,
               enabled:
                   !_busy &&
+                  _sessionLoaded &&
                   !_loading &&
                   !_acceptingDrop &&
                   (ModalRoute.of(context)?.isCurrent ?? true),
@@ -3242,22 +3663,54 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 child: Row(
                   children: [
                     if (sidebarShown) ...[
+                      _rail(),
                       SizedBox(
-                        width: (_railExpanded ? 164 : 56) + 270,
-                        child: _sidebar(),
+                        width: _explorerVisible ? explorerWidth : 0,
+                        child: ClipRect(
+                          child: OverflowBox(
+                            alignment: Alignment.centerLeft,
+                            minWidth: explorerWidth,
+                            maxWidth: explorerWidth,
+                            child: _explorer(),
+                          ),
+                        ),
                       ),
+                      if (_explorerVisible)
+                        ExplorerResize(
+                          key: const ValueKey('explorer-resize'),
+                          onStart: () {
+                            _resizing = true;
+                            _explorerWidth = explorerWidth;
+                            _sessionTimer?.cancel();
+                          },
+                          onDelta: (delta) => setState(
+                            () =>
+                                _explorerWidth = (_explorerWidth + delta).clamp(
+                                  220.0,
+                                  math.min(
+                                    520.0,
+                                    constraints.maxWidth - railWidth - 8 - 480,
+                                  ),
+                                ),
+                          ),
+                          onEnd: () {
+                            _resizing = false;
+                            setState(() {});
+                          },
+                          onReset: () => setState(() => _explorerWidth = 270),
+                        ),
                     ],
                     Expanded(
                       child: Column(
                         children: [
+                          _documentStrip(
+                            wide: wide,
+                            sidebarShown: sidebarShown,
+                          ),
                           _workspaceHeader(
                             wide: wide,
                             sidebarShown: sidebarShown,
-                            width:
-                                constraints.maxWidth -
-                                (sidebarShown
-                                    ? (_railExpanded ? 164 : 56) + 270
-                                    : 0),
+                            width: constraints.maxWidth - navigationWidth,
                           ),
                           if (_busy) ...[
                             const LinearProgressIndicator(minHeight: 2),
@@ -3267,7 +3720,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                             ),
                           ],
                           Expanded(
-                            child: _loading
+                            child: _loading || !_sessionLoaded
                                 ? const Center(
                                     child: CircularProgressIndicator(),
                                   )
@@ -3278,7 +3731,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                     description: errorLabel(_loadError!),
                                   )
                                 : LayoutBuilder(
-                                    builder: (context, bounds) => _root == null
+                                    builder: (context, bounds) => _hasDocument
+                                        ? _documentContent()
+                                        : _root == null
                                         ? _globalView(bounds)
                                         : _rootView(_root!, bounds),
                                   ),

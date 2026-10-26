@@ -79,8 +79,8 @@ void registerCompactExplorerTests() {
           56,
         );
         expect(
-          tester.getSize(find.byKey(const ValueKey('workspace-header'))).height,
-          60,
+          tester.getSize(find.byKey(const ValueKey('document-tabs'))).height,
+          42,
         );
         expect(tester.getTopLeft(find.byType(MarkdownBody)).dy, lessThan(175));
         await tester.tap(find.byKey(const ValueKey('rail-expand')));

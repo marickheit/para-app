@@ -88,10 +88,25 @@ Text-/Metadatenänderungen verwenden weiterhin Revisions-/Hashschutz. Ein geziel
 Bearbeiten der Aufgabenangaben kann Zeit und Energie leeren; ältere Speicheraufrufe
 überschreiben diese neuen Felder nicht implizit.
 
-`workspace_settings` speichert `session.v1` mit Ansicht, Auswahl, Navigation,
-Ordnerzustand und Aufgabenfilter. UI-Änderungen werden verzögert gespeichert;
+`workspace_settings` speichert ab 0.9.0 `session.v2` (Format 2) mit Ansicht,
+Auswahl, Navigation, Ordnerzustand, Aufgabenfilter, dauerhaften Dateitabs,
+Explorer-Breite/-Sichtbarkeit und Textlesebreite. `workspace_session.dart`
+validiert Formate und übernimmt `session.v1` erst nach vollständigem konsistentem
+Export nach `.migration-backups/PARA-Sicherung-…`. Der alte Wert bleibt erhalten.
+Unbekannte/beschädigte Formate sperren automatische Sitzungsschreibvorgänge,
+Inhalte bleiben verfügbar. Schema 6 und Sicherungsformat 3 bleiben unverändert.
+UI-Änderungen werden verzögert, Resize erst nach Ende des Ziehens gespeichert;
 vor Arbeitsbereichswechsel und regulärem Beenden wird ausstehender Zustand geschrieben.
-Ungespeicherte Editorentwürfe werden nicht als Sitzung serialisiert.
+Vorschautabs und ungespeicherte Editorentwürfe werden nicht serialisiert.
+
+`document_tabs.dart` verwaltet UUID-Reihenfolge und einen temporären Vorschautab.
+Nur ein Editor ist gleichzeitig aktiv; Wechsel laufen über den vorhandenen
+Speicherschutz. Editorcontroller bleiben bei Resize und Fokuswechsel erhalten.
+Bearbeitungsmodus/Scrollposition und PDF-Transformation werden nur flüchtig
+während der Sitzung gemerkt. Ein begrenzter Inhaltsbereich trennt Dateikopf,
+Textscrollen und Dateivorschauen; keine allgemeine 760-Pixel- oder PDF-Höhenbegrenzung.
+Symbolleiste und Explorer sind getrennt; die gewünschte Breite wird unabhängig
+von der am jeweiligen Fenster möglichen Breite gespeichert.
 
 ## Aufgabenabschluss
 
@@ -227,8 +242,8 @@ geöffneten Datei das sichtbare Anlageziel. Kein separat gemerktes Ordnerziel.
 Kategorie-Wechsel setzt die Auswahl zurück; Container öffnen zunächst die
 Übersicht und klappen auf. Erneuter Klick schließt den Container und öffnet den
 Elterncontainer oder die Kategorieübersicht. Der Editor-Wechselschutz gilt auch
-für diese Übergänge. Die bestehenden session.v1-Felder speichern die Auswahl
-weiterhin; keine Schema-/Speicherformatänderung.
+für diese Übergänge. Die Auswahl wird seit 0.9.0 zusammen mit den Dateitabs
+in session.v2 gespeichert; die früheren session.v1-Felder bleiben übernehmbar.
 
 Plus und Cmd/Ctrl+N verwenden gemeinsame Typ-/Zielregeln. Projekt, Bereich,
 Ressourcensammlung und Idee haben feste Ablagen. Gewöhnliche Inhalte verwenden

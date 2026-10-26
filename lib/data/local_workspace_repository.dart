@@ -1410,10 +1410,17 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
   }
 
   @override
-  Future<String> exportBackup(String destinationDirectory) => _write(() async {
+  Future<String> exportBackup(
+    String destinationDirectory, {
+    bool forSessionMigration = false,
+  }) => _write(() async {
     final destination = p.normalize(p.absolute(destinationDirectory));
     final source = p.normalize(p.absolute(root.path));
-    if (destination == source || p.isWithin(source, destination)) {
+    final migrationDestination =
+        forSessionMigration &&
+        destination == p.join(source, '.migration-backups');
+    if (!migrationDestination &&
+        (destination == source || p.isWithin(source, destination))) {
       throw const WorkspaceException(
         'Bitte wähle einen Ordner außerhalb des Arbeitsbereichs.',
       );

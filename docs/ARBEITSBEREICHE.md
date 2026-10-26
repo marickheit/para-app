@@ -1,6 +1,6 @@
 # Vollständige Arbeitsbereiche
 
-Stand 0.6: Arbeitsbereiche lassen sich über Einstellungen öffnen, neu anlegen und
+Stand 0.9.0: Arbeitsbereiche lassen sich über Einstellungen öffnen, neu anlegen und
 kopieren. Inhalte, Einstellungen und Sitzungszustand werden gemeinsam geladen;
 die Auswahl bleibt über Neustarts erhalten.
 
@@ -12,15 +12,20 @@ Im gewählten Root liegen alle fachlichen Daten und Einstellungen:
 - Notiztexte, importierte Dateien, Archiv, Papierkorb und Textversionen.
 - Kontexte mit Namen/Farben und die weiteren Arbeitsbereichseinstellungen.
 
-Die gespeicherte Sitzung enthält zuletzt geöffneten Inhalt,
-Navigationszustand und Aufgabenfilter. Ungespeicherte Entwürfe
+Die gespeicherte Sitzung enthält ab 0.9.0 dauerhafte Dateitabs/Reihenfolge,
+zuletzt geöffneten Inhalt, Navigationszustand, Aufgabenfilter,
+Explorer-Breite/-Sichtbarkeit und Textlesebreite. Vorschautabs werden nicht wiederhergestellt. Ungespeicherte Entwürfe
 automatisch wiederherzustellen ist damit noch nicht ausgewählt; vor einem
 Arbeitsbereichswechsel greift Speichern/Verwerfen/Abbrechen.
 
 Die bestehende Speicheraufteilung `workspace.sqlite`, `notes/`, `files/` bleibt
 übernehmbar. Kontextdefinitionen und versionierte Sitzungsdaten liegen ebenfalls
-in `workspace.sqlite` (Schema 5). Vorhandene Arbeitsbereiche ohne diese
+in `workspace.sqlite` (aktuell Schema 6; Einstellungstabelle seit Schema 5). Vorhandene Arbeitsbereiche ohne diese
 Angaben erhalten kompatible Voreinstellungen; vorhandene Daten nicht ersetzen.
+Sitzungsformat 2 übernimmt Format 1 nach vollständigem Rückfallexport innerhalb
+des Roots unter `.migration-backups/`. Der alte Einstellungswert bleibt erhalten.
+Unbekannte neuere/beschädigte Sitzungen bleiben unangetastet; ihre automatische
+Speicherung wird gesperrt. Inhalte bleiben lesbar und bearbeitbar.
 
 ## Öffnen und über Neustarts merken
 

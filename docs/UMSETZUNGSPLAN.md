@@ -1,8 +1,14 @@
 # Arbeitsstand
 
-Stand: 26. Oktober 2026 · Version 0.8.0+11.
+Stand: 26. Oktober 2026 · Version 0.9.0+13.
 
 ## Implementiert
+
+- Dateifläche und Tabs 0.9.0: A mit optionalem Fokusmodus B, ziehbarer Explorer-
+  Breite und Textlesebreite. Vorschau-/dauerhafte Dateitabs, gemeinsame UUID-Tabfolge,
+  kompakter Kopf und flächenfüllende Vorschauen. Speicherschutz, Sitzung Format 2
+  und Übernahme mit vollständigem Rückfallexport; Schema 6 / Sicherungsformat 3.
+  [Bedienvertrag und Abnahme](DATEI_TABS_UMSETZUNGSPLAN.md). Splits bleiben zurückgestellt.
 
 - MCP-Ablage und kompakte Antworten: Bereiche/Ressourcensammlungen/Ordner anlegen,
   Titel/Projektdaten ändern und Texte gezielt anhängen/eindeutig ersetzen.
@@ -43,6 +49,20 @@ Stand: 26. Oktober 2026 · Version 0.8.0+11.
 [Arbeitsbereiche](ARBEITSBEREICHE.md) · [Aufgabenangaben](GTD_AUSBAU.md).
 
 ## Prüfstand
+
+- Dateifläche/Tabs 0.9.0: Analyse ohne Befund, alle 115 Flutter-Tests erfolgreich.
+  Vier neue Modell-/Resize-/Übernahmetests mit unabhängiger Rückholung von Texten,
+  Anhängen, Links, Papierkorb und Textversionen. Fünf neue native Linux-Abläufe
+  erfolgreich, einschließlich Entwurferhalt über Resize/Fokus, Abbruch/Speichern,
+  30 Tabs, Formatvorschauen, Wiederöffnung und Schutz unbekannter Sitzungsformate.
+  Alle zwölf bisherigen Linux-Bedienabläufe sowie zehn Anlage-/Zielauswahltests
+  erfolgreich; ein macOS-spezifischer Test auf Linux übersprungen.
+  Linux-Release 0.9.0 lokal installiert, alle 24 Paketdateien per SHA-256 gegen
+  den Build geprüft, vorige App als Rückfallkopie erhalten. Tatsächlich installierte
+  Release-App mit vollständig getrennten temporären XDG-Verzeichnissen gestartet:
+  Schema 6, Sitzung Format 2, fehlerfreier Start. Alle Testdaten synthetisch und
+  temporär; kein regulärer Nutzerbestand als Testumgebung. Neue native macOS-
+  Abnahme einschließlich Cmd+W-Menüweiterleitung weiterhin offen.
 
 - MCP 0.8.1 / Server 0.3.0: vollständige Flutter-Suite mit 111 Tests erfolgreich,
   davon elf neue isolierte Erweiterungstests; sieben Node-Tests erfolgreich.
@@ -114,10 +134,8 @@ Stand: 26. Oktober 2026 · Version 0.8.0+11.
 
 ## Weitere offene Arbeit
 
-- Dateifläche besser nutzen und Tabs vergleichen: drei neue
-  [interaktive Mocks](mockups/DATEI_TABS.md) mit breiter Ansicht, Fokus und Split.
-  HTML-Bedienabläufe und schmale Darstellung in Chromium geprüft;
-  Variantenauswahl und Flutter-Umsetzung offen.
+- Splits wie C, Tabgruppen und mehrere gleichzeitig ungespeicherte Editoren erst
+  später bei Bedarf. Kein Live Preview oder Autosave durch die Tab-Umsetzung.
 - Regelmäßige automatische Sicherungen, geführte Auswahl älterer Sicherungsstände,
   allgemeiner Wiederanlauf für Datei-/Datenbankänderungen und App-Updater.
 - Wochenrückblick, Projektprüfung, Wiederholungen und externe Dateiverweise sind

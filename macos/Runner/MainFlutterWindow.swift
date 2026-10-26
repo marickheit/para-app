@@ -199,6 +199,10 @@ class MainFlutterWindow: NSWindow {
 
   private func connectFindMenu(_ menu: NSMenu?) {
     for item in menu?.items ?? [] {
+      if item.keyEquivalent == "w" && item.action == NSSelectorFromString("performClose:") {
+        item.target = self
+        item.action = #selector(closeWorkspaceDocument(_:))
+      }
       if item.keyEquivalent == "," {
         item.title = "Settings…"
         item.target = self
@@ -209,6 +213,13 @@ class MainFlutterWindow: NSWindow {
         item.action = #selector(showWorkspaceSearch(_:))
       }
       connectFindMenu(item.submenu)
+    }
+  }
+
+  @objc private func closeWorkspaceDocument(_ sender: Any?) {
+    menuChannel?.invokeMethod("closeDocument", arguments: nil) { [weak self] result in
+      if (result as? Bool) == true { return }
+      self?.performClose(sender)
     }
   }
 

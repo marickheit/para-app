@@ -1,6 +1,6 @@
 # Zieloberfläche und Umzug nach Flutter
 
-Stand: 25. Oktober 2026. Verbindliche Nutzeranforderungen und Abnahmekriterien,
+Stand: 26. Oktober 2026. Verbindliche Nutzeranforderungen und Abnahmekriterien,
 kein Gesprächsprotokoll. Bei neuen Entscheidungen diese Beschreibung aktualisieren.
 
 ## Grundlage und Status
@@ -52,8 +52,10 @@ nativen Datei-Drops. Die Beispieldaten wurden nicht in den Nutzerarbeitsbereich 
 
 ## Umsetzung und Grenzen
 
-- Die Symbolleiste ist 56 bzw. 164 Pixel breit, der Desktop-Explorer 270 Pixel;
-  der Textbereich bleibt auf 760 Pixel begrenzt. Native Fenstersteuerung bleibt macOS.
+- Die Symbolleiste ist 56 bzw. 164 Pixel breit; der Explorer startet bei 270 Pixel
+  und ist zwischen 220 und 520 Pixel verstellbar, abhängig vom Fenster.
+  Dateifläche breit, Textlesebreite optional 760 Pixel. Schmale Fenster nutzen
+  eine überlagerte Navigation.
 - Menü unten öffnet Daten & Sicherung; weitere Einstellungen wurden nicht erfunden.
 - MD und TXT sind mit explizitem Speichern bearbeitbar. UTF-8-/Größenprüfung und
   Hash-/Revisionsprüfung schützen externe Änderungen. Dateiumbenennung erhält Links.
@@ -95,6 +97,18 @@ native Mac-Bedienung. Die früheren Mockup-Prüfungen ersetzen diese Nachweise n
 - Weitere Textformate, Encoding-Erkennung und Größenlimits festlegen.
 
 Diese Vorschläge sind keine beschlossenen Zusatzfunktionen.
+
+## Dateifläche und Tabs – umgesetzt in 0.9.0
+
+- Variante A als Grundlage: breite Dateifläche, Tabs und kompakter gemeinsamer Kopf.
+- Optionaler Fokusmodus B: Explorer aus-/einblenden, Symbolleiste weiter erreichbar.
+- Explorer zusätzlich an seiner rechten Kante mit der Maus in der Breite verstellen.
+  Beim Wiedereinblenden die gewählte Breite wiederherstellen.
+- Geteilte Ansichten wie C zurückstellen, bis sie gebraucht werden.
+
+[Bedienvertrag und Prüfnachweise](DATEI_TABS_UMSETZUNGSPLAN.md) beschreiben
+Tabbedienung, Resize-Grenzen, Speicherschutz und Sitzungsübernahme.
+Die Mocks bleiben Beispieldaten; geteilte Ansichten sind keine App-Funktion.
 
 ## Ergänzung in Flutter 0.5
 

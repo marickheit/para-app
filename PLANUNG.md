@@ -1,6 +1,6 @@
 # P.A.R.A. – Produktstand
 
-Stand: 26. Oktober 2026 · lokale App 0.8.1 für macOS und Linux.
+Stand: 26. Oktober 2026 · lokale App 0.9.0 für macOS und Linux.
 
 ## Ziel und Grundregeln
 
@@ -16,7 +16,10 @@ Stand: 26. Oktober 2026 · lokale App 0.8.1 für macOS und Linux.
 
 ## Funktionen und Bedienung
 
-- **Oberfläche:** Bestätigte Symbolleisten-/Explorer-Vorlage in Flutter umgesetzt.
+- **Oberfläche:** A mit Dateitabs und breiter Dateifläche umgesetzt; optionaler
+  Fokusmodus B blendet nur den Explorer aus. Explorer per Kante in der Breite
+  verstellbar, Textlesebreite auf Wunsch. Vorschautabs, dauerhafte Tabs,
+  Speicherschutz und gespeicherte Sitzung. [Bedienung und Prüfungen](docs/DATEI_TABS_UMSETZUNGSPLAN.md).
   Links Symbole oder Symbole mit Namen, daneben der vollständige Datei-/Ordnerbaum,
   rechts Containerübersicht oder Editor. Eine gemeinsame kompakte Kopfzeile
   wechselt Übersicht, Inhalte und Aufgaben. Containerklick wählt sichtbar aus
@@ -84,6 +87,8 @@ Stand: 26. Oktober 2026 · lokale App 0.8.1 für macOS und Linux.
 
 ## Offen / später
 
+- Geteilte Ansichten wie C erst später bei Bedarf. Tabgruppen und mehrere
+  gleichzeitig ungespeicherte Editoren bleiben ebenfalls außerhalb dieser Iteration.
 - Projektprüfung und Wochenrückblick bleiben nicht ausgewählte GTD-Vorschläge.
 - Live Preview/Autosave, Rückgängig, Mehrfachauswahl und weitere Textformate sind
   unbestätigte Vorschläge, keine bereits umgesetzten Funktionen.
