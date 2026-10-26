@@ -1,4 +1,5 @@
 import Cocoa
+import CryptoKit
 import Darwin
 import FlutterMacOS
 
@@ -34,9 +35,47 @@ class MainFlutterWindow: NSWindow {
     let arguments = call.arguments as? [String: Any] ?? [:]
     do {
       switch call.method {
+      case "ingestStat":
+        guard let path = arguments["path"] as? String else { throw NSError(domain: "PARA", code: 10) }
+        var status = stat()
+        guard Darwin.lstat(path, &status) == 0,
+          (status.st_mode & S_IFMT) == S_IFREG || (status.st_mode & S_IFMT) == S_IFDIR else {
+          throw NSError(domain: "PARA", code: 10)
+        }
+        result(["identity": Self.ingestIdentity(status), "signature": Self.ingestSignature(status),
+          "directory": (status.st_mode & S_IFMT) == S_IFDIR, "size": status.st_size,
+          "package": (try? URL(fileURLWithPath: path).resourceValues(forKeys: [.isPackageKey]))?.isPackage ?? false])
+      case "ingestMove":
+        guard let source = arguments["source"] as? String,
+          let destination = arguments["destination"] as? String,
+          let identity = arguments["identity"] as? String else { throw NSError(domain: "PARA", code: 10) }
+        var status = stat()
+        guard Darwin.lstat(source, &status) == 0, Self.ingestIdentity(status) == identity,
+          (status.st_mode & S_IFMT) == S_IFREG || (status.st_mode & S_IFMT) == S_IFDIR,
+          Darwin.renamex_np(source, destination, UInt32(RENAME_EXCL)) == 0,
+          Darwin.lstat(destination, &status) == 0, Self.ingestIdentity(status) == identity else {
+          throw NSError(domain: "PARA", code: 10)
+        }
+        result(nil)
+      case "ingestCopy":
+        guard let source = arguments["source"] as? String,
+          let destination = arguments["destination"] as? String,
+          let signature = arguments["signature"] as? String else { throw NSError(domain: "PARA", code: 10) }
+        DispatchQueue.global(qos: .utility).async {
+          let hash = Self.copyIngest(source, destination, signature)
+          DispatchQueue.main.async {
+            if let hash = hash { result(hash) }
+            else { result(FlutterError(code: "ingest-copy", message: "Datei nicht vollständig übernommen; Original bleibt erhalten.", details: nil)) }
+          }
+        }
+      case "releaseDirectory":
+        if let path = arguments["path"] as? String, let url = directoryAccess.removeValue(forKey: path) {
+          url.stopAccessingSecurityScopedResource()
+        }
+        result(nil)
       case "defaultMcpDirectory":
         result(NSHomeDirectory() + "/Library/Application Support/para-mcp")
-      case "prepareMcpDirectory":
+      case "prepareMcpDirectory", "preparePrivateDirectory":
         guard let path = arguments["path"] as? String else {
           throw NSError(domain: "PARA", code: 4)
         }
@@ -98,11 +137,51 @@ class MainFlutterWindow: NSWindow {
       default: result(FlutterMethodNotImplemented)
       }
     } catch {
+      let isIngest = call.method.hasPrefix("ingest") || call.method == "preparePrivateDirectory"
       let isMcp = call.method == "prepareMcpDirectory" || call.method == "writeMcpConnection" || call.method == "defaultMcpDirectory"
-      result(FlutterError(code: isMcp ? "mcp-connection" : "workspace-directory",
-        message: isMcp ? "Sichere lokale MCP-Verbindung konnte nicht eingerichtet werden." : "Der Ordnerzugriff konnte nicht hergestellt werden. Bitte den Ordner erneut auswählen.",
+      result(FlutterError(code: isIngest ? "ingest-file" : (isMcp ? "mcp-connection" : "workspace-directory"),
+        message: isIngest ? "Eingangsdatei verändert oder Ordner nicht zugänglich. Originale bleiben erhalten." : (isMcp ? "Sichere lokale MCP-Verbindung konnte nicht eingerichtet werden." : "Der Ordnerzugriff konnte nicht hergestellt werden. Bitte den Ordner erneut auswählen."),
         details: error.localizedDescription))
     }
+  }
+
+  private static func ingestIdentity(_ status: stat) -> String {
+    "\(status.st_dev):\(status.st_ino)"
+  }
+
+  private static func ingestSignature(_ status: stat) -> String {
+    "\(ingestIdentity(status))|\(status.st_mtimespec.tv_sec):\(status.st_mtimespec.tv_nsec)|\(status.st_size)|\(status.st_mode & S_IFMT)"
+  }
+
+  private static func copyIngest(_ source: String, _ destination: String, _ signature: String) -> String? {
+    let input = Darwin.open(source, O_RDONLY | O_NOFOLLOW)
+    guard input >= 0 else { return nil }
+    defer { Darwin.close(input) }
+    var status = stat()
+    guard Darwin.fstat(input, &status) == 0, (status.st_mode & S_IFMT) == S_IFREG,
+      ingestSignature(status) == signature else { return nil }
+    let output = Darwin.open(destination, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, 0o600)
+    guard output >= 0 else { return nil }
+    defer { Darwin.close(output) }
+    let buffer = UnsafeMutableRawPointer.allocate(byteCount: 1024 * 1024, alignment: 16)
+    defer { buffer.deallocate() }
+    var hasher = SHA256()
+    while true {
+      let count = Darwin.read(input, buffer, 1024 * 1024)
+      if count < 0 && errno == EINTR { continue }
+      if count < 0 { return nil }
+      if count == 0 { break }
+      hasher.update(data: Data(bytes: buffer, count: count))
+      var offset = 0
+      while offset < count {
+        let written = Darwin.write(output, buffer.advanced(by: offset), count - offset)
+        if written < 0 && errno == EINTR { continue }
+        if written <= 0 { return nil }
+        offset += written
+      }
+    }
+    guard Darwin.fstat(input, &status) == 0, ingestSignature(status) == signature, Darwin.fsync(output) == 0 else { return nil }
+    return hasher.finalize().map { String(format: "%02x", $0) }.joined()
   }
 
   private func resolveDirectory(_ data: Data) throws -> [String: Any] {

@@ -78,5 +78,27 @@ Verbindungsdatei darf ausschließlich außerhalb von Arbeitsbereichen und
 Sicherungen liegen und wird nicht mit exportiert. Kopien und Rückholungen
 benötigen eine neue ausdrückliche Freigabe in der App. Seit 0.7.1 verwaltet die
 App den privaten Verbindungsordner auf macOS/Linux automatisch; er gehört
-weiterhin nicht zum Datenroot oder Sicherungsexport. Das Inhaltsformat bleibt
-Schema 5; MCP ändert weder UUIDs noch das Sicherungsformat.
+weiterhin nicht zum Datenroot oder Sicherungsexport. MCP selbst ändert weder
+UUIDs noch das Sicherungsformat; die Eingangsordner-Erweiterung verwendet Schema 6.
+
+## Eingangsordner ab 0.8.0
+
+Schema 6 ergänzt ein dauerhaftes Importjournal. Vor Migration aus Schema 1–5
+wird weiterhin eine vollständige Rückfallkopie angelegt. Ein Rückfall auf 0.7.x
+benötigt die alte App und ihre zugehörige Schema-5-Sicherung; die alte App darf
+nicht mit dem bereits übernommenen Schema-6-Bestand verwendet werden.
+
+Sicherungsformat 3 enthält neben Datenbank, Notizen, Dateien und Textversionen
+auch `ingest/` mit Formatkennung 1 und vorhandenen Import-Zwischenkopien. Der
+Export wartet auf laufende Importoperationen und nimmt einen konsistenten Stand.
+Alte Sicherungen der Formate 1/2 bleiben lesbar. Unbekannte neuere Formate werden
+abgelehnt. Bei Rückholung werden geprüfte Zwischenkopien ohne Originalquelle
+veröffentlicht; unvollständige Kopien bleiben erhalten und werden nicht als
+fertige Inhalte ausgegeben. Keine externe Quelle wird dabei umbenannt oder gelöscht.
+
+Aktivierung/Zuordnung liegen als `ingest.sources.v1` im Root; lokale Ordnerrechte
+bleiben außerhalb. Der Sicherungsexport deaktiviert die externe Quelle im
+Sicherungsabbild und erneuert dessen Bindung, damit auch eine Rückholung an dieselbe
+Adresse keine alte Freigabe übernimmt. Quelle am Ziel explizit erneut auswählen.
+Der externe Eingangsordner samt `.para-ingest/completed/` gehört nicht zum Export;
+dessen Originale separat sichern, falls sie zusätzlich aufbewahrt werden sollen.

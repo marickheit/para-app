@@ -1,6 +1,6 @@
 # P.A.R.A. Workspace
 
-Lokale Flutter-App 0.7.3 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS.
+Lokale Flutter-App 0.8.0 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS.
 Linux-x64-Release-Build und ein nativer Bedientest sind geprüft; die vollständige
 Linux-Bedienung und Android sind noch nicht geprüft.
 
@@ -107,6 +107,44 @@ Linux-Bedienung und Android sind noch nicht geprüft.
   weiterhin über den vorhandenen Speicher-/Wechselschutz behandelt.
 - **Sicherung:** Menü unten → Daten & Sicherung; alternativ den lokalen Statuspunkt
   anklicken. Der Datenpfad und der Sicherungsexport stehen dort bereit.
+
+## Automatischer Eingangsordner
+
+Menü → Daten & Sicherung → **Eingangsordner**. Einen eigenen lokalen Ordner
+wählen und **Aktivieren …** bestätigen. Bereits vorhandene Dateien und
+verschachtelte Unterordner werden in die Inbox dieses Arbeitsbereichs übernommen;
+Struktur und leere Ordner bleiben erhalten. Der Eingangsordner selbst wird nicht
+als zusätzlicher Ordner angelegt. Gleichnamige neue Einwürfe werden getrennte
+Inhalte und überschreiben nichts.
+
+Die Automatik läuft mit der App und prüft regelmäßig (etwa alle fünf Sekunden).
+Dateien müssen mehrere Sekunden unverändert sein. Bei geschlossener App bleiben
+sie liegen; nach Neustart wird die aktivierte Automatik fortgesetzt. **Pausieren**
+stoppt sie dauerhaft, **Jetzt prüfen** stößt einen weiteren Abgleich an. Unfertige
+Downloads warten. Symlinks, Repositories, Spezialdateien und macOS-Dateipakete
+werden nicht übernommen. Geprüft sind lokale Dateisysteme, keine Cloud-Platzhalter
+oder entfernten Laufwerke.
+
+Dateien werden bytegetreu übernommen, auch Markdown. Kleine UTF-8-MD/TXT bleiben
+als Dateien bearbeitbar. Der manuelle Import behält seine bisherige Markdown-
+Umwandlung in Notizen. Nach geprüfter Übernahme verschwinden Originale aus dem
+sichtbaren Eingang und bleiben unter `.para-ingest/completed/` im Eingangsordner
+erhalten. **Originale öffnen** zeigt diesen Rückholbereich. Keine automatische
+Leerung; diese zusätzlichen Originale benötigen Speicherplatz und liegen außerhalb
+der Arbeitsbereichssicherung.
+
+Fehler stehen in den Einstellungen; nach Beheben bei aktiver Automatik **Jetzt
+prüfen** verwenden. Bei einer Quellenänderung nach bereits erfolgter Inbox-Anlage
+bleiben die importierte Fassung und das geänderte Original erhalten; diese Abweichung
+manuell prüfen. Ein noch geöffnetes Schreibprogramm kann auch nach einer Ruhepause
+weiter schreiben. Für zuverlässige Übergaben erst fertig schreiben und schließen,
+dann in den Eingang verschieben. Ein in den Rückholbereich verschobenes Original
+wird bei späteren Änderungen nicht erneut automatisch importiert.
+
+Die Zuordnung gilt für genau diesen Arbeitsbereich und Rechner. Kopien und
+zurückgeholte Sicherungen starten ohne aktive externe Quellenfreigabe; den Ordner
+am Ziel erneut auswählen und aktivieren. Die Übernahme nutzt weder MCP noch dessen
+Freigabe. [Ablauf, Datenübernahme und Prüfplan](docs/EINGANGSORDNER_UMSETZUNGSPLAN.md).
 
 ## KI-Anbindung (MCP)
 
@@ -226,7 +264,7 @@ Versionen müssen ältere Arbeitsbereiche direkt lesen oder verlustfrei migriere
 das gilt auch für Links, Papierkorb und Textverlauf. Die verbindlichen
 Entwicklungsregeln stehen in [AGENTS.md](AGENTS.md).
 
-Aktuell: Schema 5, getestete Migrationen aus Schema 1–4 und vollständiger
+Aktuell: Schema 6, getestete Migrationen aus Schema 1–5 und vollständiger
 Sicherungsexport. Vor einer nötigen Datenmigration erstellt die App automatisch
 eine vollständige Rückfallkopie unter `.migration-backups/` im jeweiligen Root.
 Unbekannte neuere Datenformate und paralleles Öffnen werden abgefangen.

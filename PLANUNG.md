@@ -1,6 +1,6 @@
 # P.A.R.A. – Produktstand
 
-Stand: 26. Oktober 2026 · lokale App 0.7.3 für macOS und Linux.
+Stand: 26. Oktober 2026 · lokale App 0.8.0 für macOS und Linux.
 
 ## Ziel und Grundregeln
 
@@ -36,6 +36,11 @@ Stand: 26. Oktober 2026 · lokale App 0.7.3 für macOS und Linux.
   Inbox, Projekte, Bereiche, Ressourcen und deren Ordner. Import als lokale Kopie,
   vorhandene Inhalte intern per Ziehen oder „Verschieben …“ bewegen. Kleine
   UTF-8-Markdown-Importe werden Notizen; große Dateien werden gestreamt.
+- **Eingangsordner:** Frei wählbare lokale Quelle, automatische bytegetreue
+  Übernahme mit verschachtelten/leeren Ordnern in die Inbox. Nur bei laufender App,
+  Nachholen beim Start, Pause und Fehleranzeige. Dauerhaftes Importjournal,
+  geprüfte Zwischenkopien und Originale im externen Rückholbereich ohne automatische
+  Löschung. Kopien/Sicherungsrückholungen aktivieren keine externe Quelle.
 - **Aufgaben:** Noch zu klären, Nächste Aktion, Warten auf, Irgendwann / Vielleicht,
   Erledigt und Nicht mehr relevant. Letztere zwei sind getrennte Abschlusszustände;
   Wiederaufnahme verwendet den vorherigen Arbeitsstatus. Globale nächste Aktionen
@@ -65,7 +70,7 @@ Stand: 26. Oktober 2026 · lokale App 0.7.3 für macOS und Linux.
   und Energie. Kleine farbige Chips unter dem Titel, kombinierbare Listenfilter.
   Kontextnamen, Farben, Reihenfolge und Aktivierung in Einstellungen verwalten;
   bestehende freie Kontexttexte verlustfrei übernehmen.
-- **Übernahme älterer Daten:** Schema 5 migriert Formate 1–4 nach vollständiger
+- **Übernahme älterer Daten:** Schema 6 migriert Formate 1–5 nach vollständiger
   automatischer Rückfallkopie. Neuere unbekannte Formate ablehnen, aktuellen
   Mehrprozess-Zugriff sperren; unvollständige Übernahmen nicht aktivieren.
 

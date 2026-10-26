@@ -1,8 +1,14 @@
 # Arbeitsstand
 
-Stand: 26. Oktober 2026 · Version 0.7.3+10.
+Stand: 26. Oktober 2026 · Version 0.8.0+11.
 
 ## Implementiert
+
+- Automatischer Eingangsordner 0.8.0: rekursive, bytegetreue Inbox-Übernahme,
+  Ruhephase, dauerhafte Jobs und stabile UUIDs, geprüfte Zwischenkopien sowie
+  Original-Rückholbereich. App-Laufzeit, Pause, Neustart und lokale Quellenbindung.
+  Schema 6, Sicherungsformat 3 und getestete unabhängige Rückholung.
+  [Implementierung und Abnahme](EINGANGSORDNER_UMSETZUNGSPLAN.md).
 
 - Auswahl, Übersicht und Anlegen 0.7.3: Kategorien ohne automatische Auswahl,
   graues Anlageziel, Containerklick wählt/klappt auf, erneuter Klick wählt ab/zu.
@@ -16,7 +22,7 @@ Stand: 26. Oktober 2026 · Version 0.7.3+10.
 - GTD-Listen mit projektweisen nächsten Aktionen und getrenntem Aufgabenabschluss.
 - Mehrere Kontexte, optionale Minuten und Energie; Chips und kombinierbare Filter.
 - Kontextverwaltung, wählbare Arbeitsbereiche, vollständiges Kopieren und gespeicherte Ansicht.
-- Schema 5: vollständige Rückfallkopie vor Migrationen aus 1–4, Root-Sperre und
+- Schema 6: vollständige Rückfallkopie vor Migrationen aus 1–5, Root-Sperre und
   Ablehnung unbekannter neuerer Datenformate.
 - Lokaler MCP-Server im Repository: sofortige Zugriffsauswahl und automatische
   sichere Verbindungsablage auf macOS/Linux, acht Lese- und
@@ -28,6 +34,16 @@ Stand: 26. Oktober 2026 · Version 0.7.3+10.
 [Arbeitsbereiche](ARBEITSBEREICHE.md) · [Aufgabenangaben](GTD_AUSBAU.md).
 
 ## Prüfstand
+
+- Eingangsordner 0.8.0: Analyse ohne Befund, 100 Flutter-Tests einschließlich
+  18 neuer Import-/Wiederanlauf-/Integritätstests. Nativer Linux-Test für neue
+  Bedienung, sichere Dateioperationen und rekursive Übernahme erfolgreich.
+  Zwölf bisherige native Linux-Bedienabläufe erfolgreich, ein macOS-spezifischer
+  Test übersprungen. Neue native macOS-Sandbox-Prüfung offen.
+  Alle Testquellen und Arbeitsbereiche temporär, keine regulären Nutzdaten geöffnet.
+  Linux-Release 0.8.0 lokal installiert, alle 24 Paketdateien geprüft; bisherige
+  App als Rückfallkopie erhalten. Nutzer hat die Funktion am 26. Oktober 2026
+  im Praxistest bestätigt und Commit/Push freigegeben.
 
 - Auswahl/Übersicht/Anlegen 0.7.3: Analyse ohne Befund und alle 82 Flutter-Tests
   erfolgreich. Zehn neue native Linux-Abläufe sowie alle zwölf auf Linux

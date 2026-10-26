@@ -79,8 +79,23 @@ class WorkspaceSettings extends Table {
   Set<Column<Object>> get primaryKey => {key};
 }
 
+@DataClassName('IngestJobRow')
+class IngestJobs extends Table {
+  TextColumn get id => text()();
+  TextColumn get payload => text()();
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DriftDatabase(
-  tables: [Entries, EntryLinks, NoteVersions, TaskContexts, WorkspaceSettings],
+  tables: [
+    Entries,
+    EntryLinks,
+    NoteVersions,
+    TaskContexts,
+    WorkspaceSettings,
+    IngestJobs,
+  ],
 )
 class WorkspaceDatabase extends _$WorkspaceDatabase {
   WorkspaceDatabase(super.executor);
@@ -153,6 +168,7 @@ class WorkspaceDatabase extends _$WorkspaceDatabase {
           await migrator.createTable(workspaceSettings);
           await _initialContexts();
         }
+        if (from < 6) await migrator.createTable(ingestJobs);
       });
     },
     beforeOpen: (_) async {

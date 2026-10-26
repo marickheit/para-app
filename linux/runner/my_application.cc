@@ -12,6 +12,7 @@
 #endif
 
 #include "flutter/generated_plugin_registrant.h"
+#include "ingest_file_ops.h"
 
 struct _MyApplication {
   GtkApplication parent_instance;
@@ -50,6 +51,7 @@ static bool write_mcp_connection(const char* path, const char* content) {
 
 static void directory_method_call(FlMethodChannel* channel, FlMethodCall* call,
                                   gpointer user_data) {
+  if (handle_ingest_call(call)) return;
   const gchar* method = fl_method_call_get_name(call);
   FlValue* arguments = fl_method_call_get_args(call);
   FlValue* path_value = arguments && fl_value_get_type(arguments) == FL_VALUE_TYPE_MAP
@@ -57,7 +59,8 @@ static void directory_method_call(FlMethodChannel* channel, FlMethodCall* call,
   const char* path = path_value && fl_value_get_type(path_value) == FL_VALUE_TYPE_STRING
       ? fl_value_get_string(path_value) : nullptr;
   bool success = false;
-  if (g_strcmp0(method, "prepareMcpDirectory") == 0 && path) {
+  if ((g_strcmp0(method, "prepareMcpDirectory") == 0 ||
+       g_strcmp0(method, "preparePrivateDirectory") == 0) && path) {
     struct stat status;
     success = g_mkdir_with_parents(path, 0700) == 0 &&
         lstat(path, &status) == 0 && S_ISDIR(status.st_mode) &&
@@ -73,7 +76,9 @@ static void directory_method_call(FlMethodChannel* channel, FlMethodCall* call,
   if (success) {
     fl_method_call_respond_success(call, nullptr, nullptr);
   } else {
-    fl_method_call_respond_error(call, "mcp-connection",
+    const bool ingest = g_strcmp0(method, "preparePrivateDirectory") == 0;
+    fl_method_call_respond_error(call, ingest ? "ingest-directory" : "mcp-connection",
+        ingest ? "Eingangsordner ist nicht sicher beschreibbar." :
         "Sichere lokale MCP-Verbindung konnte nicht eingerichtet werden.", nullptr, nullptr);
   }
 }

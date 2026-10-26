@@ -7,6 +7,8 @@ import '../domain/workspace.dart';
 import 'common.dart';
 import '../services/mcp_bridge.dart';
 import 'mcp_settings.dart';
+import '../services/inbox_ingest_service.dart';
+import 'ingest_settings.dart';
 
 enum SettingsAction { open, create, copy, backup }
 
@@ -17,6 +19,7 @@ Future<SettingsAction?> showWorkspaceSettings(
   required bool canChangeRoot,
   int tab = 0,
   McpBridge? mcp,
+  InboxIngestService? ingest,
 }) => showDialog<SettingsAction>(
   context: context,
   builder: (_) => _WorkspaceSettings(
@@ -25,6 +28,7 @@ Future<SettingsAction?> showWorkspaceSettings(
     canChangeRoot: canChangeRoot,
     initialTab: tab,
     mcp: mcp,
+    ingest: ingest,
   ),
 );
 
@@ -35,12 +39,14 @@ class _WorkspaceSettings extends StatefulWidget {
     required this.canChangeRoot,
     required this.initialTab,
     this.mcp,
+    this.ingest,
   });
   final WorkspaceRepository repository;
   final String root;
   final bool canChangeRoot;
   final int initialTab;
   final McpBridge? mcp;
+  final InboxIngestService? ingest;
   @override
   State<_WorkspaceSettings> createState() => _WorkspaceSettingsState();
 }
@@ -351,7 +357,8 @@ class _WorkspaceSettingsState extends State<_WorkspaceSettings> {
     canPop: !_busy,
     child: Dialog(
       child: DefaultTabController(
-        length: widget.mcp == null ? 2 : 3,
+        length:
+            2 + (widget.mcp == null ? 0 : 1) + (widget.ingest == null ? 0 : 1),
         initialIndex: widget.initialTab,
         child: SizedBox(
           width: 700,
@@ -383,6 +390,7 @@ class _WorkspaceSettingsState extends State<_WorkspaceSettings> {
                   const Tab(text: 'Daten & Sicherung'),
                   const Tab(text: 'Aufgaben / Kontexte'),
                   if (widget.mcp != null) const Tab(text: 'KI-Anbindung'),
+                  if (widget.ingest != null) const Tab(text: 'Eingangsordner'),
                 ],
               ),
               Expanded(
@@ -391,6 +399,8 @@ class _WorkspaceSettingsState extends State<_WorkspaceSettings> {
                     _data(),
                     _contextList(),
                     if (widget.mcp != null) McpSettings(bridge: widget.mcp!),
+                    if (widget.ingest != null)
+                      IngestSettings(service: widget.ingest!),
                   ],
                 ),
               ),

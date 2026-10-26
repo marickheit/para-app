@@ -209,7 +209,7 @@ Textverlauf bleiben erhalten. Nur abgeleitete Indizes dürfen verworfen und neu
 aufgebaut werden. Unbekannte neuere Datenstände dürfen nicht durch Zurücksetzen
 behandelt werden. Diese Vorgaben stehen in [AGENTS.md](../AGENTS.md).
 
-Implementierter Stand: Schema 5 mit getesteten Migrationen von 1–4. Vor der
+Implementierter Stand: Schema 6 mit getesteten Migrationen von 1–5. Vor der
 Migration prüft `workspace_storage.dart` Version, Datenbank und Dateipfade, sperrt
 den Root und erstellt eine konsistente vollständige Rückfallkopie. Migrationen
 laufen in einer Datenbanktransaktion. Nicht unterstützte neuere Versionen werden
@@ -239,3 +239,36 @@ zeigen den vollständigen Pfad und können gültige aktive Ziele auswählen.
 Projektwurzel ist kein Ziel für gewöhnliche Inhalte. Bereits vorhandene freie
 Wurzelinhalte in Bereiche/Ressourcen bleiben zulässig. Lokale Neuanlage ist im
 Archiv/Papierkorb und in abgeschlossenen Aufgabenlisten deaktiviert.
+
+## Automatischer Eingang
+
+`InboxIngestService` ist an eine Repository-Instanz gebunden. Er verwaltet eine
+lokale Quellenfreigabe, eine Quellensperre und begrenzte, rekursive Kontrollscans;
+Root-Dateisystemereignisse stoßen zusätzliche Scans an. Tiefe Änderungen werden
+auch ohne Ereignis erkannt, spätestens beim nächsten Kontrollscan. Kein rekursiver
+Linux-Watcher pro Unterordner erforderlich. Der Manager hält den Dienst vor einem
+Rootwechsel an, wartet laufende Übernahmen ab und beendet ihn vor Repositoryschluss.
+Import und Export laufen in derselben exklusiven Repository-Warteschlange.
+
+Schema 6 ergänzt `ingest_jobs` mit versioniertem Payload (Format 1). Jobs enthalten
+stabile Inhalts-UUIDs, relative Pfade, Elternbeziehungen, Quellensignaturen und
+Prüfsummen. Unter `ingest/<job-UUID>/` liegen bytegetreue Zwischenkopien. Nach Prüfung
+werden Inhaltsdatensätze und Journalzustand gemeinsam veröffentlicht. Ein gescheiterter
+Datenbankabschluss lässt den Job unveröffentlicht; vorhandene Zielkennungen werden
+nicht überschrieben. Der Suchindex ist abgeleitet und wird nach Veröffentlichung
+aktualisiert beziehungsweise beim nächsten Öffnen neu aufgebaut.
+
+Native Linux-/macOS-Funktionen verwenden Dateiidentitäten und kopieren im Hintergrund
+mit `O_NOFOLLOW`, exklusiver Zielanlage und `fsync`. Der während des Lesens
+gebildete SHA-256 wird gegen die erneut gelesene Zwischenkopie geprüft. Quellverschiebungen überschreiben
+keine vorhandenen Ziele. Originale bleiben unter dem privaten `.para-ingest/completed/`
+der Quelle erhalten; vor/nach dem Verschieben wird der Baum erneut verglichen.
+Die Ruhephase ist eine Heuristik, kein Beweis, dass ein Erzeuger fertig ist.
+Der automatische Eingang löscht keine Originale endgültig.
+
+Fachliche Zuordnung `ingest.sources.v1` liegt im Root. In der Startkonfiguration
+liegen daneben nur die geräteabhängigen Ordnerfreigaben in
+`ingest-directory-grants.json`, gebunden an kanonischen Root, Quelle und Bindungs-ID.
+Format-3-Sicherungen nehmen Zwischenkopien mit und invalidieren im Abbild die
+Quellenbindung. Verifizierte interne Zwischenstände können unabhängig fertiggestellt
+werden; externe Quellenbereinigung setzt eine gültige aktuelle lokale Bindung voraus.

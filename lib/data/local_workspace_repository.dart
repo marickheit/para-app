@@ -11,6 +11,8 @@ import '../domain/workspace.dart';
 import 'database.dart';
 import 'workspace_storage.dart';
 import '../services/file_formats.dart';
+import '../domain/ingest.dart';
+part 'ingest_repository.dart';
 
 class LocalWorkspaceRepository implements WorkspaceRepository {
   LocalWorkspaceRepository._(
@@ -1441,10 +1443,35 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
           ).copy(p.join(temporary.path, 'notes', '${entry.id}.md'));
         }
       }
+      await WorkspaceStorage.copyTree(
+        Directory(p.join(root.path, 'ingest')),
+        Directory(p.join(temporary.path, 'ingest')),
+      );
+      // Restored/copy workspaces never inherit permission to consume a source.
+      final backupDb = WorkspaceDatabase(
+        NativeDatabase(File(p.join(temporary.path, 'workspace.sqlite'))),
+      );
+      try {
+        final setting = await (backupDb.select(
+          backupDb.workspaceSettings,
+        )..where((e) => e.key.equals('ingest.sources.v1'))).getSingleOrNull();
+        if (setting != null) {
+          final value = jsonDecode(setting.value) as Map<String, dynamic>;
+          value['enabled'] = false;
+          value['binding'] = _uuid.v4();
+          await (backupDb.update(
+            backupDb.workspaceSettings,
+          )..where((e) => e.key.equals(setting.key))).write(
+            WorkspaceSettingsCompanion(value: Value(jsonEncode(value))),
+          );
+        }
+      } finally {
+        await backupDb.close();
+      }
       await File(p.join(temporary.path, 'backup.json')).writeAsString(
         jsonEncode({
           'format': 'para-workspace',
-          'version': 2,
+          'version': 3,
           'schemaVersion': database.schemaVersion,
           'appVersion': workspaceAppVersion,
           'createdAt': DateTime.now().toUtc().toIso8601String(),

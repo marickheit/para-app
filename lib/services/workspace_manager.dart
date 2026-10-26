@@ -9,6 +9,7 @@ import '../data/local_workspace_repository.dart';
 import '../data/workspace_storage.dart';
 import '../domain/workspace.dart';
 import 'mcp_bridge.dart';
+import 'inbox_ingest_service.dart';
 
 class WorkspaceLocation {
   const WorkspaceLocation(this.path, {this.bookmark});
@@ -76,6 +77,7 @@ class WorkspaceManager extends ChangeNotifier {
   final Future<String?> Function(String)? pdfTextExtractor;
   LocalWorkspaceRepository? repository;
   McpBridge? mcp;
+  InboxIngestService? ingest;
   WorkspaceLocation? location;
   Object? error;
   bool loading = true;
@@ -129,6 +131,8 @@ class WorkspaceManager extends ChangeNotifier {
       }
       repository = next;
       mcp = McpBridge(next, next.root);
+      ingest = InboxIngestService(next, configurationDirectory);
+      await ingest!.initialize();
       location = resolved;
     } catch (value) {
       error = value;
@@ -162,6 +166,8 @@ class WorkspaceManager extends ChangeNotifier {
     }
     _working = true;
     LocalWorkspaceRepository? next;
+    final previousIngest = ingest;
+    final resumePreviousIngest = ingest?.enabled == true;
     try {
       final granted = await access.restore(selected);
       final target = Directory(granted.path);
@@ -189,6 +195,7 @@ class WorkspaceManager extends ChangeNotifier {
         );
       }
       await mcp?.disable();
+      await ingest?.pause(remember: false);
       loading = true;
       error = null;
       notifyListeners();
@@ -214,11 +221,22 @@ class WorkspaceManager extends ChangeNotifier {
       repository = next;
       mcp?.dispose();
       mcp = McpBridge(next, next.root);
+      await ingest?.close();
+      ingest?.dispose();
+      ingest = InboxIngestService(next, configurationDirectory);
+      await ingest!.initialize();
       location = WorkspaceLocation(destination, bookmark: granted.bookmark);
       next = null;
       await previous?.close();
     } catch (_) {
       await next?.close();
+      if (identical(ingest, previousIngest) && resumePreviousIngest) {
+        try {
+          await ingest?.activate();
+        } catch (_) {
+          /* Source remains safely paused. */
+        }
+      }
       rethrow;
     } finally {
       _working = false;
@@ -277,6 +295,9 @@ class WorkspaceManager extends ChangeNotifier {
   }
 
   Future<void> close() async {
+    await ingest?.close();
+    ingest?.dispose();
+    ingest = null;
     await mcp?.disable();
     mcp?.dispose();
     mcp = null;

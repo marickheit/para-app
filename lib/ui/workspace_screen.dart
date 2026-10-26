@@ -1396,6 +1396,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       canChangeRoot: manager != null && !manager.testOverride,
       tab: tab,
       mcp: manager?.mcp,
+      ingest: manager?.ingest,
     );
     if (action == null || !mounted) return;
     if (action == SettingsAction.backup) {

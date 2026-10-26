@@ -88,6 +88,32 @@ class WorkspaceStorage {
       ).open(mode: FileMode.append);
       await file.lock(FileLock.exclusive);
       final lease = WorkspaceLease(Directory(canonical), file, canonical);
+      final manifest = File(p.join(canonical, 'backup.json'));
+      if (await manifest.exists()) {
+        final value = jsonDecode(await manifest.readAsString());
+        if (value['format'] != 'para-workspace' ||
+            ![1, 2, 3].contains(value['version'])) {
+          throw const WorkspaceException(
+            'Unbekanntes Sicherungsformat; keine Daten verändert.',
+          );
+        }
+      }
+      final ingest = Directory(p.join(canonical, 'ingest'));
+      if (await FileSystemEntity.type(ingest.path, followLinks: false) ==
+          FileSystemEntityType.link) {
+        throw const WorkspaceException(
+          'Verknüpfter Import-Zwischenordner nicht zulässig.',
+        );
+      }
+      if (await ingest.exists() && !await ingest.list().isEmpty) {
+        final format = File(p.join(ingest.path, 'format.json'));
+        if (!await format.exists() ||
+            jsonDecode(await format.readAsString())['version'] != 1) {
+          throw const WorkspaceException(
+            'Unbekanntes Import-Zwischenformat; keine Daten verändert.',
+          );
+        }
+      }
       if (await dbFile.exists()) {
         final db = sqlite3.open(dbFile.path, mode: OpenMode.readOnly);
         try {
@@ -203,7 +229,7 @@ class WorkspaceStorage {
       } finally {
         destination.close();
       }
-      for (final name in ['notes', 'files']) {
+      for (final name in ['notes', 'files', 'ingest']) {
         await copyTree(
           Directory(p.join(root.path, name)),
           Directory(p.join(temporary.path, name)),
