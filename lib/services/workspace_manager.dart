@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import '../data/local_workspace_repository.dart';
 import '../data/workspace_storage.dart';
 import '../domain/workspace.dart';
+import 'mcp_bridge.dart';
 
 class WorkspaceLocation {
   const WorkspaceLocation(this.path, {this.bookmark});
@@ -74,6 +75,7 @@ class WorkspaceManager extends ChangeNotifier {
   final WorkspaceDirectoryAccess access;
   final Future<String?> Function(String)? pdfTextExtractor;
   LocalWorkspaceRepository? repository;
+  McpBridge? mcp;
   WorkspaceLocation? location;
   Object? error;
   bool loading = true;
@@ -126,6 +128,7 @@ class WorkspaceManager extends ChangeNotifier {
         rethrow;
       }
       repository = next;
+      mcp = McpBridge(next, next.root);
       location = resolved;
     } catch (value) {
       error = value;
@@ -185,6 +188,7 @@ class WorkspaceManager extends ChangeNotifier {
           'Bitte einen leeren Zielordner wählen. Vorhandene Inhalte werden nicht überschrieben.',
         );
       }
+      await mcp?.disable();
       loading = true;
       error = null;
       notifyListeners();
@@ -208,6 +212,8 @@ class WorkspaceManager extends ChangeNotifier {
       );
       final previous = repository;
       repository = next;
+      mcp?.dispose();
+      mcp = McpBridge(next, next.root);
       location = WorkspaceLocation(destination, bookmark: granted.bookmark);
       next = null;
       await previous?.close();
@@ -271,6 +277,9 @@ class WorkspaceManager extends ChangeNotifier {
   }
 
   Future<void> close() async {
+    await mcp?.disable();
+    mcp?.dispose();
+    mcp = null;
     await repository?.close();
     repository = null;
   }

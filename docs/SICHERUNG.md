@@ -69,3 +69,12 @@ macOS-Ordnerrechte werden am Zielrechner neu gesetzt. Über „Arbeitsbereich ö
 lässt sich ein vollständiger Sicherungsordner als eigener Arbeitsbereich laden.
 Vor einem weiteren Bearbeiten vorzugsweise eine Kopie des Sicherungsordners öffnen,
 damit der Sicherungsstand selbst unverändert bleibt. [Arbeitsbereiche](ARBEITSBEREICHE.md).
+
+## KI-Anbindung
+
+Ab Version 0.7 enthalten Sicherungen auch die Berechtigungspräferenz `mcp.v1`
+im Root. Sie aktiviert nach Rückholung keinen Zugang. Die geheime
+Verbindungsdatei darf ausschließlich außerhalb von Arbeitsbereichen und
+Sicherungen liegen und wird nicht mit exportiert. Kopien und Rückholungen
+benötigen eine neue ausdrückliche Freigabe in der App. Das Inhaltsformat bleibt
+Schema 5; MCP ändert weder UUIDs noch das Sicherungsformat.

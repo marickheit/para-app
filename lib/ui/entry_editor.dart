@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../services/mcp_editor_guard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -45,12 +46,29 @@ class EntryEditorState extends State<EntryEditor> {
   DateTime? _due;
   String _bodyHash = '';
   int _revision = 0;
-  bool _dirty = false;
+  bool _dirtyValue = false;
+  bool get _dirty => _dirtyValue;
+  set _dirty(bool value) {
+    _dirtyValue = value;
+    _reportEditor();
+  }
+
   List<TaskContext> _contexts = [];
   TaskDetailsValue _taskDetails = const TaskDetailsValue();
   StreamSubscription<List<TaskContext>>? _contextSubscription;
-  bool _loading = true;
-  bool _saving = false;
+  bool _loadingValue = true, _savingValue = false;
+  bool get _loading => _loadingValue;
+  set _loading(bool value) {
+    _loadingValue = value;
+    _reportEditor();
+  }
+
+  bool get _saving => _savingValue;
+  set _saving(bool value) {
+    _savingValue = value;
+    _reportEditor();
+  }
+
   bool _preview = true;
   bool _bodyEditable = true;
   bool _showInfo = false;
@@ -62,11 +80,29 @@ class EntryEditorState extends State<EntryEditor> {
   late Future<List<List<Entry>>> _relations;
   bool get _readOnly =>
       widget.entry.inTrash || isArchived(widget.entry, widget.entries);
-  bool get _locked => _readOnly || _saving || widget.busy;
+  late final McpEditorGuard _mcpGuard;
+  int _loadGeneration = 0;
+  bool get _locked =>
+      _readOnly ||
+      _saving ||
+      _loading ||
+      widget.busy ||
+      _mcpGuard.isWriting(widget.entry.id);
+  void _reportEditor() => _mcpGuard.report(
+    this,
+    widget.entry.id,
+    blocked: _dirty || _loading || _saving,
+  );
+  void _mcpChanged() {
+    if (mounted) setState(() {});
+  }
 
   @override
   void initState() {
     super.initState();
+    _mcpGuard = McpEditorGuard.forRepository(widget.repository);
+    _mcpGuard.addListener(_mcpChanged);
+    _reportEditor();
     _contextSubscription = widget.repository.watchContexts().listen((values) {
       if (mounted) setState(() => _contexts = values);
     });
@@ -76,8 +112,9 @@ class EntryEditorState extends State<EntryEditor> {
   @override
   void didUpdateWidget(covariant EntryEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.entry.id != widget.entry.id) _dirty = false;
     if (oldWidget.entry.id != widget.entry.id ||
-        (!_dirty && !_saving && widget.entry.revision != _revision)) {
+        (!_dirty && !_saving && widget.entry.revision > _revision)) {
       _load();
     } else {
       _loadRelations();
@@ -94,15 +131,22 @@ class EntryEditorState extends State<EntryEditor> {
   Future<void> _load() async {
     _loadRelations();
     final id = widget.entry.id;
+    final generation = ++_loadGeneration;
     _loading = true;
+    _reportEditor();
     _error = null;
     try {
-      final snapshot = await widget.repository.readNote(id);
-      final latest = widget.entry.inTrash
-          ? await widget.repository.getTrash()
-          : await widget.repository.getEntries();
-      if (!mounted || widget.entry.id != id) return;
-      final entry = latest.where((e) => e.id == id).firstOrNull ?? widget.entry;
+      final value = await widget.repository.readSnapshot(id);
+      if (!mounted || widget.entry.id != id || generation != _loadGeneration) {
+        return;
+      }
+      final snapshot = value.note;
+      final entry = value.entry;
+      if (_dirty) {
+        _loading = false;
+        _reportEditor();
+        return;
+      }
       setState(() {
         _title.text = entry.title;
         _body.text = snapshot.text;
@@ -126,12 +170,14 @@ class EntryEditorState extends State<EntryEditor> {
         _showInfo = false;
         _dirty = false;
         _loading = false;
+        _reportEditor();
       });
     } catch (error) {
-      if (mounted) {
+      if (mounted && generation == _loadGeneration) {
         setState(() {
           _error = error;
           _loading = false;
+          _reportEditor();
         });
       }
     }
@@ -139,6 +185,8 @@ class EntryEditorState extends State<EntryEditor> {
 
   @override
   void dispose() {
+    _mcpGuard.removeListener(_mcpChanged);
+    _mcpGuard.remove(this);
     _contextSubscription?.cancel();
     _title.dispose();
     _bodyFocus.dispose();
@@ -150,15 +198,17 @@ class EntryEditorState extends State<EntryEditor> {
 
   void _changed([String? _]) {
     if (!_dirty) setState(() => _dirty = true);
+    _reportEditor();
   }
 
   Future<bool> save() async {
     if (_saving) return false;
     if (!_dirty) return true;
-    if (_readOnly || widget.busy || _loading || _error != null) return false;
+    if (_locked || _error != null) return false;
     setState(() => _saving = true);
+    _reportEditor();
     try {
-      await widget.repository.save(
+      final saved = await widget.repository.saveSnapshot(
         id: widget.entry.id,
         expectedRevision: _revision,
         expectedBodyHash: _bodyHash,
@@ -177,14 +227,10 @@ class EntryEditorState extends State<EntryEditor> {
           updateTaskDetails: widget.entry.kind == EntryKind.task,
         ),
       );
-      final latest = (await widget.repository.getEntries()).firstWhere(
-        (e) => e.id == widget.entry.id,
-      );
-      final snapshot = await widget.repository.readNote(widget.entry.id);
       if (!mounted) return true;
       setState(() {
-        _revision = latest.revision;
-        _bodyHash = snapshot.hash;
+        _revision = saved.entry.revision;
+        _bodyHash = saved.note.hash;
         _dirty = false;
         _loadRelations();
       });
@@ -193,7 +239,11 @@ class EntryEditorState extends State<EntryEditor> {
       if (mounted) showMessage(context, errorLabel(error));
       return false;
     } finally {
-      if (mounted) setState(() => _saving = false);
+      if (mounted) {
+        setState(() => _saving = false);
+        _reportEditor();
+        if (!_dirty && widget.entry.revision > _revision) _load();
+      }
     }
   }
 
@@ -433,10 +483,12 @@ class EntryEditorState extends State<EntryEditor> {
                 _due != null &&
                 !_readOnly)
               TextButton(
-                onPressed: () => setState(() {
-                  _due = null;
-                  _dirty = true;
-                }),
+                onPressed: _locked
+                    ? null
+                    : () => setState(() {
+                        _due = null;
+                        _dirty = true;
+                      }),
                 child: const Text('Entfernen'),
               ),
           ],
@@ -637,7 +689,10 @@ class EntryEditorState extends State<EntryEditor> {
         TextButton.icon(
           onPressed: _locked
               ? null
-              : () => setState(() => _preview = !_preview),
+              : () => setState(() {
+                  _editRequested = _preview;
+                  _preview = !_preview;
+                }),
           icon: Icon(_preview ? LucideIcons.pencil : LucideIcons.eye, size: 15),
           label: Text(
             _preview ? 'Bearbeiten' : 'Vorschau',

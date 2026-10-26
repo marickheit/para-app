@@ -65,8 +65,45 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
   }
 
   // Serialize application mutations, including backup, to avoid partial views.
+  final Object _operationZone = Object();
+
+  @override
+  Future<T> exclusive<T>(Future<T> Function() operation) => _write(operation);
+
+  @override
+  Future<EntrySnapshot> readSnapshot(String id) => _write(
+    () async => EntrySnapshot(
+      _entry(await _require(id, includeTrash: true)),
+      await readNote(id),
+    ),
+  );
+
+  @override
+  Future<EntrySnapshot> saveSnapshot({
+    required String id,
+    required int expectedRevision,
+    required String expectedBodyHash,
+    required EntryDraft draft,
+  }) => _write(() async {
+    await _save(
+      id: id,
+      expectedRevision: expectedRevision,
+      expectedBodyHash: expectedBodyHash,
+      draft: draft,
+    );
+    return readSnapshot(id);
+  });
+
   Future<T> _write<T>(Future<T> Function() operation) {
-    final next = _pending.then((_) => operation());
+    if (Zone.current[_operationZone] == this) return operation();
+    if (_closed) {
+      return Future.error(
+        const WorkspaceException('Arbeitsbereich geschlossen.'),
+      );
+    }
+    final next = _pending.then(
+      (_) => runZoned(operation, zoneValues: {_operationZone: this}),
+    );
     _pending = next.then<void>((_) {}, onError: (Object _, StackTrace _) {});
     return next;
   }

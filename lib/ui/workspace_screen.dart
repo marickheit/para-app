@@ -272,8 +272,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     });
     _restoreSession();
     _lifecycle = AppLifecycleListener(
-      onExitRequested: () async =>
-          await _canLeave() ? AppExitResponse.exit : AppExitResponse.cancel,
+      onExitRequested: () async {
+        if (!await _canLeave()) return AppExitResponse.cancel;
+        await widget.workspaceManager?.mcp?.disable();
+        return AppExitResponse.exit;
+      },
     );
   }
 
@@ -1404,6 +1407,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       widget.dataDirectory,
       canChangeRoot: manager != null && !manager.testOverride,
       tab: tab,
+      mcp: manager?.mcp,
     );
     if (action == null || !mounted) return;
     if (action == SettingsAction.backup) {

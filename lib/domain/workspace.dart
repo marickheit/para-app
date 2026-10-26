@@ -172,6 +172,12 @@ class NoteSnapshot {
   final String hash;
 }
 
+class EntrySnapshot {
+  const EntrySnapshot(this.entry, this.note);
+  final Entry entry;
+  final NoteSnapshot note;
+}
+
 class EntryDraft {
   const EntryDraft({
     required this.title,
@@ -259,6 +265,16 @@ bool belongsTo(Entry entry, String parentId, List<Entry> entries) =>
 
 /// This application boundary is also usable by a future MCP adapter.
 abstract class WorkspaceRepository {
+  /// Runs a short application operation without interleaving repository writes.
+  Future<T> exclusive<T>(Future<T> Function() operation);
+  Future<EntrySnapshot> readSnapshot(String id);
+  Future<EntrySnapshot> saveSnapshot({
+    required String id,
+    required int expectedRevision,
+    required String expectedBodyHash,
+    required EntryDraft draft,
+  });
+
   Stream<List<TaskContext>> watchContexts();
   Future<List<TaskContext>> getContexts();
   Future<TaskContext> saveContext({

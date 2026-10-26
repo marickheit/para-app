@@ -13,8 +13,21 @@
 - `lib/ui/`: Navigation, Dialoge und Editor. Die Oberfläche verwendet die
   Repository-Schnittstelle; SQLite ist kein Bestandteil der UI-Verträge.
 
-Eine spätere MCP-Anbindung kann dieselbe Schnittstelle verwenden. Das ist eine
-vorbereitete Zuständigkeitsgrenze, noch kein implementierter MCP-Server.
+`mcp/` enthält den lokalen TypeScript-stdio-Server. Er ruft die authentifizierte,
+versionierte Loopback-Bridge der laufenden App auf und öffnet selbst keine
+Nutzdateien oder Datenbank. `mcp_access_service.dart` prüft Freigaben und führt
+Werkzeuge innerhalb `WorkspaceRepository.exclusive` aus. Die Warteschlange ist
+für verschachtelte Repository-Aufrufe innerhalb derselben Operation wiedereintrittsfähig.
+Konsistente Snapshots bündeln Text, Hash und Revision; der Editor übernimmt den
+tatsächlich gespeicherten Snapshot. `mcp_editor_guard.dart` koordiniert
+Editorentwürfe, Laden/Speichern und MCP-Änderungen. Seitencursor sind an das
+jeweilige Ergebnis und die App-Öffnung gebunden.
+
+Die Freigabepräferenz `mcp.v1` liegt versioniert in `workspace_settings` und
+aktiviert keinen Zugang. Token, Port und Öffnungskennung sind flüchtig; die
+lokale 0600-Verbindungsdatei liegt außerhalb des Roots. Rootwechsel widerruft
+Verbindungen vor der Übernahme und wartet laufende Schreiboperationen ab.
+[Bedienung und Grenzen](MCP.md).
 
 ## Daten
 
@@ -174,7 +187,7 @@ Die Sicherung enthält keine Zugangsdaten; es gibt noch keine Cloud-Anmeldung.
 
 ## Aktuelle Grenzen
 
-Cloud-Sync, Konfliktauflösung zwischen Geräten, MCP, Benachrichtigungen und
+Cloud-Sync, Konfliktauflösung zwischen Geräten, Benachrichtigungen und
 wiederkehrende Aufgaben folgen später. PDF, Rasterbilder, SVG, Markdown/Text und CSV haben die in README.md beschriebenen
 Vorschauen. Für andere Formate bleibt die Standard-App oder ein lokaler Export.
 Die Sicherung ist ein lokaler Export mit dokumentierter manueller Wiederherstellung.

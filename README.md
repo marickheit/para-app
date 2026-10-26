@@ -1,6 +1,6 @@
 # P.A.R.A. Workspace
 
-Lokale Flutter-App 0.6 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS.
+Lokale Flutter-App 0.7 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS.
 Linux-/Android-Gerüste sind vorhanden; ihre Builds und Bedienung sind noch nicht geprüft.
 
 [Quellcode auf GitHub](https://github.com/marickheit/para-app)
@@ -90,6 +90,14 @@ Linux-/Android-Gerüste sind vorhanden; ihre Builds und Bedienung sind noch nich
 - **Sicherung:** Menü unten → Daten & Sicherung; alternativ den lokalen Statuspunkt
   anklicken. Der Datenpfad und der Sicherungsexport stehen dort bereit.
 
+## KI-Anbindung (MCP)
+
+Einstellungen → **KI-Anbindung** gibt den geöffneten Arbeitsbereich für einen
+lokalen KI-Client frei: nur lesen oder lesen und schreiben, optional Archiv lesen.
+Die Freigabe endet beim Beenden oder Rootwechsel und ist jederzeit widerrufbar.
+Der MCP-Server liegt unter `mcp/`; Node.js ab 22 erforderlich.
+[Einrichtung, Werkzeuge und Grenzen](docs/MCP.md).
+
 ## Unterstützte Dateiformate und Grenzen
 
 - Kleine UTF-8-Markdown-Importe bis 16 MiB werden bearbeitbare Notizen.
@@ -128,6 +136,8 @@ zeigt „Daten & Sicherung“. [Datensicherung](docs/SICHERUNG.md).
 ## Prüfen
 
 ```sh
+npm ci --prefix mcp
+npm run build --prefix mcp
 flutter analyze
 flutter test
 flutter test -d macos integration_test/workspace_test.dart

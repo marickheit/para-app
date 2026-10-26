@@ -1,4 +1,5 @@
 import Cocoa
+import Darwin
 import FlutterMacOS
 
 class MainFlutterWindow: NSWindow {
@@ -33,6 +34,35 @@ class MainFlutterWindow: NSWindow {
     let arguments = call.arguments as? [String: Any] ?? [:]
     do {
       switch call.method {
+      case "writeMcpConnection":
+        guard let path = arguments["path"] as? String,
+              let content = arguments["content"] as? String else {
+          throw NSError(domain: "PARA", code: 4)
+        }
+        let target = URL(fileURLWithPath: path)
+        var status = stat()
+        if Darwin.lstat(path, &status) == 0 {
+          guard (status.st_mode & S_IFMT) == S_IFREG,
+                (status.st_mode & 0o777) == 0o600,
+                status.st_uid == Darwin.geteuid() else {
+            throw NSError(domain: "PARA", code: 5)
+          }
+        } else if errno != ENOENT {
+          throw NSError(domain: "PARA", code: 5)
+        }
+        let temporary = target.deletingLastPathComponent().appendingPathComponent(".para-mcp-\(UUID().uuidString).tmp").path
+        let fd = Darwin.open(temporary, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, 0o600)
+        guard fd >= 0 else { throw NSError(domain: "PARA", code: 6) }
+        defer { Darwin.close(fd); Darwin.unlink(temporary) }
+        let data = Data(content.utf8)
+        let written = data.withUnsafeBytes { buffer in
+          Darwin.write(fd, buffer.baseAddress, buffer.count)
+        }
+        guard written == data.count, Darwin.fsync(fd) == 0,
+              Darwin.rename(temporary, path) == 0 else {
+          throw NSError(domain: "PARA", code: 7)
+        }
+        result(nil)
       case "bookmarkDirectory":
         guard let path = arguments["path"] as? String else {
           throw NSError(domain: "PARA", code: 1, userInfo: [NSLocalizedDescriptionKey: "Kein Ordner ausgewählt."])

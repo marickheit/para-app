@@ -5,6 +5,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:open_filex/open_filex.dart';
 import '../domain/workspace.dart';
 import 'common.dart';
+import '../services/mcp_bridge.dart';
+import 'mcp_settings.dart';
 
 enum SettingsAction { open, create, copy, backup }
 
@@ -14,6 +16,7 @@ Future<SettingsAction?> showWorkspaceSettings(
   String root, {
   required bool canChangeRoot,
   int tab = 0,
+  McpBridge? mcp,
 }) => showDialog<SettingsAction>(
   context: context,
   builder: (_) => _WorkspaceSettings(
@@ -21,6 +24,7 @@ Future<SettingsAction?> showWorkspaceSettings(
     root: root,
     canChangeRoot: canChangeRoot,
     initialTab: tab,
+    mcp: mcp,
   ),
 );
 
@@ -30,11 +34,13 @@ class _WorkspaceSettings extends StatefulWidget {
     required this.root,
     required this.canChangeRoot,
     required this.initialTab,
+    this.mcp,
   });
   final WorkspaceRepository repository;
   final String root;
   final bool canChangeRoot;
   final int initialTab;
+  final McpBridge? mcp;
   @override
   State<_WorkspaceSettings> createState() => _WorkspaceSettingsState();
 }
@@ -345,7 +351,7 @@ class _WorkspaceSettingsState extends State<_WorkspaceSettings> {
     canPop: !_busy,
     child: Dialog(
       child: DefaultTabController(
-        length: 2,
+        length: widget.mcp == null ? 2 : 3,
         initialIndex: widget.initialTab,
         child: SizedBox(
           width: 700,
@@ -372,13 +378,22 @@ class _WorkspaceSettingsState extends State<_WorkspaceSettings> {
                   ],
                 ),
               ),
-              const TabBar(
+              TabBar(
                 tabs: [
-                  Tab(text: 'Daten & Sicherung'),
-                  Tab(text: 'Aufgaben / Kontexte'),
+                  const Tab(text: 'Daten & Sicherung'),
+                  const Tab(text: 'Aufgaben / Kontexte'),
+                  if (widget.mcp != null) const Tab(text: 'KI-Anbindung'),
                 ],
               ),
-              Expanded(child: TabBarView(children: [_data(), _contextList()])),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _data(),
+                    _contextList(),
+                    if (widget.mcp != null) McpSettings(bridge: widget.mcp!),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

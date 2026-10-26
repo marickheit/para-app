@@ -71,7 +71,8 @@ List<WorkspaceSearchHit> searchWorkspace(
       final score = b.score.compareTo(a.score);
       if (score != 0) return score;
     }
-    return b.entry.updatedAt.compareTo(a.entry.updatedAt);
+    final recent = b.entry.updatedAt.compareTo(a.entry.updatedAt);
+    return recent != 0 ? recent : a.entry.id.compareTo(b.entry.id);
   });
   return hits;
 }

@@ -1,11 +1,11 @@
 # P.A.R.A. – Produktstand
 
-Stand: 25. Oktober 2026 · lokale Mac-App 0.6.
+Stand: 26. Oktober 2026 · lokale Mac-App 0.7.
 
 ## Ziel und Grundregeln
 
 - Persönlicher Arbeitsplatz für Dateien, Markdown-Notizen und GTD-Aufgaben.
-- Zuerst lokal auf macOS; später Linux, Android, Cloud-Sync und MCP.
+- Zuerst lokal auf macOS; lokaler MCP-Anschluss; später Linux, Android und Cloud-Sync.
 - Ein Inhalt hat einen Hauptablageort. Stabile Links verbinden weitere Inhalte.
 - Bestehende Nutzerdaten bleiben bei Änderungen erhalten: neue Versionen müssen
   ältere Daten direkt lesen oder verlustfrei migrieren. Entwicklungs-/Testdaten
@@ -64,13 +64,18 @@ Stand: 25. Oktober 2026 · lokale Mac-App 0.6.
   automatischer Rückfallkopie. Neuere unbekannte Formate ablehnen, aktuellen
   Mehrprozess-Zugriff sperren; unvollständige Übernahmen nicht aktivieren.
 
+- **MCP:** Lokaler stdio-Server unter `mcp/`, Freigabe in Einstellungen; Suche,
+  Lesen und gezielte Notiz-/Aufgabenänderungen über die laufende App. Rechte,
+  Konflikt- und Editorschutz; kein Zugriff auf Papierkorb oder endgültiges Löschen.
+  [Einrichtung und Grenzen](docs/MCP.md).
+
 ## Offen / später
 
 - Projektprüfung und Wochenrückblick bleiben nicht ausgewählte GTD-Vorschläge.
 - Live Preview/Autosave, Rückgängig, Mehrfachauswahl und weitere Textformate sind
   unbestätigte Vorschläge, keine bereits umgesetzten Funktionen.
 - Wiederkehrende Aufgaben, externe Dateiverweise.
-- Große Backups, selektive Verfügbarkeit, Cloud-Anbieter, Konfliktauflösung, MCP.
+- Große Backups, selektive Verfügbarkeit, Cloud-Anbieter, Konfliktauflösung.
 - Linux-/Android-Build und native Bedienung auf diesen Systemen noch nicht geprüft.
 
 [Bedienung](README.md) · [UI-Anforderungen](docs/UI_UMZUG.md) ·

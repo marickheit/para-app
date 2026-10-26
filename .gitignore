@@ -54,3 +54,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# MCP build/dependencies and local credentials
+/mcp/node_modules/
+/mcp/dist/
+*para-mcp-connection*.json
