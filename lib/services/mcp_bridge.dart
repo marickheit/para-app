@@ -7,15 +7,24 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import '../domain/workspace.dart';
 import 'mcp_access_service.dart';
+import 'mcp_connection.dart';
 
 const mcpMaxBytes = 2 * 1024 * 1024;
 
 /// Owns one ephemeral, explicitly enabled connection for one repository opening.
 class McpBridge extends ChangeNotifier {
-  McpBridge(this.repository, this.root, {this.connectionWriter});
+  McpBridge(
+    this.repository,
+    this.root, {
+    this.connectionWriter,
+    this.automaticDirectory,
+  });
   final WorkspaceRepository repository;
   final Directory root;
   final Future<void> Function(String path, String content)? connectionWriter;
+
+  /// Injection for isolated tests; production uses the platform's fixed path.
+  final Directory? automaticDirectory;
   HttpServer? _server;
   McpAccessService? _access;
   String? _token;
@@ -29,6 +38,20 @@ class McpBridge extends ChangeNotifier {
 
   int _generation = 0;
   Future<void>? _pendingEnable;
+
+  Future<void> enableAutomatic({
+    required bool write,
+    bool archive = false,
+  }) async {
+    final generation = _generation;
+    final directory = automaticDirectory ?? await defaultMcpDirectory();
+    _checkGeneration(generation);
+    await mcpDirectoryChannel.invokeMethod<void>('prepareMcpDirectory', {
+      'path': directory.path,
+    });
+    _checkGeneration(generation);
+    await enable(directory, write: write, archive: archive);
+  }
 
   Future<void> enable(
     Directory destination, {
@@ -145,14 +168,14 @@ class McpBridge extends ChangeNotifier {
 
   Future<void> _writeConnection(String path, String content) async {
     if (connectionWriter != null) return connectionWriter!(path, content);
-    if (Platform.isMacOS) {
+    if (Platform.isMacOS || Platform.isLinux) {
       await const MethodChannel('para.workspace/directory').invokeMethod<void>(
         'writeMcpConnection',
         {'path': path, 'content': content},
       );
     } else {
       throw const WorkspaceException(
-        'Sichere Verbindungsdatei derzeit nur unter macOS verfügbar.',
+        'Sichere Verbindungsdatei benötigt macOS oder Linux.',
       );
     }
   }

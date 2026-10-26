@@ -1,6 +1,6 @@
 # KI-Anbindung über MCP
 
-Stand: Version 0.7. MCP läuft lokal mit der geöffneten macOS-App.
+Stand: Version 0.7.1. MCP läuft lokal mit der geöffneten App auf macOS und Linux.
 Der Server liegt im Repository unter `mcp/`. Er öffnet selbst keine Nutzdaten.
 
 ## Einrichten
@@ -13,22 +13,41 @@ npm ci --prefix mcp
 npm run build --prefix mcp
 ```
 
-1. App 0.7 starten und den gewünschten Arbeitsbereich öffnen.
-2. Einstellungen (Cmd+,) → **KI-Anbindung** öffnen.
-3. **Nur lesen** oder **Lesen und Schreiben** wählen. Optional das Archiv
-   mit freigeben; es bleibt schreibgeschützt.
-4. **Freigeben und Verbindungsdatei ablegen …** wählen. Einen lokalen Ordner
-   außerhalb von Repository, Arbeitsbereichen und Sicherungen auswählen.
-   Keine synchronisierte oder mit anderen Nutzern geteilte Ablage verwenden.
+1. App starten und den gewünschten Arbeitsbereich öffnen.
+2. Einstellungen → **KI-Anbindung** öffnen.
+3. Optional „Archiv mit freigeben“ wählen; es bleibt schreibgeschützt.
+4. Bei **Zugriff** „Nur lesen“ oder „Lesen und Schreiben“ wählen. Das aktiviert
+   die Verbindung sofort; die App verwaltet die Verbindungsdatei automatisch.
+   „Aus“ und „Zugriff sofort widerrufen“ beenden den Zugang.
 5. Den lokalen MCP-Client mit der [Beispielkonfiguration](../mcp/config/client.example.json)
-   einrichten. Darin die absoluten Pfade zu Node, `mcp/dist/server.js` und der
-   angezeigten `para-mcp-connection.json` eintragen.
+   einrichten. Nur die absoluten Pfade zu Node und `mcp/dist/server.js` eintragen;
+   ein Verbindungsdateipfad ist nicht mehr nötig.
 6. MCP-Client verbinden. `workspace_info` zeigt Rechte und App-Version.
 
-Die Verbindungsdatei enthält einen geheimen Zugang. Sie wird atomar mit
-Dateirechten 0600 angelegt. Nicht weitergeben oder versionieren. Ein vorhandener
-Symlink oder eine unsicher zugängliche Datei wird abgelehnt; dann einen anderen
-Ablageort wählen beziehungsweise die alte Datei selbst entfernen.
+Die automatische Ablage liegt außerhalb des Arbeitsbereichs:
+
+- Linux: `$XDG_STATE_HOME/para-mcp/para-mcp-connection.json`, sonst
+  `~/.local/state/para-mcp/para-mcp-connection.json`. Ein relativer XDG-Wert wird ignoriert.
+- macOS: `~/Library/Containers/dev.para.paraWorkspace/Data/Library/Application Support/para-mcp/para-mcp-connection.json`
+  (App-Sandbox mit unveränderter Bundle-Kennung).
+
+Der Server muss als derselbe Benutzer laufen. Bei einem eigenen `XDG_STATE_HOME`
+auch diese Umgebungsvariable an den MCP-Server weiterreichen. Ein ausdrücklich
+übergebenes zweites Serverargument verwendet weiterhin den bisherigen Dateipfad.
+Vorhandene manuelle Freigaben werden nicht automatisch eingeschaltet oder kopiert;
+bei Umstellung den Dateipfad aus der Client-Konfiguration entfernen und in der
+neuen App erneut freigeben. Verbindungsformat 1 und Berechtigungspräferenz `mcp.v1`
+bleiben kompatibel; keine Datenmigration.
+
+Entwicklungsstarts mit `PARA_DATA_DIR` oder `PARA_CONFIG_DIR` verwenden keine
+automatische Produktionsablage. Der native Integrationstest injiziert dafür
+einen eigenen temporären Verbindungsordner.
+
+Die Verbindungsdatei enthält einen geheimen Zugang. Die App erstellt den privaten
+Ordner mit 0700 und schreibt die Datei atomar mit 0600. Nicht weitergeben oder
+versionieren. Ein vorhandener Symlink oder eine unsicher zugängliche Datei wird
+abgelehnt; die automatische Verbindung bleibt dann aus. Die Zugriffsrechte des lokalen
+MCP-Ordners prüfen und nur eine eindeutig veraltete Verbindungsdatei entfernen.
 
 Die Freigabe umfasst den gesamten aktiven Bestand des geöffneten Arbeitsbereichs,
 nicht einzelne Ordner. Keine zusätzliche Bestätigung jeder Aktion in der App.
@@ -122,8 +141,9 @@ flutter test
 
 Die Flutter-Suite enthält einen echten Node-MCP-Client gegen eine echte
 Repository-Instanz in einem temporären Root; vorher das MCP-Paket bauen.
-Ein nativer Release-Test steht unter `integration_test/mcp_native_test.dart`.
-Er legt ausschließlich eigene temporäre Daten an, gibt `MCP_NATIVE_READY` mit
+Ein nativer Integrationstest steht unter `integration_test/mcp_native_test.dart`.
+Er prüft die Zugriffsauswahl, sichere Ablage und Widerruf ausschließlich mit
+eigenen temporären Daten, gibt `MCP_NATIVE_READY` mit
 seinem Verbindungsdateipfad aus und wartet auf den externen Treiber:
 
 ```sh
@@ -133,6 +153,9 @@ node mcp/test/app-smoke.mjs /absoluter/testpfad/para-mcp-connection.json
 Nach Erfolg im selben Testordner eine leere Datei
 `para-mcp-connection.json.done` anlegen. Der native Test prüft gespeicherte Daten,
 Widerruf und Dateibereinigung. Keine Geheimnisse ausgeben.
+
+Die native Änderung dieser Version ist auf Linux geprüft. Ein erneuter nativer
+macOS-Test mit Sandbox steht noch aus.
 
 Intern: stdio → TypeScript-SDK → authentifizierte HTTP-Bridge ausschließlich auf
 127.0.0.1 → App-Dienst → Repository. Bridge-Vertrag und `mcp.v1`-Präferenz sind

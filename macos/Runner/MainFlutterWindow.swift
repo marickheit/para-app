@@ -34,6 +34,22 @@ class MainFlutterWindow: NSWindow {
     let arguments = call.arguments as? [String: Any] ?? [:]
     do {
       switch call.method {
+      case "defaultMcpDirectory":
+        result(NSHomeDirectory() + "/Library/Application Support/para-mcp")
+      case "prepareMcpDirectory":
+        guard let path = arguments["path"] as? String else {
+          throw NSError(domain: "PARA", code: 4)
+        }
+        try FileManager.default.createDirectory(atPath: path,
+          withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+        var status = stat()
+        guard Darwin.lstat(path, &status) == 0,
+              (status.st_mode & S_IFMT) == S_IFDIR,
+              (status.st_mode & 0o777) == 0o700,
+              status.st_uid == Darwin.geteuid() else {
+          throw NSError(domain: "PARA", code: 5)
+        }
+        result(nil)
       case "writeMcpConnection":
         guard let path = arguments["path"] as? String,
               let content = arguments["content"] as? String else {
@@ -82,7 +98,10 @@ class MainFlutterWindow: NSWindow {
       default: result(FlutterMethodNotImplemented)
       }
     } catch {
-      result(FlutterError(code: "workspace-directory", message: "Der Ordnerzugriff konnte nicht hergestellt werden. Bitte den Ordner erneut auswählen.", details: error.localizedDescription))
+      let isMcp = call.method == "prepareMcpDirectory" || call.method == "writeMcpConnection" || call.method == "defaultMcpDirectory"
+      result(FlutterError(code: isMcp ? "mcp-connection" : "workspace-directory",
+        message: isMcp ? "Sichere lokale MCP-Verbindung konnte nicht eingerichtet werden." : "Der Ordnerzugriff konnte nicht hergestellt werden. Bitte den Ordner erneut auswählen.",
+        details: error.localizedDescription))
     }
   }
 

@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/server';
 import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import { z } from 'zod';
 import { BridgeClient, BridgeError } from './bridge.js';
+import { defaultConnectionPath } from './connection-path.js';
 
 const id = z.string().uuid();
 const state = z.enum(['inbox', 'next', 'waiting', 'someday', 'done', 'cancelled']);
@@ -31,14 +32,14 @@ export const tools = {
   set_task_state: { description: 'Set task state using current revision. Closed states preserve previous open status in the app.', schema: z.object({ ...existing, state }).strict() },
 };
 
-const path = process.argv[2];
+const path = process.argv[2] ?? defaultConnectionPath();
 if (!path) {
   process.stderr.write('Usage: node dist/server.js /absolute/path/para-mcp-connection.json\n');
   process.exitCode = 1;
 } else {
   const bridge = new BridgeClient(path);
   serveStdio(() => {
-    const server = new McpServer({ name: 'para-workspace', version: '0.1.0' }, { capabilities: { tools: {} } });
+    const server = new McpServer({ name: 'para-workspace', version: '0.1.1' }, { capabilities: { tools: {} } });
     for (const [name, tool] of Object.entries(tools)) {
       const write = !['workspace_info', 'list_entries', 'search', 'get_entry', 'read_text', 'list_tasks', 'list_contexts', 'get_links'].includes(name);
       server.registerTool(name, {

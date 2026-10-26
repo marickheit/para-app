@@ -76,5 +76,7 @@ Ab Version 0.7 enthalten Sicherungen auch die Berechtigungspräferenz `mcp.v1`
 im Root. Sie aktiviert nach Rückholung keinen Zugang. Die geheime
 Verbindungsdatei darf ausschließlich außerhalb von Arbeitsbereichen und
 Sicherungen liegen und wird nicht mit exportiert. Kopien und Rückholungen
-benötigen eine neue ausdrückliche Freigabe in der App. Das Inhaltsformat bleibt
+benötigen eine neue ausdrückliche Freigabe in der App. Seit 0.7.1 verwaltet die
+App den privaten Verbindungsordner auf macOS/Linux automatisch; er gehört
+weiterhin nicht zum Datenroot oder Sicherungsexport. Das Inhaltsformat bleibt
 Schema 5; MCP ändert weder UUIDs noch das Sicherungsformat.

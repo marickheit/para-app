@@ -2,7 +2,7 @@
   "mcpServers": {
     "para": {
       "command": "/absolute/path/to/node",
-      "args": ["/absolute/path/to/repo/mcp/dist/server.js", "/absolute/path/to/para-mcp-connection.json"]
+      "args": ["/absolute/path/to/repo/mcp/dist/server.js"]
     }
   }
 }

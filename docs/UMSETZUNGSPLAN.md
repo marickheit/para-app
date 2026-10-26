@@ -1,6 +1,6 @@
 # Arbeitsstand
 
-Stand: 26. Oktober 2026 · Version 0.7.0+7.
+Stand: 26. Oktober 2026 · Version 0.7.1+8.
 
 ## Implementiert
 
@@ -12,7 +12,8 @@ Stand: 26. Oktober 2026 · Version 0.7.0+7.
 - Kontextverwaltung, wählbare Arbeitsbereiche, vollständiges Kopieren und gespeicherte Ansicht.
 - Schema 5: vollständige Rückfallkopie vor Migrationen aus 1–4, Root-Sperre und
   Ablehnung unbekannter neuerer Datenformate.
-- Lokaler MCP-Server im Repository: Freigabe in Einstellungen, acht Lese- und
+- Lokaler MCP-Server im Repository: sofortige Zugriffsauswahl und automatische
+  sichere Verbindungsablage auf macOS/Linux, acht Lese- und
   fünf Schreib-Werkzeuge über die laufende App. Revisions-/Hashschutz,
   Schutz offener Editorentwürfe und Widerruf beim Rootwechsel.
 
@@ -22,15 +23,29 @@ Stand: 26. Oktober 2026 · Version 0.7.0+7.
 
 ## Prüfstand
 
-- Codeprüfung ohne Befund; alle 78 Flutter-Tests erfolgreich,
+- MCP 0.7.1: Analyse und alle 80 Flutter-Tests sowie sechs Node-Tests erfolgreich.
+  Nativer Linux-Test prüft automatische Ablage, Zugriffsauswahl, 0700/0600,
+  Symlink-/Dateischutz, Widerruf und alle 13 Werkzeuge über automatische
+  Servererkennung. Nutzdaten ausschließlich in temporären Testroots.
+  Auch der tatsächlich installierte MCP-Server mit allen 13 Werkzeugen geprüft.
+  Neuer nativer macOS-Sandbox-Test steht noch aus.
+
+- Linux x64 auf Omarchy: Release-Build mit Flutter 3.47.8 / Dart 3.13.7
+  erfolgreich; alle 80 Flutter-Tests erfolgreich. SDK-gebundene Pakete im Lockfile
+  angepasst, PDF-Engine auf 0.4.7 für die aktuelle Dart-Kompilierung aktualisiert.
+  Nativer Linux-Integrationstest für Projektinhalte, stabile Links, Aufgabenwechsel,
+  Speichern und Wiederöffnen erfolgreich, ausschließlich mit temporären Testdaten.
+  Build-Ergebnis: `build/linux/x64/release/bundle/`; vollständige native
+  Linux-Bedienprüfung weiterhin offen.
+- Codeprüfung ohne Befund; alle 80 Flutter-Tests erfolgreich,
   einschließlich alter Schemas, unabhängiger Sicherungsrückholung, UUIDs,
   Texten, Dateien, Links, Status, Archiv, Papierkorb, Textversionen und Einstellungen.
-- MCP: echte stdio-Verbindung mit SDK-Client und temporärem Repository; alle
+- Bisheriger macOS-Prüfstand aus 0.7.0: echte stdio-Verbindung mit SDK-Client und temporärem Repository; alle
   13 Werkzeuge zusätzlich über eine signierte native macOS-Release-Testapp geprüft.
   Externer Root über nativen Ordnerdialog ausgewählt, unsichere Verbindungsdateien
   abgelehnt. Details im [MCP-Prüfstand](MCP_UMSETZUNG.md).
-- Alle 13 bisherigen nativen Bedienabläufe nach der Erweiterung geprüft.
-- Unabhängige Architektur-/Sicherheitsreviews nach Korrekturen ohne Blocker.
+- Alle 13 bisherigen nativen macOS-Bedienabläufe für 0.7.0 geprüft.
+- Architektur-/Sicherheitsreviews für den bisherigen Umfang aus 0.7.0 ohne Blocker.
 - Alle Entwicklungs- und Testläufe verwenden getrennte synthetische Daten.
   Kein regulärer Nutzerarbeitsbereich wurde für diese Umsetzung geöffnet.
 
@@ -41,7 +56,7 @@ Stand: 26. Oktober 2026 · Version 0.7.0+7.
 - Wochenrückblick, Projektprüfung, Wiederholungen und externe Dateiverweise sind
   weitere Vorschläge und nicht Teil dieser Umsetzung.
 - Autosave, Live Preview, Mehrfachauswahl und Rückgängig bleiben offen.
-- Linux/Android und Cloud-Sync sind nicht als funktionsfähig geprüft.
+- Vollständige Linux-Bedienprüfung, Android und Cloud-Sync bleiben offen.
 - MCP-Erweiterungen: Projekte anlegen/umwandeln, Verschieben, Dateiimport,
   Archiv-/Papierkorbaktionen, dauerhafte oder eingeschränkte Teilfreigaben.
 

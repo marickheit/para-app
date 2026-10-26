@@ -1,6 +1,6 @@
 # MCP – Umsetzung und Prüfstand
 
-Stand: 26. Oktober 2026 · App 0.7.0+7 · MCP-Paket 0.1.0.
+Stand: 26. Oktober 2026 · App 0.7.1+8 · MCP-Paket 0.1.1.
 Beauftragter Umfang gemäß [Architekturplan](MCP_PLAN.md),
 [Einrichtung und Grenzen](MCP.md).
 
@@ -20,6 +20,16 @@ Das Inhaltsformat bleibt Schema 5. Kein neuer Datenordner und keine Migration
 für MCP. Der MCP-Prozess öffnet selbst keine Datenbank oder Nutzdateien.
 
 ## Prüfnachweise
+
+- Aktuelle Erweiterung: automatische Ablage auf macOS/Linux, sofortige Auswahl
+  Aus/Lesen/Schreiben, sichere native Linux-Dateierzeugung und Serverstart ohne
+  Pfadargument. Analyse, 80 Flutter-Tests und sechs Node-Tests erfolgreich.
+- Nativer Linux-Test: UI-Zustände, Widerruf, 0700/0600, unsichere Datei/Symlink
+  und alle 13 Werkzeuge über automatische Servererkennung erfolgreich.
+  Abschließend denselben Ablauf mit dem installierten MCP-Server erfolgreich geprüft.
+- macOS-Pfaderkennung ist automatisiert geprüft; die neue native Ordnererzeugung
+  im macOS-Sandbox-Build ist auf diesem Linux-Rechner nicht prüfbar.
+  Die folgenden macOS-Nachweise gelten für den bisherigen Umfang aus 0.7.0.
 
 - Flutter-Codeprüfung ohne Befund; 78 Tests der vollständigen Suite einschließlich alter
   Schemas 1–4 und unabhängiger Sicherungsrückholung erfolgreich.
@@ -60,4 +70,5 @@ Kein entfernter/cloudbasierter MCP-Zugang, keine dauerhafte Freigabe über
 App-Neustarts, keine Einzelordnerrechte und keine garantierte dauerhafte
 Genau-einmal-Ausführung. Nach Abbruch einer übermittelten Änderung kann das
 Ergebnis unbekannt sein. Keine automatische Wiederholung oder Rollback-Zusage.
-Linux-/Android-Integration und weitere MCP-Operationen bleiben offen.
+Erneute native macOS-Prüfung der automatischen Ablage, Android-Integration
+und weitere MCP-Operationen bleiben offen.

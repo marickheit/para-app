@@ -1,6 +1,12 @@
 #include "my_application.h"
 
 #include <flutter_linux/flutter_linux.h>
+#include <glib/gstdio.h>
+#include <cerrno>
+#include <cstring>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #ifdef GDK_WINDOWING_X11
 #include <gdk/gdkx.h>
 #endif
@@ -13,6 +19,64 @@ struct _MyApplication {
 };
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
+
+// Credentials are published atomically with owner-only permissions, as on macOS.
+static bool write_mcp_connection(const char* path, const char* content) {
+  struct stat status;
+  if (lstat(path, &status) == 0) {
+    if (!S_ISREG(status.st_mode) || (status.st_mode & 0777) != 0600 ||
+        status.st_uid != geteuid()) return false;
+  } else if (errno != ENOENT) {
+    return false;
+  }
+  g_autofree gchar* folder = g_path_get_dirname(path);
+  g_autofree gchar* temporary = g_build_filename(folder, ".para-mcp-XXXXXX", nullptr);
+  int fd = g_mkstemp_full(temporary, O_WRONLY | O_CLOEXEC, 0600);
+  if (fd < 0) return false;
+  bool success = true;
+  size_t offset = 0, length = strlen(content);
+  while (offset < length) {
+    ssize_t count = write(fd, content + offset, length - offset);
+    if (count < 0 && errno == EINTR) continue;
+    if (count <= 0) { success = false; break; }
+    offset += static_cast<size_t>(count);
+  }
+  if (success) success = fsync(fd) == 0;
+  if (close(fd) != 0) success = false;
+  if (success) success = rename(temporary, path) == 0;
+  unlink(temporary);
+  return success;
+}
+
+static void directory_method_call(FlMethodChannel* channel, FlMethodCall* call,
+                                  gpointer user_data) {
+  const gchar* method = fl_method_call_get_name(call);
+  FlValue* arguments = fl_method_call_get_args(call);
+  FlValue* path_value = arguments && fl_value_get_type(arguments) == FL_VALUE_TYPE_MAP
+      ? fl_value_lookup_string(arguments, "path") : nullptr;
+  const char* path = path_value && fl_value_get_type(path_value) == FL_VALUE_TYPE_STRING
+      ? fl_value_get_string(path_value) : nullptr;
+  bool success = false;
+  if (g_strcmp0(method, "prepareMcpDirectory") == 0 && path) {
+    struct stat status;
+    success = g_mkdir_with_parents(path, 0700) == 0 &&
+        lstat(path, &status) == 0 && S_ISDIR(status.st_mode) &&
+        (status.st_mode & 0777) == 0700 && status.st_uid == geteuid();
+  } else if (g_strcmp0(method, "writeMcpConnection") == 0 && path) {
+    FlValue* content = fl_value_lookup_string(arguments, "content");
+    if (content && fl_value_get_type(content) == FL_VALUE_TYPE_STRING)
+      success = write_mcp_connection(path, fl_value_get_string(content));
+  } else {
+    fl_method_call_respond_not_implemented(call, nullptr);
+    return;
+  }
+  if (success) {
+    fl_method_call_respond_success(call, nullptr, nullptr);
+  } else {
+    fl_method_call_respond_error(call, "mcp-connection",
+        "Sichere lokale MCP-Verbindung konnte nicht eingerichtet werden.", nullptr, nullptr);
+  }
+}
 
 // Called when first Flutter frame received.
 static void first_frame_cb(MyApplication* self, FlView* view) {
@@ -74,6 +138,13 @@ static void my_application_activate(GApplication* application) {
   gtk_widget_realize(GTK_WIDGET(view));
 
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
+
+  g_autoptr(FlStandardMethodCodec) codec = fl_standard_method_codec_new();
+  g_autoptr(FlMethodChannel) directory_channel = fl_method_channel_new(
+      fl_engine_get_binary_messenger(fl_view_get_engine(view)),
+      "para.workspace/directory", FL_METHOD_CODEC(codec));
+  fl_method_channel_set_method_call_handler(directory_channel, directory_method_call,
+                                          nullptr, nullptr);
 
   gtk_widget_grab_focus(GTK_WIDGET(view));
 }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, chmod, symlink, rm, readFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, chmod, symlink, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -70,4 +70,35 @@ test('redirect never forwards credentials and ambiguous writes report unknown ou
   try {
     await assert.rejects(new BridgeClient(path).call('create_note', {}), { code: 'outcome_unknown' });
   } finally { await new Promise(resolve => server.close(resolve)); await rm(dir, { recursive: true }); }
+});
+
+test('server without a path discovers the Linux connection automatically',
+  { skip: process.platform !== 'linux' }, async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'para-mcp-discovery-'));
+  const folder = join(dir, 'para-mcp');
+  await mkdir(folder, { mode: 0o700 });
+  const server = createServer((_, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ result: { bridge_version: 1, write: false } }));
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  await writeFile(join(folder, 'para-mcp-connection.json'), JSON.stringify({
+    version: 1, token, endpoint: `http://127.0.0.1:${server.address().port}/v1/call`,
+    opening_id: 'automatic-test',
+  }), { mode: 0o600 });
+  const client = new Client({ name: 'automatic-test', version: '1.0.0' });
+  try {
+    await client.connect(new StdioClientTransport({ command: process.execPath,
+      args: [fileURLToPath(new URL('../dist/server.js', import.meta.url))],
+      env: { ...process.env, XDG_STATE_HOME: dir },
+    }));
+    assert.equal((await client.listTools()).tools.length, 13);
+    const result = await client.callTool({ name: 'workspace_info', arguments: {} });
+    assert.notEqual(result.isError, true);
+    assert.equal(result.structuredContent.write, false);
+  } finally {
+    await client.close();
+    await new Promise(resolve => server.close(resolve));
+    await rm(dir, { recursive: true });
+  }
 });

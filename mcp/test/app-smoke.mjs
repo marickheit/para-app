@@ -5,7 +5,9 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 const client = new Client({ name: 'para-app-e2e', version: '1.0.0' });
 const transport = new StdioClientTransport({ command: process.execPath,
-  args: [fileURLToPath(new URL('../dist/server.js', import.meta.url)), process.argv[2]] });
+  env: { ...process.env },
+  args: [process.env.PARA_MCP_SERVER ?? fileURLToPath(new URL('../dist/server.js', import.meta.url)),
+    ...(process.argv[2] ? [process.argv[2]] : [])] });
 async function call(name, args = {}) {
   const value = await client.callTool({ name, arguments: args });
   assert.notEqual(value.isError, true, JSON.stringify(value.content));

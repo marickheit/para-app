@@ -25,7 +25,11 @@ jeweilige Ergebnis und die App-Öffnung gebunden.
 
 Die Freigabepräferenz `mcp.v1` liegt versioniert in `workspace_settings` und
 aktiviert keinen Zugang. Token, Port und Öffnungskennung sind flüchtig; die
-lokale 0600-Verbindungsdatei liegt außerhalb des Roots. Rootwechsel widerruft
+lokale 0600-Verbindungsdatei liegt automatisch in einem privaten 0700-Ordner
+außerhalb des Roots. Linux nutzt XDG State, macOS den stabilen App-Container;
+App und stdio-Server verwenden denselben Plattformstandard. Explizite alte
+Dateipfade bleiben im Server unterstützt. Native Schreiber veröffentlichen die
+Datei atomar und lehnen Symlinks, fremde Eigentümer und unsichere Bestandsdateien ab. Rootwechsel widerruft
 Verbindungen vor der Übernahme und wartet laufende Schreiboperationen ab.
 [Bedienung und Grenzen](MCP.md).
 

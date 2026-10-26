@@ -1,8 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import '../services/mcp_bridge.dart';
-import '../services/workspace_manager.dart';
 import 'common.dart';
 
 class McpSettings extends StatefulWidget {
@@ -13,7 +11,7 @@ class McpSettings extends StatefulWidget {
 }
 
 class _McpSettingsState extends State<McpSettings> {
-  bool _write = false, _archive = false, _busy = true;
+  bool _archive = false, _busy = true;
   bool _supported = true;
   @override
   void initState() {
@@ -32,7 +30,6 @@ class _McpSettingsState extends State<McpSettings> {
       if (saved != null) {
         final value = jsonDecode(saved) as Map<String, dynamic>;
         if (value['version'] != 1) throw const FormatException();
-        _write = value['write'] == true;
         _archive = value['archive'] == true;
       }
     } catch (_) {
@@ -47,16 +44,16 @@ class _McpSettingsState extends State<McpSettings> {
     super.dispose();
   }
 
-  Future<void> _enable() async {
+  Future<void> _setAccess(int access) async {
     setState(() => _busy = true);
     try {
-      final chosen = await NativeWorkspaceDirectoryAccess().choose();
-      if (chosen == null) return;
-      await widget.bridge.enable(
-        Directory(chosen.path),
-        write: _write,
-        archive: _archive,
-      );
+      await widget.bridge.disable();
+      if (access != 0) {
+        await widget.bridge.enableAutomatic(
+          write: access == 2,
+          archive: _archive,
+        );
+      }
     } catch (error) {
       if (mounted) showMessage(context, errorLabel(error));
     } finally {
@@ -79,17 +76,25 @@ class _McpSettingsState extends State<McpSettings> {
           'Gib einem lokalen MCP-Client Zugriff auf deine gespeicherten Inhalte. Der Client kann sie an seinen KI-Anbieter übermitteln. Die Freigabe endet beim Beenden der App oder Wechseln des Arbeitsbereichs.',
         ),
         const SizedBox(height: 12),
-        DropdownButtonFormField<bool>(
-          key: const ValueKey('mcp-permission'),
-          initialValue: _write,
+        InputDecorator(
           decoration: const InputDecoration(labelText: 'Zugriff'),
-          items: const [
-            DropdownMenuItem(value: false, child: Text('Nur lesen')),
-            DropdownMenuItem(value: true, child: Text('Lesen und Schreiben')),
-          ],
-          onChanged: _busy || bridge.enabled
-              ? null
-              : (v) => setState(() => _write = v!),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<int>(
+              key: const ValueKey('mcp-permission'),
+              value: bridge.enabled ? (bridge.canWrite ? 2 : 1) : 0,
+              isExpanded: true,
+              items: const [
+                DropdownMenuItem(value: 0, child: Text('Aus')),
+                DropdownMenuItem(value: 1, child: Text('Nur lesen')),
+                DropdownMenuItem(value: 2, child: Text('Lesen und Schreiben')),
+              ],
+              onChanged: _busy || !_supported
+                  ? null
+                  : (value) {
+                      if (value != null) _setAccess(value);
+                    },
+            ),
+          ),
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
@@ -115,7 +120,7 @@ class _McpSettingsState extends State<McpSettings> {
             bridge.canWrite ? 'Aktiv: Lesen und Schreiben' : 'Aktiv: Nur lesen',
           ),
           const SizedBox(height: 8),
-          SelectableText('Verbindungsdatei: ${bridge.connectionPath}'),
+          const Text('Die Verbindung wird automatisch lokal verwaltet.'),
           const SizedBox(height: 8),
           Text(
             'Letzter erfolgreicher Aufruf: ${bridge.lastAction ?? 'Noch keiner'}',
@@ -136,16 +141,12 @@ class _McpSettingsState extends State<McpSettings> {
             child: const Text('Zugriff sofort widerrufen'),
           ),
         ] else ...[
-          FilledButton(
-            key: const ValueKey('mcp-enable'),
-            onPressed: _busy || !_supported ? null : _enable,
-            child: const Text('Freigeben und Verbindungsdatei ablegen …'),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Wähle einen lokalen, nicht synchronisierten Ordner außerhalb von Repository, Arbeitsbereichen und Sicherungen. Die Datei enthält einen geheimen Zugang. Nach neuer Freigabe den MCP-Client neu verbinden.',
-          ),
+          const Text('Zugriff aus'),
         ],
+        const SizedBox(height: 10),
+        const Text(
+          'Beim Einschalten wird die Verbindung automatisch eingerichtet. Nach erneuter Freigabe den MCP-Client neu verbinden. Nach App-Neustart ist der Zugriff aus.',
+        ),
         if (_busy) const LinearProgressIndicator(),
       ],
     );

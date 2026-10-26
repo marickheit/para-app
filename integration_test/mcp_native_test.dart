@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:para_workspace/data/local_workspace_repository.dart';
 import 'package:para_workspace/services/mcp_bridge.dart';
+import 'package:para_workspace/services/mcp_connection.dart';
 import 'package:para_workspace/services/workspace_manager.dart';
 import 'package:para_workspace/ui/mcp_settings.dart';
 
@@ -30,8 +31,11 @@ void main() {
       );
     }
     final repo = await LocalWorkspaceRepository.open(dataRoot);
-    final folder = await Directory('${temp.path}/connection').create();
-    final bridge = McpBridge(repo, repo.root);
+    final folder = Directory('${temp.path}/para-mcp');
+    await mcpDirectoryChannel.invokeMethod<void>('prepareMcpDirectory', {
+      'path': folder.path,
+    });
+    final bridge = McpBridge(repo, repo.root, automaticDirectory: folder);
     try {
       final credentialPath = '${folder.path}/para-mcp-connection.json';
       final link = Link(credentialPath);
@@ -42,18 +46,35 @@ void main() {
       await File(credentialPath).writeAsString('unsafe');
       await expectLater(bridge.enable(folder, write: true), throwsA(anything));
       await File(credentialPath).delete();
-      await bridge.enable(folder, write: true);
-      final path = bridge.connectionPath!;
-      // Deliberately emit only the path, never the token. The external test driver
-      // runs mcp/test/app-smoke.mjs and creates this marker on success.
-      // ignore: avoid_print
-      print('MCP_NATIVE_READY $path');
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(body: McpSettings(bridge: bridge)),
         ),
       );
       await tester.pumpAndSettle();
+      expect(find.text('Zugriff aus'), findsOneWidget);
+      Future<void> selectAccess(String label) async {
+        await tester.tap(find.byKey(const ValueKey('mcp-permission')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(label).last);
+        await tester.pumpAndSettle();
+      }
+
+      await selectAccess('Nur lesen');
+      expect(bridge.enabled, true);
+      expect(bridge.canWrite, false);
+      final firstPath = bridge.connectionPath!;
+      expect((await File(firstPath).stat()).mode & 0x1ff, 0x180);
+      expect((await folder.stat()).mode & 0x1ff, 0x1c0);
+      await selectAccess('Aus');
+      expect(await File(firstPath).exists(), false);
+      await selectAccess('Lesen und Schreiben');
+      expect(bridge.canWrite, true);
+      final path = bridge.connectionPath!;
+      // Deliberately emit only the path, never the token. The external test driver
+      // runs mcp/test/app-smoke.mjs and creates this marker on success.
+      // ignore: avoid_print
+      print('MCP_NATIVE_READY $path');
       expect(find.text('Aktiv: Lesen und Schreiben'), findsOneWidget);
       final done = File('$path.done');
       final deadline = DateTime.now().add(const Duration(seconds: 90));
@@ -71,8 +92,13 @@ void main() {
             .length,
         1,
       );
-      await bridge.disable();
+      await tester.tap(find.byKey(const ValueKey('mcp-disable')));
+      await tester.pumpAndSettle();
+      expect(bridge.enabled, false);
       expect(await File(path).exists(), false);
+      final reopened = McpBridge(repo, repo.root, automaticDirectory: folder);
+      expect(reopened.enabled, false);
+      reopened.dispose();
       await tester.pumpWidget(const SizedBox.shrink());
     } finally {
       await bridge.disable();

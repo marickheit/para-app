@@ -1,7 +1,8 @@
 # P.A.R.A. Workspace
 
-Lokale Flutter-App 0.7 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS.
-Linux-/Android-Gerüste sind vorhanden; ihre Builds und Bedienung sind noch nicht geprüft.
+Lokale Flutter-App 0.7.1 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS.
+Linux-x64-Release-Build und ein nativer Bedientest sind geprüft; die vollständige
+Linux-Bedienung und Android sind noch nicht geprüft.
 
 [Quellcode auf GitHub](https://github.com/marickheit/para-app)
 
@@ -93,7 +94,9 @@ Linux-/Android-Gerüste sind vorhanden; ihre Builds und Bedienung sind noch nich
 ## KI-Anbindung (MCP)
 
 Einstellungen → **KI-Anbindung** gibt den geöffneten Arbeitsbereich für einen
-lokalen KI-Client frei: nur lesen oder lesen und schreiben, optional Archiv lesen.
+lokalen KI-Client frei: „Aus“, „Nur lesen“ oder „Lesen und Schreiben“ wählen,
+optional vorher Archiv lesen erlauben. Einschalten aktiviert den Zugriff sofort;
+die App verwaltet die Verbindung auf macOS und Linux ohne Dateidialog.
 Die Freigabe endet beim Beenden oder Rootwechsel und ist jederzeit widerrufbar.
 Der MCP-Server liegt unter `mcp/`; Node.js ab 22 erforderlich.
 [Einrichtung, Werkzeuge und Grenzen](docs/MCP.md).
@@ -129,6 +132,26 @@ flutter build macos --release
 ```
 
 Ergebnis: `build/macos/Build/Products/Release/PARA.app`.
+
+Unter Linux werden Flutter sowie Clang, CMake, Ninja, pkg-config und die
+GTK-3-Entwicklungsbibliotheken benötigt. Geprüft mit Flutter 3.47.8 / Dart 3.13.7
+auf Omarchy (x64). Das Lockfile enthält die dazu passenden SDK-Pakete und
+`pdfrx_engine` 0.4.7 für die Kompilierung mit diesem Dart-SDK.
+
+```sh
+flutter pub get
+flutter build linux --release
+./build/linux/x64/release/bundle/para_workspace
+```
+
+Zum Weitergeben den gesamten Ordner `build/linux/x64/release/bundle/` mit
+`lib/` und `data/` zusammenhalten. Für manuelle Entwicklungsstarts einen
+getrennten Datenordner verwenden:
+
+```sh
+flutter run -d linux --dart-define=PARA_DATA_DIR="/tmp/para-linux-dev"
+```
+
 Notiztexte liegen unter `notes/`, importierte Dateien unter `files/`;
 `workspace.sqlite` speichert Struktur und Metadaten. Den tatsächlichen Datenpfad
 zeigt „Daten & Sicherung“. [Datensicherung](docs/SICHERUNG.md).

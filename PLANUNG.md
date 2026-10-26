@@ -1,6 +1,6 @@
 # P.A.R.A. – Produktstand
 
-Stand: 26. Oktober 2026 · lokale Mac-App 0.7.
+Stand: 26. Oktober 2026 · lokale App 0.7.1 für macOS und Linux.
 
 ## Ziel und Grundregeln
 
@@ -64,7 +64,8 @@ Stand: 26. Oktober 2026 · lokale Mac-App 0.7.
   automatischer Rückfallkopie. Neuere unbekannte Formate ablehnen, aktuellen
   Mehrprozess-Zugriff sperren; unvollständige Übernahmen nicht aktivieren.
 
-- **MCP:** Lokaler stdio-Server unter `mcp/`, Freigabe in Einstellungen; Suche,
+- **MCP:** Lokaler stdio-Server unter `mcp/`, sofortige Zugriffsauswahl in Einstellungen
+  und automatische sichere Verbindungsablage auf macOS/Linux; Suche,
   Lesen und gezielte Notiz-/Aufgabenänderungen über die laufende App. Rechte,
   Konflikt- und Editorschutz; kein Zugriff auf Papierkorb oder endgültiges Löschen.
   [Einrichtung und Grenzen](docs/MCP.md).
@@ -76,7 +77,8 @@ Stand: 26. Oktober 2026 · lokale Mac-App 0.7.
   unbestätigte Vorschläge, keine bereits umgesetzten Funktionen.
 - Wiederkehrende Aufgaben, externe Dateiverweise.
 - Große Backups, selektive Verfügbarkeit, Cloud-Anbieter, Konfliktauflösung.
-- Linux-/Android-Build und native Bedienung auf diesen Systemen noch nicht geprüft.
+- Linux-x64-Release-Build geprüft; vollständige native Linux-Bedienung und
+  Android-Build noch offen.
 
 [Bedienung](README.md) · [UI-Anforderungen](docs/UI_UMZUG.md) ·
 [Umsetzungsplan und Prüfungen](docs/UMSETZUNGSPLAN.md) ·
