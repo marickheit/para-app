@@ -1,6 +1,6 @@
 # MCP – Umsetzung und Prüfstand
 
-Stand: 26. Oktober 2026 · App 0.7.1+8 · MCP-Paket 0.1.1.
+Stand: 26. Oktober 2026 · App 0.7.2+9 · MCP-Paket 0.2.0.
 Beauftragter Umfang gemäß [Architekturplan](MCP_PLAN.md),
 [Einrichtung und Grenzen](MCP.md).
 
@@ -9,7 +9,7 @@ Beauftragter Umfang gemäß [Architekturplan](MCP_PLAN.md),
 1. [x] Authentifizierte lokale Bridge, sichere Verbindungsdatei und macOS-Release-Berechtigung.
 2. [x] Konsistente Repository-Snapshots und Schutz sämtlicher Editorentwürfe.
 3. [x] Acht Lese-Werkzeuge mit Filtern, Suche, Verweisen und Seitencursor.
-4. [x] Fünf Schreib-Werkzeuge mit Revision/Hash und Wiederholungsschutz.
+4. [x] Sechs Schreib-Werkzeuge mit Revision/Hash und Wiederholungsschutz.
 5. [x] Einstellungen zur Freigabe, Widerruf und eigenständiges stdio-Paket in `mcp/`.
 6. [x] Vertrags-, Sicherheits-, Konkurrenz-, Rückholungs- und echte stdio-Prüfungen.
 7. [x] Signierte macOS-Release-Testapp, Bedienungsdoku und unabhängige Code-Reviews.
@@ -20,6 +20,15 @@ Das Inhaltsformat bleibt Schema 5. Kein neuer Datenordner und keine Migration
 für MCP. Der MCP-Prozess öffnet selbst keine Datenbank oder Nutzdateien.
 
 ## Prüfnachweise
+
+- Projektanlage 0.7.2: Pflichtangaben und Kalenderdaten an App/MCP-Grenzen,
+  Nur-Lesen-Schutz, parallele doppelte Requests, Text/Links, Projektaufgaben
+  und Wiederöffnen geprüft. Analyse ohne Befund, alle 82 Flutter-Tests und sechs
+  Node-Tests erfolgreich. Echter stdio-Client gegen native Linux-Testapp prüft
+  alle 14 Werkzeuge einschließlich Projektanlage; ausschließlich temporäre Daten.
+  Linux-Release gebaut und lokal installiert, einschließlich MCP 0.2.0;
+  installierten Server erneut nativ mit allen 14 Werkzeugen geprüft.
+  Skill-Format validiert und bestehender lokaler Repository-Verweis geprüft.
 
 - Aktuelle Erweiterung: automatische Ablage auf macOS/Linux, sofortige Auswahl
   Aus/Lesen/Schreiben, sichere native Linux-Dateierzeugung und Serverstart ohne

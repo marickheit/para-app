@@ -73,6 +73,8 @@ Anbieter gelangen; dies vor Freigabe klar anzeigen.
 
 ## Werkzeuge
 
+Projektanlage seit 0.7.2 gemäß [Erweiterungsplan](MCP_PROJEKTE_PLAN.md).
+
 Alle Antworten: strukturierte JSON-Daten mit UUID, Art, Titel, Ablage, Revision,
 Status und `para://entry/<UUID>`; Suche liefert begrenzte Ausschnitte,
 `read_text` gezielt angeforderten Text. Datum als
@@ -81,8 +83,8 @@ Kalenderdatum für Projekttermine; Zeitstempel mit Zeitzone. Keine internen Pfad
 | Stufe | Werkzeuge | Vertrag |
 | --- | --- | --- |
 | 1: Lesen | `workspace_info`, `list_entries`, `search`, `get_entry`, `read_text`, `list_tasks`, `list_contexts`, `get_links` | Pagination, begrenzte Textausschnitte, Filter und vorhandene Suchgrenzen; Archiv nur mit Freigabe und explizitem Filter |
-| 2: Schreiben | `create_note`, `create_task`, `update_text`, `update_task`, `set_task_state` | Einzeloperationen mit expliziten Feldern; vorhandene Werte nicht durch fehlende Parameter leeren |
-| später | Projekte anlegen/umwandeln, Verschieben, Archivieren, Papierkorb, Wiederherstellen, Dateiimport | Separat entwerfen und freigeben; noch kein Umfang der ersten Version |
+| 2: Schreiben | `create_project`, `create_note`, `create_task`, `update_text`, `update_task`, `set_task_state` | Einzeloperationen mit expliziten Feldern; vorhandene Werte nicht durch fehlende Parameter leeren |
+| später | Vorhandene Inhalte in Projekte umwandeln, Verschieben, Archivieren, Papierkorb, Wiederherstellen, Dateiimport | Separat entwerfen und freigeben; noch kein Umfang der ersten Version |
 
 Kein SQL, beliebiger Dateipfad, Shellzugriff, Öffnen externer URLs, endgültiges
 Löschen, Backup-Rückspielen oder Rootwechsel als Tool. Binäranhänge zunächst nur

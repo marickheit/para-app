@@ -1,0 +1,6 @@
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "para"
+      description: "Lokaler Zugriff auf die laufende P.A.R.A.-App"
+      transport: "stdio"

@@ -1,6 +1,6 @@
 # P.A.R.A. Workspace
 
-Lokale Flutter-App 0.7.1 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS.
+Lokale Flutter-App 0.7.2 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS.
 Linux-x64-Release-Build und ein nativer Bedientest sind geprüft; die vollständige
 Linux-Bedienung und Android sind noch nicht geprüft.
 
@@ -97,6 +97,8 @@ Einstellungen → **KI-Anbindung** gibt den geöffneten Arbeitsbereich für eine
 lokalen KI-Client frei: „Aus“, „Nur lesen“ oder „Lesen und Schreiben“ wählen,
 optional vorher Archiv lesen erlauben. Einschalten aktiviert den Zugriff sofort;
 die App verwaltet die Verbindung auf macOS und Linux ohne Dateidialog.
+Über MCP lassen sich auch Projekte mit Titel, konkretem Ergebnis und
+Fälligkeitsdatum anlegen, anschließend Notizen und Aufgaben darin.
 Die Freigabe endet beim Beenden oder Rootwechsel und ist jederzeit widerrufbar.
 Der MCP-Server liegt unter `mcp/`; Node.js ab 22 erforderlich.
 [Einrichtung, Werkzeuge und Grenzen](docs/MCP.md).

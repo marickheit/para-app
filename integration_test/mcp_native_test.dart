@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:para_workspace/data/local_workspace_repository.dart';
+import 'package:para_workspace/domain/workspace.dart';
 import 'package:para_workspace/services/mcp_bridge.dart';
 import 'package:para_workspace/services/mcp_connection.dart';
 import 'package:para_workspace/services/workspace_manager.dart';
@@ -91,6 +92,21 @@ void main() {
             .where((e) => e.title == 'MCP integration')
             .length,
         1,
+      );
+      final entries = await repo.getEntries();
+      final project = entries.singleWhere((e) => e.title == 'MCP project');
+      expect(project.kind, EntryKind.project);
+      expect(project.section, ParaSection.projects);
+      expect(project.parentId, isNull);
+      expect(project.goal, 'Verified release');
+      expect(project.dueDate, DateTime(2028, 2, 29));
+      expect(
+        (await repo.readSnapshot(project.id)).note.text,
+        'Project details',
+      );
+      expect(
+        entries.singleWhere((e) => e.title == 'MCP task').parentId,
+        project.id,
       );
       await tester.tap(find.byKey(const ValueKey('mcp-disable')));
       await tester.pumpAndSettle();

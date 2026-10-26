@@ -92,7 +92,7 @@ test('server without a path discovers the Linux connection automatically',
       args: [fileURLToPath(new URL('../dist/server.js', import.meta.url))],
       env: { ...process.env, XDG_STATE_HOME: dir },
     }));
-    assert.equal((await client.listTools()).tools.length, 13);
+    assert.equal((await client.listTools()).tools.length, 14);
     const result = await client.callTool({ name: 'workspace_info', arguments: {} });
     assert.notEqual(result.isError, true);
     assert.equal(result.structuredContent.write, false);

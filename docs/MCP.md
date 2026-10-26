@@ -1,6 +1,6 @@
 # KI-Anbindung über MCP
 
-Stand: Version 0.7.1. MCP läuft lokal mit der geöffneten App auf macOS und Linux.
+Stand: Version 0.7.2. MCP läuft lokal mit der geöffneten App auf macOS und Linux.
 Der Server liegt im Repository unter `mcp/`. Er öffnet selbst keine Nutzdaten.
 
 ## Einrichten
@@ -53,6 +53,34 @@ Die Freigabe umfasst den gesamten aktiven Bestand des geöffneten Arbeitsbereich
 nicht einzelne Ordner. Keine zusätzliche Bestätigung jeder Aktion in der App.
 Der KI-Client kann gelesene Inhalte an seinen Anbieter übermitteln.
 
+## Codex-Skill
+
+Der versionierbare Skill liegt unter [skills/para-workspace](../skills/para-workspace/SKILL.md).
+Er beschreibt Suche, Lesen und gezielte Änderungen über MCP einschließlich
+Projekt-/Aufgabenregeln, Revisionsschutz und Verbindungsfehlern. Er benötigt den
+eingerichteten Server `para` und funktioniert auf macOS/Linux ohne Rechnerpfade
+oder Zugangsschlüssel im Skill.
+
+Im Repository-Root lokal installieren, sofern dort noch kein gleichnamiger Skill liegt:
+
+```sh
+mkdir -p "$HOME/.codex/skills"
+ln -s "$PWD/skills/para-workspace" "$HOME/.codex/skills/para-workspace"
+```
+
+Der Verweis verwendet die Repositoryfassung direkt; den Checkout deshalb am
+gleichen Ort behalten. Aufruf über `$para-workspace`, etwa „Suche meine Notiz
+Urlaub“, oder automatische Auswahl bei passenden P.A.R.A.-Aufträgen. Falls der
+Skill in einer laufenden Sitzung nicht erscheint, Codex neu starten.
+
+Prüfung: Format und MCP-Abhängigkeitsmetadaten validiert; drei unabhängige
+Subagenten haben die Anleitung in zwei Runden mit synthetischen Werkzeugantworten
+für Lese-, Schreib- und Fehlerfälle durchgespielt. Gefundene Unklarheiten sind
+korrigiert; in Runde zwei keine verbleibenden konkreten Befunde. Diese
+Verhaltenssimulation ersetzt keinen Live-Test gegen einen Nutzerarbeitsbereich.
+Die lokale Installation wurde zusätzlich über Codex `skills/list` außerhalb des
+Repositories als aktivierter Benutzer-Skill samt MCP-Abhängigkeit erkannt.
+
 ## Beenden, Wechseln und Widerrufen
 
 Die App muss geöffnet bleiben. In den Einstellungen lässt sich der Zugang sofort
@@ -82,9 +110,18 @@ ungültige Verbindungsdatei übrig bleiben; eine neue Freigabe ersetzt sie siche
 | Schreiben | Zweck |
 | --- | --- |
 | `create_note`, `create_task` | Im aktiven Bestand anlegen |
+| `create_project` | Projekt mit Ergebnis und Termin unter Projekte anlegen |
 | `update_text` | Text mit Revision und Hash ersetzen |
 | `update_task` | Explizite Aufgabenfelder ändern |
 | `set_task_state` | Aufgabenstatus mit Revisionsprüfung setzen |
+
+`create_project` benötigt `title`, ein konkretes Ergebnis als `goal`,
+`due_date` als gültiges Kalenderdatum `YYYY-MM-DD` und `request_id`; `text` ist
+optional. Projekte stehen immer auf oberster Ebene unter Projekte. `parent_id`,
+`section` und Aufgabenstatus sind für dieses Werkzeug nicht erlaubt. Aufgaben im
+neuen Projekt mit dessen zurückgegebener ID als `parent_id` anlegen. Fehlen Ergebnis
+oder Termin, muss der Assistent nachfragen. Vorhandene Inhalte in Projekte
+umwandeln bleibt eine App-Aktion.
 
 Ausgelassene Aufgabenfelder bleiben erhalten. `null` leert Zeit beziehungsweise
 Energie, `context_ids: []` leert Kontexte. Statuswerte: `inbox`, `next`, `waiting`,

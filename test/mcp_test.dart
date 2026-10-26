@@ -132,6 +132,128 @@ void main() {
       expect((await permitted.call('list_entries', {}))['total'], 1);
     },
   );
+  test(
+    'create project preserves details, links and child grouping after reopen',
+    () async {
+      final linked = await note('Reference');
+      final args = {
+        'title': 'Release',
+        'goal': 'Published release',
+        'due_date': '2028-02-29',
+        'text': markdownLink(linked),
+        'request_id': 'project-create',
+      };
+      final results = await Future.wait([
+        access.call('create_project', args),
+        access.call('create_project', args),
+      ]);
+      expect(results[0], results[1]);
+      final project = results.first;
+      expect(project['kind'], 'project');
+      expect(project['section'], 'projects');
+      expect(project['parent_id'], isNull);
+      expect(project['goal'], args['goal']);
+      expect(project['due_date'], args['due_date']);
+      expect(
+        (await access.call('read_text', {'id': project['id']}))['text'],
+        args['text'],
+      );
+      expect(
+        (await access.call('get_links', {
+          'id': project['id'],
+          'direction': 'outgoing',
+        }))['total'],
+        1,
+      );
+      final child = await access.call('create_task', {
+        'title': 'Publish',
+        'parent_id': project['id'],
+        'state': 'next',
+        'request_id': 'project-child',
+      });
+      expect(child['project_id'], project['id']);
+      expect(
+        (await access.call('list_tasks', {
+          'project_id': project['id'],
+        }))['total'],
+        1,
+      );
+      expect(
+        (await access.call('list_entries', {'kind': 'project'}))['total'],
+        1,
+      );
+      access.revoke();
+      await repo.close();
+      repo = await LocalWorkspaceRepository.open(
+        Directory('${temp.path}/workspace'),
+      );
+      access = McpAccessService(repo, canWrite: true);
+      final reopened = await access.call('get_entry', {'id': project['id']});
+      expect(reopened['link'], project['link']);
+      expect(reopened['goal'], args['goal']);
+      expect(reopened['due_date'], args['due_date']);
+      expect(
+        (await access.call('read_text', {'id': project['id']}))['text'],
+        args['text'],
+      );
+      expect(
+        (await access.call('list_tasks', {
+          'project_id': project['id'],
+        }))['total'],
+        1,
+      );
+    },
+  );
+  test(
+    'project creation rejects incomplete dates, location, status and read-only access',
+    () async {
+      final valid = <String, dynamic>{
+        'title': 'Project',
+        'goal': 'Result',
+        'due_date': '2026-12-01',
+        'request_id': 'invalid-project',
+      };
+      for (final field in ['title', 'goal', 'due_date']) {
+        final missing = {...valid}..remove(field);
+        expect(
+          () => access.call('create_project', missing),
+          code('invalid_input'),
+        );
+        expect(
+          () => access.call('create_project', {...valid, field: ' '}),
+          code('invalid_input'),
+        );
+      }
+      for (final date in [
+        '2026-02-29',
+        '2026-04-31',
+        '2026-13-01',
+        '2026-00-01',
+        '0000-01-01',
+        '2026-1-01',
+        '2026-01-01T12:00:00Z',
+      ]) {
+        expect(
+          () => access.call('create_project', {...valid, 'due_date': date}),
+          code('invalid_input'),
+        );
+      }
+      for (final extra in [
+        {'parent_id': '00000000-0000-4000-8000-000000000001'},
+        {'section': 'inbox'},
+        {'state': 'someday'},
+      ]) {
+        expect(
+          () => access.call('create_project', {...valid, ...extra}),
+          code('invalid_input'),
+        );
+      }
+      final readonly = McpAccessService(repo, canWrite: false);
+      expect(() => readonly.call('create_project', valid), code('read_only'));
+      readonly.revoke();
+      expect(await repo.getEntries(), isEmpty);
+    },
+  );
   test('task filters and patch preserve omitted fields, null clears', () async {
     final context = await repo.saveContext(name: 'Computer', color: 0xff123456);
     final created = await access.call('create_task', {

@@ -26,6 +26,7 @@ const mcpReadTools = {
 const mcpWriteTools = {
   'create_note',
   'create_task',
+  'create_project',
   'update_text',
   'update_task',
   'set_task_state',
@@ -288,7 +289,9 @@ class McpAccessService {
             }
           }
           try {
-            if (tool == 'create_note' || tool == 'create_task') {
+            if (tool == 'create_note' ||
+                tool == 'create_task' ||
+                tool == 'create_project') {
               if (a['parent_id'] != null) {
                 final parent = require(a['parent_id'] as String);
                 if (!parent.kind.isContainer || isArchived(parent, all)) {
@@ -300,10 +303,18 @@ class McpAccessService {
               }
               _check();
               final created = await repository.create(
-                kind: tool == 'create_note' ? EntryKind.note : EntryKind.task,
+                kind: switch (tool) {
+                  'create_note' => EntryKind.note,
+                  'create_project' => EntryKind.project,
+                  _ => EntryKind.task,
+                },
                 draft: EntryDraft(
                   title: a['title'] as String,
                   body: a['text'] as String? ?? '',
+                  goal: a['goal'] as String? ?? '',
+                  dueDate: a['due_date'] == null
+                      ? null
+                      : DateTime.parse(a['due_date'] as String),
                   taskState: TaskState.values.byName(
                     a['state'] as String? ?? 'inbox',
                   ),
@@ -314,7 +325,8 @@ class McpAccessService {
                       : EnergyLevel.values.byName(a['energy'] as String),
                 ),
                 section: ParaSection.values.byName(
-                  a['section'] as String? ?? 'inbox',
+                  a['section'] as String? ??
+                      (tool == 'create_project' ? 'projects' : 'inbox'),
                 ),
                 parentId: a['parent_id'] as String?,
               );
@@ -520,6 +532,7 @@ void _validate(String tool, Map<String, dynamic> a) {
     },
     'list_contexts' => {...page},
     'get_links' => {...page, 'id', 'direction'},
+    'create_project' => {'title', 'goal', 'due_date', 'text', 'request_id'},
     'create_note' => {...location, 'title', 'text', 'request_id'},
     'create_task' => {...location, ...task, 'title', 'text', 'request_id'},
     'update_text' => {
@@ -544,6 +557,7 @@ void _validate(String tool, Map<String, dynamic> a) {
     'get_entry': ['id'],
     'read_text': ['id'],
     'get_links': ['id', 'direction'],
+    'create_project': ['title', 'goal', 'due_date', 'request_id'],
     'create_note': ['title', 'request_id'],
     'create_task': ['title', 'request_id'],
     'update_text': [
@@ -595,9 +609,18 @@ void _validate(String tool, Map<String, dynamic> a) {
     } else {
       if (v is! String || v.length > (k == 'text' ? 1048576 : 4096)) invalid();
       if (k == 'text' && utf8.encode(v as String).length > 1048576) invalid();
-      if ({'title', 'query', 'request_id'}.contains(k) &&
+      if ({'title', 'goal', 'query', 'request_id'}.contains(k) &&
           (v as String).trim().isEmpty) {
         invalid();
+      }
+      if (k == 'due_date') {
+        final date = DateTime.tryParse(v as String);
+        if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(v) ||
+            date == null ||
+            date.year < 1 ||
+            date.toIso8601String().split('T').first != v) {
+          invalid();
+        }
       }
       if ({'id', 'parent_id', 'project_id'}.contains(k) &&
           entryIdFromLink('para://entry/$v') == null) {

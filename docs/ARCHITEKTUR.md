@@ -22,6 +22,9 @@ Konsistente Snapshots bündeln Text, Hash und Revision; der Editor übernimmt de
 tatsächlich gespeicherten Snapshot. `mcp_editor_guard.dart` koordiniert
 Editorentwürfe, Laden/Speichern und MCP-Änderungen. Seitencursor sind an das
 jeweilige Ergebnis und die App-Öffnung gebunden.
+`create_project` nutzt die bestehende Repository-Anlage mit Ergebnis und gültigem
+Kalenderdatum; Ziel ist fest die oberste Projektebene. App und MCP prüfen die
+Pflichtangaben unabhängig. Keine Änderung an Schema 5 oder Sicherungsformat.
 
 Die Freigabepräferenz `mcp.v1` liegt versioniert in `workspace_settings` und
 aktiviert keinen Zugang. Token, Port und Öffnungskennung sind flüchtig; die

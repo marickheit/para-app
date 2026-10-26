@@ -1,6 +1,6 @@
 # P.A.R.A. – Produktstand
 
-Stand: 26. Oktober 2026 · lokale App 0.7.1 für macOS und Linux.
+Stand: 26. Oktober 2026 · lokale App 0.7.2 für macOS und Linux.
 
 ## Ziel und Grundregeln
 
@@ -66,7 +66,8 @@ Stand: 26. Oktober 2026 · lokale App 0.7.1 für macOS und Linux.
 
 - **MCP:** Lokaler stdio-Server unter `mcp/`, sofortige Zugriffsauswahl in Einstellungen
   und automatische sichere Verbindungsablage auf macOS/Linux; Suche,
-  Lesen und gezielte Notiz-/Aufgabenänderungen über die laufende App. Rechte,
+  Lesen, Projektanlage mit Ergebnis/Termin und gezielte Notiz-/Aufgabenänderungen
+  über die laufende App. Rechte,
   Konflikt- und Editorschutz; kein Zugriff auf Papierkorb oder endgültiges Löschen.
   [Einrichtung und Grenzen](docs/MCP.md).
 

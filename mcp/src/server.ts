@@ -25,6 +25,7 @@ export const tools = {
   list_tasks: { description: 'List tasks with project grouping metadata and the same context/time/energy filters as the app.', schema: z.object({ ...page, ...location, state: state.optional(), project_id: id.optional(), context_ids: z.array(id).max(100).optional(), all_contexts: z.boolean().optional(), max_minutes: z.number().int().positive().optional(), max_energy: energy.optional(), include_unspecified: z.boolean().optional() }).strict() },
   list_contexts: { description: 'Read context definitions including inactive contexts.', schema: z.object(page).strict() },
   get_links: { description: 'List permitted incoming or outgoing links, excluding hidden archive/trash entries.', schema: z.object({ ...page, id, direction: z.enum(['incoming', 'outgoing']) }).strict() },
+  create_project: { description: 'Create a top-level project in projects. Requires a concrete goal and due_date (YYYY-MM-DD), write permission; no task state or parent.', schema: z.object({ ...request, title, goal: title, due_date: z.iso.date().refine(value => !value.startsWith('0000-')), text: text.optional() }).strict() },
   create_note: { description: 'Create a Markdown note in an active location. Requires write permission.', schema: z.object({ ...location, ...request, title, text: text.optional() }).strict() },
   create_task: { description: 'Create a task. Projects are separate entries; someday is a task state.', schema: z.object({ ...location, ...request, ...task, title, text: text.optional() }).strict() },
   update_text: { description: 'Replace saved text using the revision and whole-text hash from read_text. Creates text history where supported. Refuses a busy/dirty editor. Never truncate content.', schema: z.object({ ...existing, expected_body_hash: z.string().regex(/^[a-f0-9]{64}$/), text }).strict() },
@@ -39,7 +40,7 @@ if (!path) {
 } else {
   const bridge = new BridgeClient(path);
   serveStdio(() => {
-    const server = new McpServer({ name: 'para-workspace', version: '0.1.1' }, { capabilities: { tools: {} } });
+    const server = new McpServer({ name: 'para-workspace', version: '0.2.0' }, { capabilities: { tools: {} } });
     for (const [name, tool] of Object.entries(tools)) {
       const write = !['workspace_info', 'list_entries', 'search', 'get_entry', 'read_text', 'list_tasks', 'list_contexts', 'get_links'].includes(name);
       server.registerTool(name, {

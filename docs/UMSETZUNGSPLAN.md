@@ -1,6 +1,6 @@
 # Arbeitsstand
 
-Stand: 26. Oktober 2026 · Version 0.7.1+8.
+Stand: 26. Oktober 2026 · Version 0.7.2+9.
 
 ## Implementiert
 
@@ -14,7 +14,7 @@ Stand: 26. Oktober 2026 · Version 0.7.1+8.
   Ablehnung unbekannter neuerer Datenformate.
 - Lokaler MCP-Server im Repository: sofortige Zugriffsauswahl und automatische
   sichere Verbindungsablage auf macOS/Linux, acht Lese- und
-  fünf Schreib-Werkzeuge über die laufende App. Revisions-/Hashschutz,
+  sechs Schreib-Werkzeuge über die laufende App. Revisions-/Hashschutz,
   Schutz offener Editorentwürfe und Widerruf beim Rootwechsel.
 
 [Bedienung](../README.md) · [MCP-Einrichtung](MCP.md) ·
@@ -22,6 +22,16 @@ Stand: 26. Oktober 2026 · Version 0.7.1+8.
 [Arbeitsbereiche](ARBEITSBEREICHE.md) · [Aufgabenangaben](GTD_AUSBAU.md).
 
 ## Prüfstand
+
+- Projektanlage 0.7.2 gemäß [Plan](MCP_PROJEKTE_PLAN.md): `create_project`
+  in App, MCP und Skill. Ergebnis/Termin Pflicht, feste oberste Projektebene.
+  Analyse ohne Befund, alle 82 Flutter-Tests und sechs Node-Tests erfolgreich.
+  Native Linux-Testapp mit echtem stdio-Client: alle 14 Werkzeuge erfolgreich,
+  einschließlich Projektanlage und zugeordneter Aufgaben. Daten ausschließlich
+  in temporären Testroots. Linux-Release gebaut, App 0.7.2 und MCP 0.2.0 lokal
+  mit Rückfallkopien installiert; installierten Server erneut mit allen 14
+  Werkzeugen geprüft. Skill-Verweis aktuell, Format validiert.
+  Neuer nativer macOS-Test weiterhin offen.
 
 - MCP 0.7.1: Analyse und alle 80 Flutter-Tests sowie sechs Node-Tests erfolgreich.
   Nativer Linux-Test prüft automatische Ablage, Zugriffsauswahl, 0700/0600,
@@ -57,7 +67,7 @@ Stand: 26. Oktober 2026 · Version 0.7.1+8.
   weitere Vorschläge und nicht Teil dieser Umsetzung.
 - Autosave, Live Preview, Mehrfachauswahl und Rückgängig bleiben offen.
 - Vollständige Linux-Bedienprüfung, Android und Cloud-Sync bleiben offen.
-- MCP-Erweiterungen: Projekte anlegen/umwandeln, Verschieben, Dateiimport,
+- MCP-Erweiterungen: vorhandene Inhalte in Projekte umwandeln, Verschieben, Dateiimport,
   Archiv-/Papierkorbaktionen, dauerhafte oder eingeschränkte Teilfreigaben.
 
 [Sicherung](SICHERUNG.md) · [Architektur](ARCHITEKTUR.md) ·
