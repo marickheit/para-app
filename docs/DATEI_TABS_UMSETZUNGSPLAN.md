@@ -1,8 +1,8 @@
 # Dateifläche, Tabs und verstellbarer Explorer
 
-Stand: 26. Oktober 2026 · Flutter 0.9.0+13. A mit optionalem B und verstellbarem
-Explorer umgesetzt. Dieser Bedienvertrag beschreibt Umfang und Abnahme;
-konkrete Prüfnachweise stehen am Ende.
+Stand: 26. Oktober 2026 · aktueller Bedienvertrag in Flutter 0.9.2, umgesetzt
+seit 0.9.0. A mit optionalem B und verstellbarem Explorer. Die versionsgebundenen
+Nachweise am Ende gelten für 0.9.0+13; aktueller [Prüfstand](UMSETZUNGSPLAN.md).
 
 ## Bestätigter Umfang
 
@@ -154,8 +154,8 @@ Die Aufteilung folgt diesen Regeln:
   Baumzustand und Sichtbarkeit erhalten; bislang geöffnete Datei/Notiz wird ein
   dauerhafter Tab, Aufgaben und Container bleiben ihre jeweilige Ansicht.
   Fehlende neue Felder bekommen die oben beschriebenen Voreinstellungen.
-- Schema 6 und Sicherungsformat 3 können bleiben, sofern nur ein neuer
-  versionierter Einstellungswert hinzukommt; keine neuen maßgeblichen Inhaltstabellen.
+- Schema 6 und Sicherungsformat 3 bleiben erhalten; nur der versionierte
+  Sitzungswert wurde ergänzt, keine neue maßgebliche Inhaltstabelle.
   Vor der ersten Übernahme vollständigen konsistenten Rückfallexport erstellen.
   Erst nach erfolgreicher Validierung `session.v2` aktivieren; `session.v1` erhalten.
 - Unbekannte neuere oder beschädigte Sitzungsformate nicht überschreiben;

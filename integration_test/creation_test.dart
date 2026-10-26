@@ -6,6 +6,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:para_workspace/app.dart';
 import 'package:para_workspace/data/local_workspace_repository.dart';
 import 'package:para_workspace/domain/workspace.dart';
+import 'package:para_workspace/domain/archive.dart';
 import 'package:para_workspace/ui/workspace_style.dart';
 import 'target_features.dart' show captureSurface;
 
@@ -90,6 +91,13 @@ void registerCreationTests() {
 
   Finder tree(Entry e) => find.byKey(ValueKey('tree-entry-${e.id}'));
   Finder nav(String name) => find.byKey(ValueKey('nav-$name'));
+  Finder toggle(Entry e) => find.byKey(ValueKey('tree-toggle-${e.id}'));
+  Future<void> expand(WidgetTester tester, Entry entry) async {
+    if (tester.widget<IconButton>(toggle(entry)).tooltip == 'Aufklappen') {
+      await tap(tester, toggle(entry));
+    }
+  }
+
   Future<void> shortcut(WidgetTester tester) async {
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyN);
@@ -103,7 +111,7 @@ void registerCreationTests() {
   }
 
   testWidgets(
-    'category has no implicit selection, container toggles overview and visible target',
+    'container selection and disclosure are independent for all root kinds',
     (tester) async {
       await start(tester);
       try {
@@ -124,6 +132,8 @@ void registerCreationTests() {
         await tap(tester, tree(area));
         expect(find.byKey(ValueKey('overview-${area.id}')), findsOneWidget);
         expect(find.text('Mein Bereichstext'), findsOneWidget);
+        expect(tree(folder), findsNothing);
+        expect(tester.widget<IconButton>(toggle(area)).tooltip, 'Aufklappen');
         final container = tester.widget<Container>(tree(area));
         final color = (container.decoration! as BoxDecoration).color;
         expect(color, WorkspaceColors(tester.element(tree(area))).selection);
@@ -131,6 +141,35 @@ void registerCreationTests() {
         expect(find.byKey(ValueKey('overview-${area.id}')), findsNothing);
         expect(find.text('Keine Ablage ausgewählt'), findsOneWidget);
         expect(find.byKey(ValueKey('tree-entry-${folder.id}')), findsNothing);
+        // The arrow opens the tree without selecting its container.
+        await tap(tester, toggle(area));
+        expect(tree(folder), findsOneWidget);
+        expect(find.byKey(ValueKey('overview-${area.id}')), findsNothing);
+        await tap(tester, tree(area));
+        expect(find.byKey(ValueKey('overview-${area.id}')), findsOneWidget);
+        expect(tree(folder), findsOneWidget);
+        await tap(tester, toggle(area));
+        expect(tree(folder), findsNothing);
+        expect(find.byKey(ValueKey('overview-${area.id}')), findsOneWidget);
+        for (final item in [('projects', project), ('resources', resource)]) {
+          await tap(tester, nav(item.$1));
+          await tap(tester, tree(item.$2));
+          expect(
+            tester.widget<IconButton>(toggle(item.$2)).tooltip,
+            'Aufklappen',
+          );
+          await tap(tester, toggle(item.$2));
+          expect(
+            find.byKey(ValueKey('overview-${item.$2.id}')),
+            findsOneWidget,
+          );
+          await tap(tester, tree(item.$2));
+          expect(
+            tester.widget<IconButton>(toggle(item.$2)).tooltip,
+            'Zuklappen',
+          );
+          expect(find.byKey(ValueKey('overview-${item.$2.id}')), findsNothing);
+        }
       } finally {
         await finish(tester);
       }
@@ -180,13 +219,30 @@ void registerCreationTests() {
   );
 
   testWidgets(
-    'folder and open file choose the visible parent, second click returns to parent overview',
+    'folder selection, disclosure and file parent targets remain independent',
     (tester) async {
       await start(tester);
       try {
         await tap(tester, nav('areas'));
         await tap(tester, tree(area));
+        await expand(tester, area);
         await tap(tester, tree(folder));
+        expect(
+          find.text('Neu in: Bereiche / Gesundheit / Unterlagen'),
+          findsOneWidget,
+        );
+        await tap(tester, toggle(folder));
+        expect(tree(note), findsNothing);
+        expect(
+          find.text('Neu in: Bereiche / Gesundheit / Unterlagen'),
+          findsOneWidget,
+        );
+        await tap(tester, tree(folder));
+        expect(tree(note), findsNothing);
+        expect(find.byKey(ValueKey('overview-${area.id}')), findsOneWidget);
+        await tap(tester, tree(folder));
+        expect(tree(note), findsNothing);
+        await tap(tester, toggle(folder));
         expect(
           find.text('Neu in: Bereiche / Gesundheit / Unterlagen'),
           findsOneWidget,
@@ -221,6 +277,7 @@ void registerCreationTests() {
       try {
         await tap(tester, nav('areas'));
         await tap(tester, tree(area));
+        await expand(tester, area);
         await tap(tester, tree(folder));
         final menu = find.descendant(
           of: tree(area),
@@ -301,6 +358,7 @@ void registerCreationTests() {
       try {
         await tap(tester, nav('areas'));
         await tap(tester, tree(area));
+        await expand(tester, area);
         await tap(tester, tree(folder));
         await tap(tester, tree(note));
         await tap(tester, find.widgetWithText(TextButton, 'Bearbeiten'));
@@ -308,6 +366,13 @@ void registerCreationTests() {
           find.byKey(const ValueKey('markdown-body')),
           'Offener Entwurf',
         );
+        await tap(tester, toggle(area));
+        expect(tree(note), findsNothing);
+        expect(find.text('Offener Entwurf'), findsOneWidget);
+        expect(find.text('Änderungen speichern?'), findsNothing);
+        await tap(tester, toggle(area));
+        expect(tree(note), findsOneWidget);
+        expect(find.text('Offener Entwurf'), findsOneWidget);
         await tap(tester, tree(area));
         expect(find.text('Änderungen speichern?'), findsOneWidget);
         await tap(tester, find.text('Abbrechen'));
@@ -320,6 +385,51 @@ void registerCreationTests() {
         await shortcut(tester);
         expect(find.byType(SimpleDialog), findsNothing);
         expect((await repo.readNote(note.id)).text, 'Gespeicherter Text');
+        await repo.archive(area.id, true);
+        await settle(tester);
+        await tap(tester, nav('archive'));
+        String? keyFor(List<ArchiveNode> nodes, String id) {
+          for (final node in nodes) {
+            if (node.entry?.id == id) return node.key;
+            final found = keyFor(node.children, id);
+            if (found != null) return found;
+          }
+          return null;
+        }
+
+        final archive = buildArchiveTree(await repo.getEntries());
+        final areaKey = keyFor(archive, area.id)!;
+        final folderKey = keyFor(archive, folder.id)!;
+        final archivedArea = find.byKey(ValueKey('archive-node-$areaKey'));
+        final archivedFolder = find.byKey(ValueKey('archive-node-$folderKey'));
+        final archiveToggle = find.byKey(ValueKey('archive-toggle-$areaKey'));
+        await tap(tester, archivedArea);
+        expect(archivedFolder, findsOneWidget);
+        await tap(tester, archiveToggle);
+        expect(archivedFolder, findsNothing);
+        await tap(tester, archivedArea);
+        expect(archivedFolder, findsNothing);
+        await tap(tester, archiveToggle);
+        expect(archivedFolder, findsOneWidget);
+        final trashChild = await repo.create(
+          kind: EntryKind.note,
+          parentId: resource.id,
+          draft: const EntryDraft(title: 'Entfernte Unterlage'),
+        );
+        await repo.trash(resource.id);
+        await settle(tester);
+        await tap(tester, nav('trash'));
+        final trashRoot = find.byKey(ValueKey('trash-entry-${resource.id}'));
+        final childRow = find.byKey(ValueKey('trash-entry-${trashChild.id}'));
+        final trashToggle = find.byKey(ValueKey('trash-toggle-${resource.id}'));
+        await tap(tester, trashRoot);
+        expect(childRow, findsOneWidget);
+        await tap(tester, trashToggle);
+        expect(childRow, findsNothing);
+        await tap(tester, trashRoot);
+        expect(childRow, findsNothing);
+        await tap(tester, trashToggle);
+        expect(childRow, findsOneWidget);
       } finally {
         await finish(tester);
       }
@@ -332,6 +442,7 @@ void registerCreationTests() {
       try {
         await tap(tester, nav('areas'));
         await tap(tester, tree(area));
+        await expand(tester, area);
         await tap(tester, tree(folder));
         await shortcut(tester);
         await tap(tester, find.text('Neue Textdatei …'));
@@ -424,7 +535,9 @@ void registerCreationTests() {
       try {
         await tap(tester, nav('areas'));
         await tap(tester, tree(area));
+        await expand(tester, area);
         await tap(tester, tree(folder));
+        await tap(tester, toggle(area));
         await Future<void>.delayed(const Duration(milliseconds: 400));
         await tester.pumpWidget(const SizedBox.shrink());
         await repo.close();
@@ -433,6 +546,8 @@ void registerCreationTests() {
           ParaApp(repository: repo, dataDirectory: temp.path),
         );
         await settle(tester);
+        expect(tree(folder), findsNothing);
+        expect(tester.widget<IconButton>(toggle(area)).tooltip, 'Aufklappen');
         expect(
           find.text('Neu in: Bereiche / Gesundheit / Unterlagen'),
           findsOneWidget,

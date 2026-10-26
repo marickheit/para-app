@@ -1,6 +1,8 @@
 # Umsetzung 0.6: Arbeitsbereiche und Aufgabenangaben
 
-Status: implementiert, geprüft und nach Review freigegeben.
+Versionsgebundener Nachweis für 0.6, implementiert und geprüft. Aktuelle Bedienung
+und Grenzen stehen in [README](../README.md), die aktuelle Abnahme im
+[Arbeitsstand](UMSETZUNGSPLAN.md). Die damaligen Prüfzahlen gelten nur für 0.6.
 
 ## Verbindlicher Umfang
 

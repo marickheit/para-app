@@ -8,23 +8,30 @@
 4. Die Bestätigung abwarten. Die App erstellt darin einen Ordner mit dem Präfix
    `PARA-Sicherung-` und einem eindeutigen Namen.
 
-Dieser Ordner enthält `workspace.sqlite`, `notes/`, `files/` und `backup.json`.
+Dieser Ordner enthält `workspace.sqlite`, `notes/`, `files/`, `ingest/` und
+`backup.json` (Sicherungsformat 3).
 Papierkorbinhalte sind vollständig enthalten; Textversionen liegen in der Datenbank.
 Das Manifest nennt Sicherungsformat, Schema- und App-Version.
 Die Datenbank wird als konsistentes SQLite-Abbild exportiert. Für eine vollständige
-Wiederherstellung müssen Datenbank, Notizen und Dateien zusammenbleiben.
+Wiederherstellung müssen Datenbank, Notizen, Dateien und Import-Zwischenstände
+zusammenbleiben.
 
 ## Eine Sicherung wiederherstellen
 
 Die Wiederherstellung erfolgt derzeit manuell:
 
-1. In der App „Daten & Sicherung“ öffnen und den Datenordner anzeigen lassen.
-2. Die App vollständig beenden.
-3. Den bisherigen Ordner `workspace` umbenennen und als Rückfallkopie behalten.
-4. Den gewünschten `PARA-Sicherung-…`-Ordner an dieselbe Stelle kopieren und die
-   Kopie `workspace` nennen. Darin liegen direkt `workspace.sqlite`, `notes/`
-   und `files/`.
+1. In „Daten & Sicherung“ den tatsächlich gewählten Arbeitsbereichspfad anzeigen
+   lassen; der Ordner muss nicht `workspace` heißen.
+2. Offene Änderungen speichern und die App vollständig beenden.
+3. Den bisherigen Root umbenennen und als vollständige Rückfallkopie behalten.
+4. Den gewünschten `PARA-Sicherung-…`-Ordner an den bisherigen Root-Pfad kopieren,
+   mit dessen ursprünglichem Ordnernamen. Datenbank, `notes/`, `files/` und bei
+   Format 3 `ingest/` müssen direkt darin liegen; nicht nur einzelne Dateien kopieren.
 5. Die App erneut starten und die Inhalte prüfen.
+
+Alternativ eine vollständige Kopie der Sicherung unter „Arbeitsbereich öffnen …“
+auswählen. Das Sicherungsoriginal und den bisherigen Bestand unverändert behalten.
+Ältere Sicherungsformate 1/2 ohne Importjournal bleiben übernehmbar.
 
 Die bisherige Rückfallkopie und das Original der Sicherung bleiben dabei erhalten.
 Die Sicherung wird automatisiert geprüft, indem sie unabhängig als Arbeitsbereich
@@ -39,10 +46,11 @@ Vor Änderungen am echten Bestand ist eine vollständige Rückfallkopie erforder
 Konvertierungen werden zuerst an getrennten Testdaten geprüft. Diese Regeln sind
 in [AGENTS.md](../AGENTS.md) festgehalten.
 
-Der Arbeitsbereich liegt außerhalb des App-Pakets im Anwendungsdatenordner.
+Der Arbeitsbereich liegt außerhalb des App-Pakets: standardmäßig im
+Anwendungsdatenordner oder am ausdrücklich gewählten Root-Pfad.
 Beim Ersetzen der App sollen Bundle-Kennung und Datenpfad gleich bleiben;
 dadurch wird derselbe Arbeitsbereich weiterverwendet. Datenbankänderungen werden
-beim Öffnen migriert. Migrationen aus Schema 1, 2, 3 und 4 sind getestet.
+beim Öffnen migriert. Migrationen aus Schema 1–5 nach Schema 6 sind getestet.
 
 Vor einer nötigen Datenmigration wird automatisch eine vollständige Rückfallkopie
 unter `.migration-backups/Schema-…` im jeweiligen Root angelegt. Datenbank, Notizen,

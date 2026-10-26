@@ -66,6 +66,8 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(ValueKey('tree-entry-${project.id}')));
         await tester.pumpAndSettle();
+        await tester.tap(find.byKey(ValueKey('tree-toggle-${project.id}')));
+        await tester.pumpAndSettle();
         expect(
           find.descendant(
             of: find.byKey(const ValueKey('workspace-header')),
@@ -188,9 +190,7 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.byTooltip('Navigation öffnen'));
         await tester.pumpAndSettle();
-        await tester.tap(find.byKey(ValueKey('tree-entry-${project.id}')));
-        await tester.pumpAndSettle();
-        await tester.tap(find.byTooltip('Navigation öffnen'));
+        await tester.tap(find.byKey(ValueKey('tree-toggle-${project.id}')));
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(ValueKey('tree-entry-${folder.id}')));
         await tester.pumpAndSettle();

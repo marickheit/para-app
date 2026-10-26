@@ -1,7 +1,7 @@
 # Zusammenarbeit an diesem Projekt
 
 - Zuerst PLANUNG.md und README.md lesen.
-- Aktuell: lokale Flutter-App auf macOS. Der Produktstand steht in PLANUNG.md,
+- Aktuell: lokale Flutter-App auf macOS und Linux. Der Produktstand steht in PLANUNG.md,
   Bedienung in README.md, nächste Arbeit und Prüfnachweise in docs/UMSETZUNGSPLAN.md.
 - Projekte sind konkrete, zeitlich begrenzte Vorhaben mit Ergebnis und
   Fälligkeitsdatum. Projekte haben keinen „Irgendwann / Vielleicht“-Status.
@@ -17,6 +17,28 @@
   mehrere Kontext-, Zeit- und Energie-Chips unter dem Titel.
 - UI-Mocks enthalten Beispieldaten. Ihre Inhalte oder Klicks sind keine
   verbindlichen Produktentscheidungen.
+
+## Dokumentation dauerhaft synchron halten
+
+- Dokumentation ist Teil der Fertigstellung jeder fachlichen Änderung, kein
+  späterer Nachtrag. Alle betroffenen Anleitungen, Fachpläne, MCP-/Skill-Verträge
+  und Querverweise im selben Arbeitsgang mit der Implementierung abgleichen;
+  nicht nur README oder den Arbeitsstand ändern. Zuständigkeiten und Übersicht:
+  [docs/README.md](docs/README.md).
+- Implementierte Funktionen an Code und vorhandenen Prüfungen belegen. Bestätigte,
+  noch offene Anforderungen und unverbindliche Vorschläge klar kennzeichnen.
+  Ein Widerspruch in älterer Dokumentation ist kein Auftrag, neue Funktionen
+  einzubauen. Aktuelle Nutzeranweisungen gehen älteren Beschreibungen vor.
+- Bei geänderter Bedienung/Terminologie repositoryweit nach den bisherigen
+  Formulierungen suchen. Auch Funktionsgrenzen, Plattformen, Versionen, Daten-/
+  Sicherungsformate, Start-/Suchverhalten und MCP-Umfang prüfen, soweit betroffen.
+- Versionsgebundene Prüfnachweise mit ihrer tatsächlichen Version und Plattform
+  erhalten; sie sind keine aktuelle Vollabnahme oder fortgeltenden Arbeitsaufträge.
+  Veraltete fachliche Aussagen korrigieren oder eindeutig als überholten Entwurf
+  kennzeichnen und auf den aktuellen Vertrag verweisen. Mocks bleiben Beispiele.
+- Vor Abschluss sowie Commit/Push die betroffenen Dokus gegen den finalen Code
+  prüfen, lokale Verweise und `git diff --check` kontrollieren. Eine Änderung ist
+  erst fertig, wenn Implementierung, Bedienung und dokumentierter Status zusammenpassen.
 
 ## Datenkompatibilität und Weiterentwicklung
 

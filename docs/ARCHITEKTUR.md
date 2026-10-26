@@ -24,7 +24,8 @@ Editorentwürfe, Laden/Speichern und MCP-Änderungen. Seitencursor sind an das
 jeweilige Ergebnis und die App-Öffnung gebunden.
 `create_project` nutzt die bestehende Repository-Anlage mit Ergebnis und gültigem
 Kalenderdatum; Ziel ist fest die oberste Projektebene. App und MCP prüfen die
-Pflichtangaben unabhängig. Keine Änderung an Schema 5 oder Sicherungsformat.
+Pflichtangaben unabhängig. MCP benötigt keine zusätzliche Inhaltsmigration;
+aktuell gelten Schema 6 und Sicherungsformat 3.
 
 Die Freigabepräferenz `mcp.v1` liegt versioniert in `workspace_settings` und
 aktiviert keinen Zugang. Token, Port und Öffnungskennung sind flüchtig; die
@@ -38,14 +39,14 @@ Verbindungen vor der Übernahme und wartet laufende Schreiboperationen ab.
 
 ## Daten
 
-Der reguläre Arbeitsbereich liegt im Anwendungsdatenordner, außerhalb des
-App-Pakets. `PARA_DATA_DIR` kann beim Bauen einen anderen vollständigen Datenroot
+Der Standard-Arbeitsbereich liegt im Anwendungsdatenordner; ein ausdrücklich
+gewählter Root kann anderswo liegen. Beide liegen außerhalb des App-Pakets. `PARA_DATA_DIR` kann beim Bauen einen anderen vollständigen Datenroot
 festlegen; automatisierte Tests übergeben eigene temporäre Verzeichnisse direkt
 an das Repository. Die Auswahl eines anderen Roots ist keine Datenmigration.
 Manuelle Entwicklungsstarts verwenden ebenfalls einen getrennten Root;
 Startbeispiel und macOS-Zugriffsgrenzen stehen in [README.md](../README.md).
 
-Arbeitsbereichsmodell in 0.6: Alle Inhalte und Arbeitsbereichseinstellungen liegen in
+Arbeitsbereichsmodell seit 0.6: Alle Inhalte und Arbeitsbereichseinstellungen liegen in
 einem wählbaren Root. Nur Startverweis auf den zuletzt geöffneten Arbeitsbereich
 und geräteabhängige Ordnerberechtigungen bleiben außerhalb. Sitzungszustand, Auswahl, Persistenz über Neustarts
 und Einstellungsübernahme sind implementiert;
@@ -240,10 +241,16 @@ und ein allgemeines Absturzjournal für alle Datei-/Datenbankänderungen bleiben
 
 Seit 0.7.3 bestimmen `_rootId`, `_selectedId` und der Elterncontainer einer
 geöffneten Datei das sichtbare Anlageziel. Kein separat gemerktes Ordnerziel.
-Kategorie-Wechsel setzt die Auswahl zurück; Container öffnen zunächst die
-Übersicht und klappen auf. Erneuter Klick schließt den Container und öffnet den
-Elterncontainer oder die Kategorieübersicht. Der Editor-Wechselschutz gilt auch
-für diese Übergänge. Die Auswahl wird seit 0.9.0 zusammen mit den Dateitabs
+Kategorie-Wechsel setzt die Auswahl zurück; Containerklick zeigt die Übersicht
+beziehungsweise Ordnerinhalte, ohne den Baumzustand zu ändern. Erneuter Klick
+wählt ab und öffnet den Elterncontainer oder die Kategorieübersicht. Nur der
+separate Pfeil klappt Baumzweige auf/zu; dabei bleiben Auswahl und Editor erhalten.
+Im Archiv und Papierkorb öffnet ein Zeilenklick den schreibgeschützten Inhalt;
+Pfeile verändern ausschließlich den Baum. Virtuelle Archivgruppen haben keine
+eigene Inhaltsauswahl. Das Kopfzeilensymbol kann alle Zweige umschalten. Der Editor-Wechselschutz gilt
+weiterhin für Auswahlwechsel. Suche/Links und Neuanlage können den Zielpfad eines
+geöffneten Inhalts weiterhin automatisch sichtbar machen. Die Auswahl wird seit
+0.9.0 zusammen mit den Dateitabs
 in session.v2 gespeichert; die früheren session.v1-Felder bleiben übernehmbar.
 
 Plus und Cmd/Ctrl+N verwenden gemeinsame Typ-/Zielregeln. Projekt, Bereich,

@@ -266,7 +266,7 @@ void registerTargetFeatureTests() {
             .byKey(ValueKey('tree-entry-${overview.id}'))
             .evaluate()
             .isEmpty) {
-          await tester.tap(find.byKey(ValueKey('tree-entry-${project.id}')));
+          await tester.tap(find.byKey(ValueKey('tree-toggle-${project.id}')));
           await tester.pumpAndSettle();
         }
         await tester.tap(find.byKey(ValueKey('tree-entry-${overview.id}')));

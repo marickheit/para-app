@@ -1,6 +1,7 @@
 # P.A.R.A. MCP
 
-Lokaler stdio-Server für die laufende P.A.R.A.-App ab Version 0.7.
+Lokaler stdio-Server 0.3.0 für die laufende P.A.R.A.-App ab Version 0.8.1
+(aktueller App-Stand 0.9.2), API-Funktionsstand 2 mit 19 Werkzeugen.
 Node.js >=22; offizielles MCP TypeScript SDK 2.4.0 (stabile v2-Linie,
 Protokoll 2026-07-28 mit SDK-Unterstützung älterer Clients).
 Abhängigkeiten sind einschließlich Lockdatei festgelegt.
@@ -8,11 +9,14 @@ Abhängigkeiten sind einschließlich Lockdatei festgelegt.
 ```sh
 npm ci
 npm run build
-node dist/server.js /absolute/path/para-mcp-connection.json
+node dist/server.js
 ```
 
-Die Verbindungsdatei wird in der App über Einstellungen → KI-Anbindung erzeugt.
-Sie bleibt außerhalb dieses Repositories. stdout enthält ausschließlich MCP;
+Einstellungen → KI-Anbindung → Zugriff aktiviert die Verbindung unmittelbar.
+Die App verwaltet die private Verbindungsdatei auf macOS/Linux automatisch;
+der Server findet sie ohne Pfadargument. Ein optionales Pfadargument wird für
+bestehende Konfigurationen und getrennte Tests weiterhin unterstützt.
+Die Datei bleibt außerhalb dieses Repositories und des Arbeitsbereichs. stdout enthält ausschließlich MCP;
 Diagnosen stehen auf stderr. Der Prozess öffnet keine SQLite-Datenbank und
 übernimmt keine App-Öffnung oder Migration.
 

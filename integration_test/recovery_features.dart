@@ -196,10 +196,10 @@ void registerRecoveryFeatureTests() {
       await tester.tap(find.byKey(const ValueKey('nav-trash')));
       await tester.pumpAndSettle();
       expect(find.byKey(ValueKey('trash-entry-${child.id}')), findsOneWidget);
-      await tester.tap(find.byKey(ValueKey('trash-entry-${folder.id}')));
+      await tester.tap(find.byKey(ValueKey('trash-toggle-${folder.id}')));
       await tester.pumpAndSettle();
       expect(find.byKey(ValueKey('trash-entry-${child.id}')), findsNothing);
-      await tester.tap(find.byKey(ValueKey('trash-entry-${folder.id}')));
+      await tester.tap(find.byKey(ValueKey('trash-toggle-${folder.id}')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(ValueKey('trash-entry-${child.id}')));
       await tester.pumpAndSettle();

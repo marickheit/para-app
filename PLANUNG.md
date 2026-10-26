@@ -1,11 +1,11 @@
 # P.A.R.A. – Produktstand
 
-Stand: 26. Oktober 2026 · lokale App 0.9.1 für macOS und Linux.
+Stand: 26. Oktober 2026 · lokale App 0.9.2 für macOS und Linux.
 
 ## Ziel und Grundregeln
 
 - Persönlicher Arbeitsplatz für Dateien, Markdown-Notizen und GTD-Aufgaben.
-- Zuerst lokal auf macOS; lokaler MCP-Anschluss; später Linux, Android und Cloud-Sync.
+- Lokal auf macOS und Linux mit lokalem MCP-Anschluss; Android und Cloud-Sync später.
 - Ein Inhalt hat einen Hauptablageort. Stabile Links verbinden weitere Inhalte.
 - Bestehende Nutzerdaten bleiben bei Änderungen erhalten: neue Versionen müssen
   ältere Daten direkt lesen oder verlustfrei migrieren. Entwicklungs-/Testdaten
@@ -22,9 +22,9 @@ Stand: 26. Oktober 2026 · lokale App 0.9.1 für macOS und Linux.
   Speicherschutz und gespeicherte Sitzung. [Bedienung und Prüfungen](docs/DATEI_TABS_UMSETZUNGSPLAN.md).
   Links Symbole oder Symbole mit Namen, daneben der vollständige Datei-/Ordnerbaum,
   rechts Containerübersicht oder Editor. Eine gemeinsame kompakte Kopfzeile
-  wechselt Übersicht, Inhalte und Aufgaben. Containerklick wählt sichtbar aus
-  und klappt auf; erneuter Klick wählt ab und klappt zu.
-- **Ablage:** Inbox, Projekte, Bereiche, Ressourcen und Archiv. Ordner per Klick
+  wechselt Übersicht, Inhalte und Aufgaben. Containerklick wählt sichtbar aus;
+  erneuter Klick wählt ab. Nur der Pfeil daneben klappt den Baum auf oder zu.
+- **Ablage:** Inbox, Projekte, Bereiche, Ressourcen und Archiv. Ordner über den Pfeil
   auf-/zuklappen. Kategorien öffnen ohne automatische Auswahl. Plus und Strg/Cmd+N
   bieten dieselbe Typauswahl: ohne Container nur Haupttypen der Kategorie, mit
   Auswahl Inhalte im grau markierten Ziel. Kontextmenüs gelten für ihren Container;

@@ -1,14 +1,16 @@
 # Auswahl, Übersicht und Anlegen
 
-Stand: 26. Oktober 2026. Vom Nutzer bestätigter Umfang, umgesetzt in 0.7.3.
+Stand: 26. Oktober 2026. Auswahl/Anlage ab 0.7.3; getrennte Baumbedienung in 0.9.2.
 
 ## Verbindliche Bedienung
 
 - Kategorie öffnen zeigt zunächst deren Übersicht ohne automatische Auswahl.
-- Klick auf Projekt/Bereich/Ressourcensammlung wählt sichtbar aus, klappt auf
+- Klick auf Name/Zeile von Projekt/Bereich/Ressourcensammlung wählt sichtbar aus
   und zeigt die Übersicht mit Beschreibung, Inhalten und Projektaktionen.
-  Erneuter Klick wählt ab und klappt zu. Ordner verhalten sich entsprechend;
-  beim Abwählen eines Unterordners wird sein Elterncontainer ausgewählt.
+  Erneuter Klick wählt ab. Ordner verhalten sich entsprechend; beim Abwählen
+  eines Unterordners wird sein Elterncontainer ausgewählt. Der Baumzustand bleibt
+  dabei erhalten. Nur der separate Pfeil klappt auf/zu, ohne Auswahlwechsel oder
+  Editor-Wechseldialog; auch im Archiv und Papierkorb.
 - Geöffnete Dateien markieren ihren Elterncontainer als Anlageziel.
 - Ohne Auswahl bieten Projekte/Bereiche/Ressourcen nur die jeweilige Hauptanlage.
   Mit Auswahl bieten Plus und Strg/Cmd+N eine Typauswahl am sichtbaren Ziel sowie
@@ -42,13 +44,27 @@ Stand: 26. Oktober 2026. Vom Nutzer bestätigter Umfang, umgesetzt in 0.7.3.
 
 ## Grenzen
 
-Reine Bedienänderung, Schema 5 und gespeicherte session.v1 bleiben lesbar.
+Reine Bedienänderung; bestehende Daten und Sitzungen bleiben lesbar. Aktuell
+Schema 6 und session.v2, keine Änderung am Speicherformat.
 Keine Nutzdatenmigration, kein neuer Datenordner. Vorhandene freie Inhalte auf
 Bereiche-/Ressourcen-Wurzelebene bleiben lesbar und als explizite Ziele nutzbar.
-MCP-Erweiterungen für Bereich/Ressource/Ordner sind separate offene Arbeit;
-vorhandene MCP-Operationen und Daten bleiben unverändert.
+Vorhandene MCP-Operationen und Daten bleiben unverändert.
 
 ## Prüfnachweise
+
+### Abnahme 0.9.2
+
+- Getrennte Baumbedienung 0.9.2: Analyse ohne Befund, 133 Flutter-Tests erfolgreich.
+  Alle zehn nativen Auswahl-/Anlageabläufe erfolgreich, erweitert um getrennte
+  Name-/Pfeilklicks für Projekt/Bereich/Ressource/Ordner, Archiv und Papierkorb,
+  Entwurferhalt beim Einklappen und unabhängigen gespeicherten Baumzustand.
+  Alle zwölf bisherigen Linux-Bedienabläufe nach Umstellung ihrer Klicks geprüft;
+  ein macOS-spezifischer Test auf Linux übersprungen. Release 0.9.2+15 lokal
+  mit vollständiger Daten-/App-Rückfallkopie installiert, alle 24 Paketdateien
+  gegen den Build geprüft und installierte App mit temporären XDG-Verzeichnissen
+  gestartet. Kein regulärer Nutzerbestand als Testumgebung.
+
+### Ursprüngliche Abnahme 0.7.3
 
 - Analyse ohne Befund; alle 82 Flutter-Tests erfolgreich.
 - Zehn neue native Linux-Abläufe erfolgreich: Kategorie ohne Auswahl,

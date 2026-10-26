@@ -1,7 +1,8 @@
 # Eingangsordner – Implementierungsplan
 
-Version: 0.8.0+11. Status: implementiert, geprüft und lokal unter Linux installiert.
-Der Nutzer hat die Funktion im Praxistest bestätigt und Commit/Push freigegeben.
+Implementierter Vertrag seit 0.8.0+11, weiterhin gültig in 0.9.2. Die folgenden
+Prüfergebnisse/Installationsangaben sind versionsgebundene Nachweise für 0.8.0;
+aktueller Gesamtstand: [UMSETZUNGSPLAN.md](UMSETZUNGSPLAN.md).
 
 ## Festgelegter Umfang
 

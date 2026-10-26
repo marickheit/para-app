@@ -2,8 +2,10 @@
 
 Stand: 26. Oktober 2026. Ausgewählt ist **A mit optionalem B** sowie einer zusätzlich
 per Ziehen verstellbaren Explorer-Breite. **C ist auf später zurückgestellt.**
-Der [Umsetzungsstand](../DATEI_TABS_UMSETZUNGSPLAN.md) beschreibt die App-Version 0.9.0
-mit A, B und verstellbarer Explorer-Breite. Die Mocks bleiben ein Variantenvergleich.
+Der [Bedienvertrag](../DATEI_TABS_UMSETZUNGSPLAN.md) beschreibt die seit 0.9.0
+umgesetzten A-/B-Ansichten und die verstellbare Explorer-Breite. Aktuelle Bedienung
+steht in [README](../../README.md). Die Mocks bleiben ein Variantenvergleich;
+ihre Beispielinhalte und Klicks sind kein aktueller App-Vertrag.
 Der vorhandene HTML-Entwurf demonstriert noch keine ziehbare Explorer-Kante.
 
 Den [interaktiven Entwurf](para-datei-tabs.html) lokal im Browser öffnen. Er braucht

@@ -1,6 +1,9 @@
 # Umsetzung der bestätigten Zieloberfläche in Flutter
 
-Stand: 25. Oktober 2026. In Flutter 0.4 umgesetzt und geprüft; Referenz:
+Stand: 26. Oktober 2026. Grundumsetzung ab Flutter 0.4, aktuelle Bedienung 0.9.2.
+Die ursprüngliche macOS-Abnahme gilt für den damaligen Stand; aktuelle Linux-
+Nachweise und offene macOS-Nachprüfung stehen im [Arbeitsstand](UMSETZUNGSPLAN.md).
+Referenz:
 [mockups/para-zieloberflaeche.html](mockups/para-zieloberflaeche.html).
 Keine neuen optionalen Produktfunktionen aus dem Review vorwegnehmen.
 
@@ -11,7 +14,8 @@ Keine neuen optionalen Produktfunktionen aus dem Review vorwegnehmen.
   bearbeiten und für unterstützte Formate indizieren.
 - [x] Darstellung: schmale/ausgeklappte Symbolleiste, benachbarter Explorer,
   gemeinsame kompakte Kopfzeile, Dateikopf/Editor und Menü unten nach Vorlage.
-- [x] Explorer: alle Projekte auf oberster Ebene; Ordner per Zeilenklick aufklappen,
+- [x] Explorer: alle Projekte auf oberster Ebene; Name/Zeile wählt Container aus oder ab,
+  ausschließlich der Pfeil klappt den Baum auf/zu;
   Dateien direkt anzeigen; Plusmenü, gleiche Kontext-/Drei-Punkte-Aktionen,
   Zielanzeige, Datei-/Ordnerimport und Verschieben in allen aktiven Ablagen.
 - [x] Editor/Vorschau: MD und TXT mit explizitem Speichern und Änderungsschutz;
@@ -19,8 +23,9 @@ Keine neuen optionalen Produktfunktionen aus dem Review vorwegnehmen.
 - [x] Aufgaben/Suche: globale GTD-Ansichten, nächste Aktionen nach Projekt,
   erledigt und nicht mehr relevant unterscheiden/wiederaufnehmen; Suchfenster
   mit Cmd/Ctrl+F, unscharfen Namen, unterstützten Inhalten und Pfeiltasten.
-- [x] Prüfung: Repository-/Widgettests, Migration und Wiederöffnen, native Mac-Abläufe,
-  schmale Fenster sowie visueller Abgleich mit dem Mockup; Release bauen/starten.
+- [x] Prüfung: Repository-/Widgettests, Migration und Wiederöffnen, schmale Fenster
+  und visueller Abgleich; Linux-Release bauen/starten. Native macOS-Abnahmen sind
+  versionsgebunden; neuere Erweiterungen dort weiterhin nachprüfen.
 - [x] Dokumentation auf den tatsächlichen Stand bringen, Grenzen und Prüfergebnis
   festhalten. Mockup und reale Funktionen weiterhin klar unterscheiden.
 

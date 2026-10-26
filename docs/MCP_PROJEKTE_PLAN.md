@@ -1,6 +1,6 @@
 # Projektanlage über MCP
 
-Stand: 26. Oktober 2026.
+Stand: 26. Oktober 2026 · Vertrag in App 0.9.2/MCP 0.3.0, umgesetzt seit 0.7.2.
 
 ## Umfang
 
@@ -21,11 +21,12 @@ Umwandlung vorhandener Aufgaben/Ideen bleibt außerhalb dieser Erweiterung.
    nachfolgender Aufgaben über `parent_id`. Anleitung und Produktstand nachziehen.
 3. Temporäre Tests prüfen Anlage, Text/Links, Unteraufgaben, doppelte Requests,
    Wiederöffnen, ungültige Angaben und Nur-Lesen-Schutz. Echter stdio-Client
-   prüft alle 14 Werkzeuge einschließlich Projektanlage gegen die App.
+   prüfte in der ursprünglichen Abnahme 0.7.2 alle 14 Werkzeuge einschließlich
+   Projektanlage. Der heutige Umfang umfasst 19 Werkzeuge, siehe [MCP](MCP.md).
 4. Analyse, Flutter-/Node-Suiten, Linux-Release und nativen MCP-Test ausführen.
    App und MCP lokal mit Rückfallkopie aktualisieren; Skill verwendet den
    bestehenden Repository-Verweis. Commit und Push ohne Nutzdaten.
 
-Schema 5, Sicherungsformat, Bundle-Kennung und regulärer Datenpfad bleiben
-unverändert. Ein neuer nativer macOS-Nachweis ist auf Linux nicht möglich.
+Aktuell gelten Schema 6 und Sicherungsformat 3. Die MCP-Projektanlage selbst
+ändert weder Inhaltsformat noch Bundle-Kennung oder regulären Datenpfad. Ein neuer nativer macOS-Nachweis ist auf Linux nicht möglich.
 Prüfergebnisse stehen im [Arbeitsstand](UMSETZUNGSPLAN.md).

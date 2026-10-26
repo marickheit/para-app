@@ -1,6 +1,6 @@
 # GTD-Ausbau: Aufgabenangaben und weitere Vorschläge
 
-Stand 0.6: Zeitbedarf, mehrere Kontexte, Energie, Chips, Kontextverwaltung und
+Stand 0.9.2; Aufgabenangaben seit 0.6: Zeitbedarf, mehrere Kontexte, Energie, Chips, Kontextverwaltung und
 Filter sind implementiert. Weitere GTD-Funktionen unten bleiben Vorschläge.
 
 ## Aufgabenangaben in 0.6
@@ -93,14 +93,14 @@ Aufgabe auszuwählen; sie braucht keine aufwendige Projektkalkulation.
   Die Gruppierung nach Projekt bleibt erhalten, einschließlich Aufgaben ohne Projekt.
 - Aufgaben ohne Schätzung bleiben standardmäßig sichtbar. Fehlende Angaben sind
   kein Fehler; das Anlegen einer Aufgabe bleibt ohne diese Felder möglich.
-- Bestehende freie Kontextwerte erhalten. Eine spätere Auswahl-/Tag-Struktur darf
-  alte Werte nicht automatisch umdeuten oder Informationen wegwerfen.
+- Die implementierte Kontext-Mehrfachauswahl übernimmt ältere freie Kontextwerte
+  verlustfrei. Umbenennen und Deaktivieren erhalten bestehende Zuordnungen.
 - Kleine Angaben bei Bedarf in den Aufgabendetails, dezente Hinweise in der Liste.
   Keine zusätzlichen dauerhaften Spalten oder Pflichtfelder als Voreinstellung.
 - Keine automatische Priorisierung nach kürzester Dauer, keine verpflichtenden
   Aufwandspunkte, keine automatische Terminvergabe aus einer Zeitschätzung.
 
-## Projektprüfung und Wochenrückblick
+## Projektprüfung und Wochenrückblick – unbestätigter Vorschlag
 
 Ein aktives Projekt soll eine klar erkennbare nächste Handlung haben. Als Hilfe
 eine unaufdringliche Ansicht „Projekte ohne nächste Aktion“ anbieten. Aufgaben in
@@ -115,7 +115,7 @@ später ein ausdrücklich bestätigter Prüfzeitpunkt gespeichert werden. Kalend
 zunächst als manuellen Prüfschritt berücksichtigen, ohne eine Integration vorauszusetzen.
 [Grundlage: offizieller Weekly Review](https://gettingthingsdone.com/2018/08/episode-43-the-power-of-the-gtd-weekly-review/).
 
-## Weitere sinnvolle Details
+## Weitere unbestätigte Vorschläge
 
 - „Warten auf“ könnte Person, Beginn des Wartens und optional einen Nachfasstermin
   erhalten. Dieser Termin ist keine Fälligkeit der eigentlichen Aufgabe.

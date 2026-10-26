@@ -435,6 +435,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     Entry entry, {
     bool guarded = true,
     bool preview = false,
+    bool reveal = true,
   }) async {
     final sameDocument = _hasDocument && _selectedId == entry.id;
     if (guarded && !sameDocument && !await _canLeave()) return;
@@ -463,13 +464,17 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       });
       return;
     }
-    if (current.kind == EntryKind.folder && current.parentId == null) {
+    if (reveal &&
+        current.kind == EntryKind.folder &&
+        current.parentId == null) {
       _expandedRoots.add(current.id);
     }
     final ancestors = ancestorsOf(current, _entries);
-    for (final ancestor in ancestors) {
-      _collapsed.remove(ancestor.id);
-      _expandedRoots.add(ancestor.id);
+    if (reveal) {
+      for (final ancestor in ancestors) {
+        _collapsed.remove(ancestor.id);
+        _expandedRoots.add(ancestor.id);
+      }
     }
     final root = current.kind.isContainer && current.kind != EntryKind.folder
         ? current
@@ -514,10 +519,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       }
       _tab = current.kind == EntryKind.task ? 'tasks' : 'content';
       if (current.kind.isContainer) {
-        if (current.parentId == null) {
-          _expandedRoots.add(current.id);
-        } else {
-          _collapsed.remove(current.id);
+        if (reveal) {
+          if (current.parentId == null) {
+            _expandedRoots.add(current.id);
+          } else {
+            _collapsed.remove(current.id);
+          }
         }
         _tab = current.kind == EntryKind.folder ? 'content' : 'overview';
       }
@@ -528,24 +535,15 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     final direct =
         _selectedId == entry.id || (_rootId == entry.id && _selectedId == null);
     if (!direct) {
-      await _open(entry);
+      await _open(entry, reveal: false);
       return;
     }
     if (!await _canLeave() || !mounted) return;
     final parent = _find(entry.parentId);
     if (parent != null) {
-      await _open(parent, guarded: false);
+      await _open(parent, guarded: false, reveal: false);
     } else {
       await _navigate(_view);
-    }
-    if (mounted) {
-      setState(() {
-        if (entry.parentId == null) {
-          _expandedRoots.remove(entry.id);
-        } else {
-          _collapsed.add(entry.id);
-        }
-      });
     }
   }
 
@@ -1372,6 +1370,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               leading: children.isEmpty
                   ? Icon(fileIcon(entry), size: 16)
                   : IconButton(
+                      key: ValueKey('trash-toggle-${entry.id}'),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints.tightFor(
                         width: 20,
@@ -1402,16 +1401,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               ),
               selected: _selectedId == entry.id,
               trailing: _entryMenu(entry),
-              onTap: () async {
-                await _open(entry);
-                if (children.isNotEmpty && mounted) {
-                  setState(() {
-                    if (!_collapsed.add('trash-${entry.id}')) {
-                      _collapsed.remove('trash-${entry.id}');
-                    }
-                  });
-                }
-              },
+              onTap: () => _open(entry),
             ),
           ),
         ),
@@ -2034,6 +2024,27 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
           : a.title.toLowerCase().compareTo(b.title.toLowerCase());
     });
 
+  Widget _treeDisclosure({
+    required Key key,
+    required bool expanded,
+    required VoidCallback onToggle,
+  }) => SizedBox(
+    width: 24,
+    height: 28,
+    child: IconButton(
+      key: key,
+      tooltip: expanded ? 'Zuklappen' : 'Aufklappen',
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints.tightFor(width: 24, height: 28),
+      onPressed: _busy ? null : onToggle,
+      icon: Icon(
+        expanded ? LucideIcons.chevronDown : LucideIcons.chevronRight,
+        size: 13,
+        color: WorkspaceColors(context).soft,
+      ),
+    ),
+  );
+
   Widget _treeRow(Entry entry, int depth, {bool root = false}) {
     final c = WorkspaceColors(context), container = entry.kind.isContainer;
     final expanded = root
@@ -2074,18 +2085,17 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                     constraints: const BoxConstraints(minHeight: 24),
                     child: Row(
                       children: [
-                        SizedBox(
-                          width: 12,
-                          child: container
-                              ? Icon(
-                                  expanded
-                                      ? LucideIcons.chevronDown
-                                      : LucideIcons.chevronRight,
-                                  size: 12,
-                                  color: c.soft,
-                                )
-                              : null,
-                        ),
+                        if (container)
+                          _treeDisclosure(
+                            key: ValueKey('tree-toggle-${entry.id}'),
+                            expanded: expanded,
+                            onToggle: () => setState(() {
+                              final state = root ? _expandedRoots : _collapsed;
+                              if (!state.add(entry.id)) state.remove(entry.id);
+                            }),
+                          )
+                        else
+                          const SizedBox(width: 24),
                         const SizedBox(width: 6),
                         Icon(
                           entry.kind == EntryKind.folder && expanded
@@ -2158,16 +2168,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         children: [
           Expanded(
             child: InkWell(
-              onTap: () async {
-                if (branch) {
-                  setState(() {
-                    if (!_archiveCollapsed.add(node.key)) {
-                      _archiveCollapsed.remove(node.key);
-                    }
-                  });
-                }
-                if (node.entry != null && !branch) await _open(node.entry!);
-              },
+              onTap: node.entry == null ? null : () => _open(node.entry!),
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
                   5 + math.min(depth, 8) * 14,
@@ -2177,17 +2178,18 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 ),
                 child: Row(
                   children: [
-                    SizedBox(
-                      width: 12,
-                      child: branch
-                          ? Icon(
-                              open
-                                  ? LucideIcons.chevronDown
-                                  : LucideIcons.chevronRight,
-                              size: 12,
-                            )
-                          : null,
-                    ),
+                    if (branch)
+                      _treeDisclosure(
+                        key: ValueKey('archive-toggle-${node.key}'),
+                        expanded: open,
+                        onToggle: () => setState(() {
+                          if (!_archiveCollapsed.add(node.key)) {
+                            _archiveCollapsed.remove(node.key);
+                          }
+                        }),
+                      )
+                    else
+                      const SizedBox(width: 24),
                     const SizedBox(width: 6),
                     Icon(
                       node.kind == EntryKind.project
@@ -3228,7 +3230,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 onPressed: () async {
                   final parent = _find(folder.parentId);
                   if (parent != null) {
-                    await _open(parent);
+                    await _open(parent, reveal: false);
                   } else {
                     await _navigate(_view);
                   }
@@ -3263,7 +3265,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                           leading: Icon(entryIcon(child.kind), size: 20),
                           title: Text(child.title),
                           trailing: _entryMenu(child),
-                          onTap: () => _open(child),
+                          onTap: () =>
+                              _open(child, reveal: !child.kind.isContainer),
                         ),
                         surface: 'folder-content',
                       ),

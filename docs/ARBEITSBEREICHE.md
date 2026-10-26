@@ -1,6 +1,6 @@
 # Vollständige Arbeitsbereiche
 
-Stand 0.9.0: Arbeitsbereiche lassen sich über Einstellungen öffnen, neu anlegen und
+Stand 0.9.2: Arbeitsbereiche lassen sich über Einstellungen öffnen, neu anlegen und
 kopieren. Inhalte, Einstellungen und Sitzungszustand werden gemeinsam geladen;
 die Auswahl bleibt über Neustarts erhalten.
 
@@ -18,14 +18,20 @@ Explorer-Breite/-Sichtbarkeit und Textlesebreite. Vorschautabs werden nicht wied
 automatisch wiederherzustellen ist damit noch nicht ausgewählt; vor einem
 Arbeitsbereichswechsel greift Speichern/Verwerfen/Abbrechen.
 
-Die bestehende Speicheraufteilung `workspace.sqlite`, `notes/`, `files/` bleibt
-übernehmbar. Kontextdefinitionen und versionierte Sitzungsdaten liegen ebenfalls
+Die Speicheraufteilung umfasst `workspace.sqlite`, `notes/`, `files/` und seit
+Schema 6 `ingest/` für Import-Zwischenstände. Ältere Bestände bleiben übernehmbar. Kontextdefinitionen und versionierte Sitzungsdaten liegen ebenfalls
 in `workspace.sqlite` (aktuell Schema 6; Einstellungstabelle seit Schema 5). Vorhandene Arbeitsbereiche ohne diese
 Angaben erhalten kompatible Voreinstellungen; vorhandene Daten nicht ersetzen.
 Sitzungsformat 2 übernimmt Format 1 nach vollständigem Rückfallexport innerhalb
 des Roots unter `.migration-backups/`. Der alte Einstellungswert bleibt erhalten.
 Unbekannte neuere/beschädigte Sitzungen bleiben unangetastet; ihre automatische
 Speicherung wird gesperrt. Inhalte bleiben lesbar und bearbeitbar.
+
+Abgeleitete Format-1-Suchcachemarken liegen ebenfalls in der Datenbank.
+Seit 0.9.1 werden vorhandene Treffer sofort verwendet und geänderte Inhalte nach
+Öffnung im Hintergrund abgeglichen. Fehlende/veraltete Marken lösen keine
+Inhaltsmigration aus. Externe Eingangsordner samt Original-Rückholbereich liegen
+außerhalb der Arbeitsbereichssicherung; lokale Quellenrechte werden nicht mitkopiert.
 
 ## Öffnen und über Neustarts merken
 

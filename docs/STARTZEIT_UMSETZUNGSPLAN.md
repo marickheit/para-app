@@ -1,8 +1,11 @@
 # Startzeit und inkrementeller Suchindex
 
+Aktueller Vertrag in 0.9.2, umgesetzt seit 0.9.1. Die Nachweise unten nennen den
+jeweiligen Prüfstand; aktuelle Version und Abnahme im [Arbeitsstand](UMSETZUNGSPLAN.md).
+
 ## Ziel und Umsetzung
 
-Option 3: Den vorhandenen Suchtext und Linkindex sofort verwenden; Änderungen
+Den vorhandenen Suchtext und Linkindex sofort verwenden; Änderungen
 nach dem Öffnen im Hintergrund abgleichen. Das Öffnen wartet nicht mehr auf
 PDF-Textextraktion. Unveränderte Dateien werden nicht erneut ausgelesen.
 
@@ -38,7 +41,7 @@ Analyse, bestehende Flutter-Suite, nativer Linux-Start und Release-Build.
 Lokale Installation erst nach Prüfung, mit Rückfallkopie und Paketvergleich;
 regulären Nutzerbestand nicht als Testumgebung öffnen.
 
-## Prüfnachweise
+## Prüfnachweise 0.9.1
 
 Stand: 26. Oktober 2026, Version 0.9.1+14.
 

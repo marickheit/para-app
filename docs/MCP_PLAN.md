@@ -1,6 +1,7 @@
-# MCP-Anbindung – Architekturplan
+# MCP-Anbindung – Architektur und Vertrag
 
-Stand: 26. Oktober 2026. Beauftragter und umgesetzter Kernumfang für Version 0.7.
+Stand: 26. Oktober 2026 · App 0.9.2, MCP 0.3.0, API-Funktionsstand 2.
+Kern seit 0.7, automatische Ablage seit 0.7.1 und erweiterte Werkzeuge seit 0.8.1.
 Tatsächliche Bedienung und Grenzen: [MCP.md](MCP.md); Prüfstand: [MCP_UMSETZUNG.md](MCP_UMSETZUNG.md).
 
 ## Ziel
@@ -45,8 +46,10 @@ Inhaltstexte werden nicht automatisch umgeschrieben oder redigiert.
 
 Die App erstellt pro Verbindung ein kryptografisch zufälliges Geheimnis und eine
 Verbindungskennung. Endpunkt/Geheimnis in einer lokalen Datei mit restriktiven
-Rechten (0600), außerhalb von Repository, Arbeitsbereich und Sicherungszielen;
-der Nutzer wählt einen zulässigen Ablageort. Der Bridge-Client akzeptiert nur
+Rechten (0600), außerhalb von Repository, Arbeitsbereich und Sicherungszielen.
+Die App verwaltet den privaten 0700-Ordner auf macOS/Linux automatisch;
+kein Ordnerdialog. Plattformpfade und explizite ältere Pfadargumente beschreibt
+[MCP.md](MCP.md). Der Bridge-Client akzeptiert nur
 `http://127.0.0.1:<Port>` und folgt keinen Redirects. Eine
 Beispielkonfiguration enthält nur deren Platzhalterpfad. Keine Geheimnisse in
 Logs, Kommandozeilen oder exportierten Sicherungen. Die Datei atomar schreiben, Symlinks und unsichere Rechte ablehnen; lokale,
@@ -73,9 +76,11 @@ Anbieter gelangen; dies vor Freigabe klar anzeigen.
 
 ## Werkzeuge
 
-Projektanlage seit 0.7.2 gemäß [Erweiterungsplan](MCP_PROJEKTE_PLAN.md).
+Projektanlage seit 0.7.2 gemäß [Vertrag](MCP_PROJEKTE_PLAN.md); die Erweiterung
+um Ablage-/Metadaten-/Textoperationen seit 0.8.1 steht in
+[MCP_ERWEITERUNG_PLAN.md](MCP_ERWEITERUNG_PLAN.md).
 
-Alle Antworten: strukturierte JSON-Daten mit UUID, Art, Titel, Ablage, Revision,
+Inhaltsantworten enthalten strukturierte JSON-Daten mit UUID, Art, Titel, Ablage, Revision,
 Status und `para://entry/<UUID>`; Suche liefert begrenzte Ausschnitte,
 `read_text` gezielt angeforderten Text. Datum als
 Kalenderdatum für Projekttermine; Zeitstempel mit Zeitzone. Keine internen Pfade.
@@ -83,7 +88,7 @@ Kalenderdatum für Projekttermine; Zeitstempel mit Zeitzone. Keine internen Pfad
 | Stufe | Werkzeuge | Vertrag |
 | --- | --- | --- |
 | 1: Lesen | `workspace_info`, `list_entries`, `search`, `get_entry`, `read_text`, `list_tasks`, `list_contexts`, `get_links` | Pagination, begrenzte Textausschnitte, Filter und vorhandene Suchgrenzen; Archiv nur mit Freigabe und explizitem Filter |
-| 2: Schreiben | `create_project`, `create_note`, `create_task`, `update_text`, `update_task`, `set_task_state` | Einzeloperationen mit expliziten Feldern; vorhandene Werte nicht durch fehlende Parameter leeren |
+| 2: Schreiben | `create_project`, `create_area`, `create_resource`, `create_folder`, `create_note`, `create_task`, `update_entry`, `edit_text`, `update_text`, `update_task`, `set_task_state` | Einzeloperationen mit expliziten Feldern; vorhandene Werte nicht durch fehlende Parameter leeren |
 | später | Vorhandene Inhalte in Projekte umwandeln, Verschieben, Archivieren, Papierkorb, Wiederherstellen, Dateiimport | Separat entwerfen und freigeben; noch kein Umfang der ersten Version |
 
 Kein SQL, beliebiger Dateipfad, Shellzugriff, Öffnen externer URLs, endgültiges
@@ -133,9 +138,13 @@ bei Änderungen über die bestehenden App-Dienste aktualisiert.
   ungültige Eingabe, Größenlimit und unbekanntes Ausführungsergebnis.
 - Inhaltstexte sind Daten, keine Steueranweisungen. Tool-Annotationen beschreiben
   Lese-/Schreibwirkung, ersetzen aber nie serverseitige Zugriffsprüfung.
-- Startgrenzen: 100 Objekte pro Seite, maximal 1 MiB Text pro Lese-/Schreibaufruf,
-  2 MiB Bridge-Request und Gesamtantwort, begrenzte parallele Leseaufrufe und Timeouts. Größere
-  bearbeitbare Texte mit expliziten Ausschnitten lesen; kein Abschneiden beim Schreiben.
+- Listen: Standard 20, höchstens 100 Objekte; standardmäßig kompakte Metadaten,
+  vollständige Felder über `detail: full`/`get_entry`. Textabschnitte standardmäßig
+  4.000, höchstens 262.144 UTF-16-Codeeinheiten. Listen und Texte maximal 64 KiB
+  JSON, mit Cursor beziehungsweise `next_offset` fortsetzen. Unicode-Paare nicht
+  zerlegen. Gesamttext einer Änderung höchstens 1 MiB UTF-8, etwa 2 MiB für
+  Bridge-Request/-Gesamtantwort und höchstens acht parallele Anfragen. Keine stille
+  Kürzung oder Rekonstruktion einer Textersetzung aus unvollständigen Ausschnitten.
 
 ## Ablage im Repository
 
@@ -144,8 +153,9 @@ bei Änderungen über die bestehenden App-Dienste aktualisiert.
 - `lib/services/mcp_access_service.dart`, `mcp_bridge.dart`: App-Anbindung.
 - Gemeinsame JSON-Vertragsfixtures unter `test/fixtures/mcp/`; Dart und TypeScript
   prüfen denselben Vertrag. Keine Nutzerdaten als Fixtures.
-- `docs/MCP.md`: tatsächliche Einrichtung, Freigaben, Grenzen und Fehlerhilfe erst
-  mit Implementierung. Dieser Plan beschreibt die Architektur; MCP.md den implementierten Vertrag.
+- `docs/MCP.md`: Einrichtung, Freigaben, Werkzeugvertrag, Grenzen und Fehlerhilfe.
+  Dieser Architekturvertrag und die Fachpläne müssen mit der Implementierung und
+  der Bedienungsanleitung synchron bleiben.
 - README, Architektur, Sicherung und Umsetzungsplan im jeweiligen Umsetzungsschritt
   aktualisieren. Kein Commit von Builds, Credentials oder lokalen Arbeitsbereichen.
 
@@ -171,7 +181,7 @@ Archiv/Papierkorb, große Payloads, ungültige IDs, Pfadversuche, alte Revisione
 gleichzeitige UI-/MCP-Änderungen, insbesondere Speichern mit verzögerter Rückgabe
 und Eingabe während eines verzögerten Editor-Ladens, veraltete Seitencursor, doppelte Requests, Verbindungsabbruch und App-Ende.
 
-Kein neues Inhalts-/Sicherungsformat für MCP vorgesehen. Alte Schemas 1–4 weiterhin
+Kein neues Inhalts-/Sicherungsformat für MCP vorgesehen. Alte Schemas 1–5 weiterhin
 über die App mit vollständiger Rückfallkopie übernehmen; unabhängige Sicherung
 inklusive UUIDs, Links, Bytes, Status, Archiv, Papierkorb, Textversionen und
 Root-Einstellungen öffnen und vergleichen. Falls die Umsetzung doch ein
@@ -184,5 +194,7 @@ Rückholung zwingender Bestandteil derselben Änderung.
 - [MCP-Transporte](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports): stdio und Trennung von Protokollausgabe und Diagnosen.
 - [MCP-Tools](https://modelcontextprotocol.io/specification/2025-11-25/server/tools): Tool-Verträge, strukturierte Antworten und Nutzerkontrolle.
 
-Diese Quellen begründen die MCP-Seite; die interne App-Bridge und Freigaberegeln
-sind projektspezifische Architekturvorschläge. Protokollstand vor Implementierung erneut prüfen.
+Diese Hintergrundquellen begründen die MCP-Seite; die interne App-Bridge und
+Freigaberegeln sind implementierte Projektverträge. Verwendete SDK-Versionen sind
+in `mcp/package.json` und Lockdatei festgelegt. Bei SDK-/Protokolländerungen die
+Verträge und Kompatibilitätsprüfungen im selben Arbeitsgang aktualisieren.

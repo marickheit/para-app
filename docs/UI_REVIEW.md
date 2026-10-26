@@ -1,6 +1,6 @@
 # Kritische Bewertung der Zieloberfläche
 
-Stand: 26. Oktober 2026 · Flutter 0.9.0. Kritische Bewertung der Referenz und ihrer Flutter-Umsetzung.
+Stand: 26. Oktober 2026 · Flutter 0.9.2. Kritische Bewertung der Referenz und ihrer Flutter-Umsetzung.
 Optionale Vorschläge sind keine weitere Funktionsfreigabe. Verbindliche Anforderungen stehen im [UI-Umzug](UI_UMZUG.md).
 
 ## Bewusste Gegenprüfung
@@ -15,6 +15,8 @@ Optionale Vorschläge sind keine weitere Funktionsfreigabe. Verbindliche Anforde
 | Irgendwann verliert seine Kontextaktionen | Drei Punkte und Rechtsklick mit Bearbeiten, Verschieben, Abschluss und Projektumwandlung | Gemeinsame Aktionen in allen GTD-Ansichten |
 | Ein importierter Dateiname überschreibt einen vorhandenen Inhalt | Import behält beide mit Namenszusatz; interner Namenskonflikt wird blockiert | Import bewahrt beide Objekte mit eigenen UUIDs; gleiche Anzeigenamen sind möglich. Endgültige Konfliktbedienung offen |
 | Archivierte Aufgaben werden weiter bearbeitet | Aufgaben bleiben sichtbar, Abschlussfeld gesperrt; Wiederherstellen als Aktion | Einzelne Inhalte wiederherstellen und schreibgeschütztes Archiv geprüft |
+| Containerklick verändert ungewollt den Baum oder unterbricht einen Entwurf | Mocks sind unverbindliche Beispiele | Seit 0.9.2 getrennte Name-/Pfeilbedienung; Pfeile erhalten Auswahl und Editor, auch in Archiv/Papierkorb |
+| PDF-Inhaltssuche verzögert den Start | Keine echte PDF-Indexierung im Mockup | Seit 0.9.1 vorhandenen Index sofort nutzen, Änderungen im Hintergrund, unveränderte PDFs nicht erneut auslesen |
 
 ## Verbleibende Grenzen und Kritik
 

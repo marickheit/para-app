@@ -1,22 +1,19 @@
-# Anlegen: Befunde und bestätigte Überarbeitung
+# Anlegen: umgesetzter Umfang und verbleibender Vorschlag
 
-Stand: 26. Oktober 2026.
+Stand: 26. Oktober 2026 · App 0.9.2. Die Überarbeitung der Auswahl-/Anlageziele
+ist seit 0.7.3 umgesetzt. Verbindlich sind [Bedienung](../README.md) und
+[Umsetzung/Prüfungen](ANLEGEN_UMSETZUNGSPLAN.md).
 
-Die Analyse von 0.7.2 bestätigte: Bei geöffneten Bereichen/Ressourcensammlungen
-verschwand die Hauptanlage aus dem Plus-Menü. Kategorie-Navigation wählte
-ungefragt vorhandene Inhalte; ein separat gemerktes Ordnerziel konnte vom
-geöffneten Editor abweichen. Anlegedialoge zeigten kein Ziel. Tastatur und Plus
-folgten verschiedenen Regeln; neue Aufgaben konnten in der aktuellen Liste
-unsichtbar bleiben.
+Ohne Auswahl bieten Projekte/Bereiche/Ressourcen die jeweilige Hauptanlage;
+mit Auswahl lokale Inhaltstypen und eine getrennte weitere Hauptanlage.
+Container haben eine Übersicht, Dialoge zeigen den Zielpfad und normale Inhalte
+erlauben einen Zielwechsel. Geöffnete Dateien verwenden ihren Elterncontainer
+als sichtbares Anlageziel.
 
-Die gemeinsame Überarbeitung wurde bestätigt und ist für 0.7.3 umgesetzt.
-Containerklick darf ausdrücklich zugleich auswählen und aufklappen; erneuter
-Klick wählt ab und klappt zu. Ohne Auswahl nur Kategorie-Hauptanlage, mit Auswahl
-lokale Typauswahl und getrennte weitere Hauptanlage. Container haben eine
-Übersicht; Dialoge zeigen den Zielpfad und normale Inhalte erlauben Zielwechsel.
-Details und Abnahme im [Umsetzungsplan](ANLEGEN_UMSETZUNGSPLAN.md), aktuelle
-Bedienung in [README](../README.md).
+Seit 0.9.2 wählen Name/Zeile aktive Container aus oder ab, ohne den Baumzustand
+zu verändern. Nur der separate Pfeil klappt auf/zu; dabei bleiben Auswahl und
+Editor erhalten. Archiv und Papierkorb trennen Pfeil und Inhaltsöffnung ebenfalls.
 
-Noch offen und nicht Teil der App-Bedienänderung: zusätzliche MCP-Werkzeuge für
-Bereich/Ressourcensammlung/Ordner und „Neu daneben …“ an einzelnen Dateien.
-Die vorhandenen Kontextaktionen an Containern sind enthalten.
+Die MCP-Anlage von Bereichen, Ressourcensammlungen und Ordnern ist implementiert;
+siehe [MCP](MCP.md). „Neu daneben …“ an einzelnen Dateien bleibt ein unbestätigter
+Vorschlag. Die vorhandenen Kontextaktionen an Containern sind umgesetzt.

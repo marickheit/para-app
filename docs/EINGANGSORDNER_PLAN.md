@@ -41,9 +41,11 @@ Finalisierter Umfang für Version 0.8.0. Umsetzung und Prüfungen stehen im
   Spätere Änderungen im Rückholbereich werden nicht erneut automatisch importiert.
 - Erste Version ist für lokale Dateisysteme geprüft. Cloud-Platzhalter, Netzlaufwerke,
   mehrere Eingangsordner und Verarbeitung bei beendeter App bleiben weiterer Ausbau.
-- Ein Quellenfehler hält den betroffenen Eingang an; andere gültige Eingänge können
-  weiterlaufen. Nach Beheben „Jetzt prüfen“. Hat sich die Quelle nach Veröffentlichung
-  verändert, importierte Fassung und Original behalten und die Abweichung manuell prüfen.
+- Quellen-/Jobfehler werden in den Einstellungen angezeigt. Andere verarbeitbare
+  Einwürfe derselben Quelle können weiterlaufen; es gibt nur eine Quelle je Root.
+  Bei aktiver Automatik nach Beheben „Jetzt prüfen“ verwenden. Hat sich die Quelle
+  nach Veröffentlichung verändert, importierte Fassung und Original behalten und
+  die Abweichung manuell prüfen.
 
 ## Technische Umsetzung
 

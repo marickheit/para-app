@@ -5,7 +5,8 @@ kein Gesprächsprotokoll. Bei neuen Entscheidungen diese Beschreibung aktualisie
 
 ## Grundlage und Status
 
-Die bestätigte Symbolleisten-/Explorer-Vorlage ist in Flutter 0.4 umgesetzt:
+Die Symbolleisten-/Explorer-Grundlage ist seit Flutter 0.4 umgesetzt; der aktuelle
+Vertrag beschreibt 0.9.2:
 Anordnung, Farben, Symbole, Abstände, Editor, gemeinsame Kopfzeile, Dateiaktionen,
 Aufgabenansichten und schmale Navigation orientieren sich eng am Mockup.
 
@@ -17,11 +18,16 @@ nativen Datei-Drops. Die Beispieldaten wurden nicht in den Nutzerarbeitsbereich 
 ## Bestätigte Anforderungen
 
 - Symbolleiste zwischen Symbolen und Namen umschaltbar; Menübutton unten mit
-  öffnendem Menüfenster. Weitere Menüinhalte sind noch nicht festgelegt.
+  öffnendem Menüfenster für Daten & Sicherung und Einstellungen.
 - Projekte visuell von Ordnern unterscheiden. Aktive Projekte stehen nur auf
   oberster Ebene; im Archiv gilt weiterhin Jahr → Herkunft → ursprüngliche Struktur.
-- Ordner per Zeilenklick auf-/zuklappen. Notizen und Dateien vollständig im Baum
-  anzeigen, auch in Ordnern wie „Unterlagen“. Keine feste Beispiel-Ordnerstruktur erzwingen.
+- Projekte, Bereiche, Ressourcensammlungen und Ordner über Name/Zeile auswählen
+  oder abwählen. Den Baum ausschließlich über den benachbarten Pfeil auf-/zuklappen,
+  unabhängig von Auswahl und Editor. Archiv-/Papierkorbzeilen öffnen den
+  schreibgeschützten Inhalt; ihre Pfeile ändern nur den Baum. Das Kopfzeilensymbol
+  kann alle Zweige umschalten, Datei-/Tabwechsel, Suche und Links den Zielpfad
+  automatisch sichtbar machen. Notizen und Dateien vollständig im Baum anzeigen,
+  auch in Ordnern wie „Unterlagen“. Keine feste Beispiel-Ordnerstruktur erzwingen.
 - Unterstützte Dateien im Hauptbereich rendern, Metadaten über ein kleines
   Info-Symbol zeigen; für andere Formate Download beziehungsweise lokale Dateiaktion.
 - Markdown-Notizen anlegen, bearbeiten und anzeigen. Auch gängige Textdateien,
@@ -56,11 +62,14 @@ nativen Datei-Drops. Die Beispieldaten wurden nicht in den Nutzerarbeitsbereich 
   und ist zwischen 220 und 520 Pixel verstellbar, abhängig vom Fenster.
   Dateifläche breit, Textlesebreite optional 760 Pixel. Schmale Fenster nutzen
   eine überlagerte Navigation.
-- Menü unten öffnet Daten & Sicherung; weitere Einstellungen wurden nicht erfunden.
+- Menü unten öffnet Daten & Sicherung oder Einstellungen für Aufgaben/Kontexte;
+  die Einstellungen enthalten außerdem Eingangsordner und KI-Anbindung.
 - MD und TXT sind mit explizitem Speichern bearbeitbar. UTF-8-/Größenprüfung und
   Hash-/Revisionsprüfung schützen externe Änderungen. Dateiumbenennung erhält Links.
 - PDF, Rasterbilder, SVG und CSV haben echte Vorschau. Text-/PDF-Suche arbeitet
   innerhalb der in [README.md](../README.md) beschriebenen Format- und Größenlimits.
+  Vorhandenen Index sofort nutzen; geänderte Dateien und PDF-Importe werden im
+  Hintergrund ausgewertet, offene Suchtreffer aktualisieren sich automatisch.
 - Interner Umzug ändert den Ablageort desselben Objekts; Import erstellt neue lokale
   Kopien. Aktive Projekte bleiben auf oberster Ebene, Selbst-/Nachfahrenziele sind gesperrt.
 - Globale nächste Aktionen gruppieren nach Projektidentität, auch bei gleichnamigen
@@ -85,7 +94,9 @@ nativen Datei-Drops. Die Beispieldaten wurden nicht in den Nutzerarbeitsbereich 
 - Archivregeln, Projektumwandlung, Tastatur, Suche und schmale Fenster bleiben bedienbar.
 
 Die App-Prüfungen betreffen echte Speicherung, Migration, Dateiverarbeitung und
-native Mac-Bedienung. Die früheren Mockup-Prüfungen ersetzen diese Nachweise nicht.
+native Bedienung. Die frühere macOS-Abnahme gilt für ihren jeweiligen Versionsstand;
+die aktuellen Erweiterungen sind unter Linux geprüft, ihre macOS-Nachprüfung bleibt
+offen. Mockup-Prüfungen ersetzen diese Nachweise nicht.
 [Kritische Bewertung und optionale Vorschläge](UI_REVIEW.md).
 
 ## Noch nicht ausgewählte Vorschläge

@@ -1,6 +1,6 @@
 # KI-Anbindung über MCP
 
-Stand: App 0.8.1, MCP-Paket 0.3.0, API-Funktionsstand 2. MCP läuft lokal mit der geöffneten App auf macOS und Linux.
+Stand: App 0.9.2, MCP-Paket 0.3.0, API-Funktionsstand 2 (seit App 0.8.1). MCP läuft lokal mit der geöffneten App auf macOS und Linux.
 Der Server liegt im Repository unter `mcp/`. Er öffnet selbst keine Nutzdaten.
 
 ## Einrichten
@@ -170,6 +170,10 @@ Textverlauf; der vorhandene App-Umfang bleibt maßgeblich.
 - Kein Dateiimport/-export, beliebiger Dateipfad, SQL, Shell, Rootwechsel,
   Verschieben, Archivieren, endgültiges Löschen oder Rückspielen von Sicherungen.
   Binäranhänge liefern nur Metadaten; Textsuche verwendet die Grenzen aus README.
+  Suche liest den gespeicherten Index. Während des Hintergrundabgleichs nach dem
+  Öffnen können geänderte/neue Dateiinhalte noch mit dem vorherigen Stand oder
+  ohne Inhaltstreffer erscheinen. `read_text` liest den gespeicherten Inhalt,
+  nicht einen vollständigen Text aus einem Suchausschnitt.
 - Listen: standardmäßig 20, höchstens 100 Objekte; `detail: compact` ist Standard,
   `detail: full` liefert alle Metadaten. Kompakt enthält Identität, Titel, Typ,
   Ablage, Eltern-ID, Revision und Link, bei Projekten Ziel/Termin und bei Aufgaben
@@ -226,8 +230,9 @@ Nach Erfolg im selben Testordner eine leere Datei
 `para-mcp-connection.json.done` anlegen. Der native Test prüft gespeicherte Daten,
 Widerruf und Dateibereinigung. Keine Geheimnisse ausgeben.
 
-Die native Änderung dieser Version ist auf Linux geprüft. Ein erneuter nativer
-macOS-Test mit Sandbox steht noch aus.
+Der erweiterte MCP-Vertrag wurde mit App 0.8.1 und MCP 0.3.0 nativ auf Linux
+geprüft. Diese versionsgebundenen Nachweise stehen in MCP_UMSETZUNG.md. Ein
+erneuter nativer macOS-Test einschließlich automatischer Ablage steht noch aus.
 
 Intern: stdio → TypeScript-SDK → authentifizierte HTTP-Bridge ausschließlich auf
 127.0.0.1 → App-Dienst → Repository. Bridge-Vertrag und `mcp.v1`-Präferenz sind

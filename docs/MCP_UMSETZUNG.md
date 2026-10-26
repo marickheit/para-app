@@ -1,6 +1,8 @@
 # MCP – Umsetzung und Prüfstand
 
-Stand: 26. Oktober 2026 · App 0.8.1+12 · MCP-Paket 0.3.0.
+Stand: 26. Oktober 2026 · App 0.9.2+15 · MCP-Paket 0.3.0, API 2.
+Die folgenden Prüfnachweise sind jeweils an ihre App-/Serverversion gebunden;
+aktueller Gesamtprüfstand: [UMSETZUNGSPLAN.md](UMSETZUNGSPLAN.md).
 Beauftragter Umfang gemäß [Architekturplan](MCP_PLAN.md),
 [Einrichtung und Grenzen](MCP.md).
 
@@ -12,7 +14,8 @@ Beauftragter Umfang gemäß [Architekturplan](MCP_PLAN.md),
 4. [x] Elf Schreib-Werkzeuge mit Revision/Hash und Wiederholungsschutz.
 5. [x] Einstellungen zur Freigabe, Widerruf und eigenständiges stdio-Paket in `mcp/`.
 6. [x] Vertrags-, Sicherheits-, Konkurrenz-, Rückholungs- und echte stdio-Prüfungen.
-7. [x] Signierte macOS-Release-Testapp, Bedienungsdoku und unabhängige Code-Reviews.
+7. [x] Bedienungsdoku und unabhängige Code-Reviews. Signierte macOS-Release-
+   Abnahme für den damaligen Kernumfang aus 0.7.0; neuere macOS-Abnahme offen.
 
 Freigabe gilt für die aktuelle App-Öffnung; keine Bestätigung jeder Einzelaktion.
 Die Berechtigungspräferenz im Root aktiviert nach Neustart/Kopie keine Verbindung.
@@ -43,7 +46,7 @@ für MCP. Der MCP-Prozess öffnet selbst keine Datenbank oder Nutzdateien.
   installierten Server erneut nativ mit allen 14 Werkzeugen geprüft.
   Skill-Format validiert und bestehender lokaler Repository-Verweis geprüft.
 
-- Aktuelle Erweiterung: automatische Ablage auf macOS/Linux, sofortige Auswahl
+- Automatische Ablage 0.7.1: automatische Ablage auf macOS/Linux, sofortige Auswahl
   Aus/Lesen/Schreiben, sichere native Linux-Dateierzeugung und Serverstart ohne
   Pfadargument. Analyse, 80 Flutter-Tests und sechs Node-Tests erfolgreich.
 - Nativer Linux-Test: UI-Zustände, Widerruf, 0700/0600, unsichere Datei/Symlink
@@ -52,6 +55,8 @@ für MCP. Der MCP-Prozess öffnet selbst keine Datenbank oder Nutzdateien.
 - macOS-Pfaderkennung ist automatisiert geprüft; die neue native Ordnererzeugung
   im macOS-Sandbox-Build ist auf diesem Linux-Rechner nicht prüfbar.
   Die folgenden macOS-Nachweise gelten für den bisherigen Umfang aus 0.7.0.
+
+### Ursprünglicher macOS-/Kernnachweis 0.7.0
 
 - Flutter-Codeprüfung ohne Befund; 78 Tests der vollständigen Suite einschließlich alter
   Schemas 1–4 und unabhängiger Sicherungsrückholung erfolgreich.

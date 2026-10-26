@@ -1,9 +1,11 @@
 # Review 0.6
 
-Die lokale Release-App ist mit einem getrennten, dauerhaften Beispielarbeitsbereich
+Versionsgebundener Review-Nachweis für 0.6; keine aktuelle Abnahme von 0.9.2.
+Aktuelle Bedienung: [README](../README.md), Prüfstand: [Arbeitsstand](UMSETZUNGSPLAN.md).
+
+Für die damalige Review wurde die Release-App mit einem getrennten Beispielarbeitsbereich
 gestartet. Bisherige Nutzerdaten und deren Startauswahl wurden nicht verändert.
-Die bisherige App liegt zusätzlich als lokale Rückfallkopie vor.
-Version 0.6 ist nach Review für Commit und Push freigegeben.
+Die bisherige App wurde damals zusätzlich als lokale Rückfallkopie erhalten.
 
 ## Zum Ausprobieren
 

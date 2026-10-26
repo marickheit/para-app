@@ -3,8 +3,8 @@
 In Flutter 0.4 umgesetzt: **Symbolleiste mit Projekt-Explorer**. Der frühere
 kompakte Explorer und die weiteren Varianten bleiben Vergleichsentwürfe.
 Ihre Anforderungen, der Abgleich mit der App und der weitere Mockup-Plan stehen
-im [UI-Umzug](UI_UMZUG.md). Maßgeblich für Bedienung und Grenzen der App ist README.md.
-Die [aktuelle Mockup-Quelle](mockups/para-zieloberflaeche.html) ergänzt Editor,
+im [UI-Umzug](UI_UMZUG.md). Maßgeblich für Bedienung und Grenzen der App ist [README.md](../README.md).
+Die [ursprüngliche Mockup-Quelle](mockups/para-zieloberflaeche.html) ergänzt Editor,
 Anlage, Import, Kontextaktionen, Verschieben und Aufgabenabschluss.
 
 ## Gemeinsame Richtung
@@ -29,15 +29,18 @@ Die bestehenden Speicher- und Projektregeln bleiben die Grundlage.
   per Button um die Navigationsnamen erweiterbar. Daneben ein Projektbaum mit
   Ordnern und Dateien; im Projekt direkter Wechsel zwischen Inhalten und Aufgaben.
   Globale Aufgaben öffnen die GTD-Ansichten. Breiten und Zeilenabstände sind im
-  Mockup vergleichbar. Die Gestaltung und bestätigten Funktionen sind in Flutter 0.4 umgesetzt.
+  Mockup vergleichbar. Die Grundgestaltung ist seit Flutter 0.4 umgesetzt; aktuelle
+  Bedienung einschließlich Tabs und Pfeilen steht in [README](../README.md).
 
-## Anforderungen im Symbolleisten-Mockup
+## Aktuelle Anforderungen und Abgrenzung zum Mockup
 
 - Aktive Projekte stehen ausschließlich auf oberster Ebene der Projektliste;
   im Archiv können sie unter Jahr/Herkunft liegen. Ein eigenes Projektsymbol
   unterscheidet sie von normalen Ordnern.
-- Ordner lassen sich durch Klick auf die Zeile auf- und zuklappen. Ihre Notizen
-  und Dateien erscheinen direkt im Explorer, auch innerhalb von „Unterlagen“.
+- In der App wählt Name/Zeile aktive Container aus oder ab. Nur der benachbarte
+  Pfeil klappt den Baum auf-/zu; auch im Archiv und Papierkorb ist der Pfeil von
+  der Inhaltsauswahl getrennt. Die ältere Mockup-Bedienung ist nicht verbindlich.
+  Notizen und Dateien erscheinen im Explorer, auch innerhalb von „Unterlagen“.
 - Dateien öffnen bei unterstützten Formaten eine Vorschau. Ein kleines
   Info-Symbol zeigt Typ, Größe, Änderungsdatum, Ablageort und Suchunterstützung.
   Für andere Formate steht ein Download zur Verfügung.

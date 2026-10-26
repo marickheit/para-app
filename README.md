@@ -1,10 +1,12 @@
 # P.A.R.A. Workspace
 
-Lokale Flutter-App 0.9.1 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS.
-Linux-x64-Release und 27 native Bedienabläufe für Oberfläche, Arbeitsbereiche
-und Anlage sind geprüft. Die neue native macOS-Abnahme und Android sind offen.
+Lokale Flutter-App 0.9.2 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS und Linux.
+Linux-x64-Release und native Abläufe für Oberfläche, Arbeitsbereiche und Anlage
+sind geprüft; den versionsgebundenen Prüfstand nennt der [Arbeitsstand](docs/UMSETZUNGSPLAN.md).
+Die neue native macOS-Abnahme und Android sind offen.
 
-[Quellcode auf GitHub](https://github.com/marickheit/para-app)
+[Quellcode auf GitHub](https://github.com/marickheit/para-app) ·
+[Dokumentationsübersicht](docs/README.md)
 
 ## Benutzen
 
@@ -27,9 +29,16 @@ und Anlage sind geprüft. Die neue native macOS-Abnahme und Android sind offen.
   „Alle Aufgaben“ öffnet die GTD-Ansichten, darunter steht der Papierkorb. Cmd/Ctrl+\ blendet die ganze Navigation
   ein/aus; schmale Fenster öffnen sie über den Kopfzeilenbutton.
 - **Explorer und Auswahl:** Ein Kategorie-Klick zeigt ihre Übersicht ohne automatische
-  Auswahl. Projekt, Bereich, Ressourcensammlung oder Ordner anklicken: auswählen
-  und aufklappen. Das wirksame Anlageziel ist grau hinterlegt. Erneut anklicken:
-  abwählen und zuklappen; bei Unterordnern zurück zum Elterncontainer.
+  Auswahl. Name oder Zeile eines aktiven Projekts, Bereichs, einer Ressourcensammlung
+  oder eines Ordners anklicken: auswählen. Das wirksame Anlageziel ist grau hinterlegt. Erneut
+  anklicken: abwählen; bei Unterordnern zurück zum Elterncontainer. Auf- und
+  Zuklappen im Baum über den Pfeil daneben, unabhängig von der Auswahl; das
+  Kopfzeilensymbol kann alle Zweige auf-/zuklappen. Im Archiv und Papierkorb
+  öffnen Zeilen den schreibgeschützten Inhalt, ihre Pfeile ändern nur den Baum.
+  Virtuelle Archivgruppen wie Jahr/Herkunft werden nur über ihren Pfeil geöffnet.
+  Pfeilklicks lassen einen offenen Editor samt ungespeicherten Änderungen stehen.
+  Datei-/Tabwechsel, Suche, Links und Neuanlage können den Zielpfad automatisch
+  sichtbar machen.
   „Zur Kategorieübersicht“ setzt die Auswahl zurück. Eine geöffnete Datei verwendet
   ihren Elterncontainer als sichtbares Anlageziel.
 - **Containerübersicht:** Projekte, Bereiche und Ressourcensammlungen öffnen mit
@@ -185,7 +194,7 @@ Der MCP-Server liegt unter `mcp/`; Node.js ab 22 erforderlich.
   beschädigte PDFs gegebenenfalls mit der Standard-App öffnen.
 - CSV: Vorschau bis 200 Zeilen / 20 Spalten, einschließlich zitierter Felder;
   keine Tabellenbearbeitung. Textsuche in UTF-8-CSV bis 16 MiB.
-- PDF-Suche: auslesbarer Text, erste 100 Seiten und höchstens 2 MiB Text bei Dateien
+- PDF-Suche: auslesbarer Text, erste 100 Seiten und höchstens etwa zwei Millionen Zeichen bei Dateien
   bis 100 MiB. Keine Bildtexterkennung/OCR. Andere Dateien bleiben nach Namen suchbar.
 - Start und Suche: Der vorhandene Suchindex ist sofort verfügbar. Beim Öffnen
   werden geänderte Inhalte im Hintergrund aktualisiert; unveränderte Dateien
