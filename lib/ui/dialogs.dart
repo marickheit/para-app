@@ -11,6 +11,7 @@ Future<EntryDraft?> showEntryDialog(
   String? heading,
   String? submitLabel,
   List<TaskContext> contexts = const [],
+  Widget? locationField,
 }) => showDialog<EntryDraft>(
   context: context,
   builder: (_) => _EntryDialog(
@@ -20,6 +21,7 @@ Future<EntryDraft?> showEntryDialog(
     heading: heading,
     submitLabel: submitLabel,
     contexts: contexts,
+    locationField: locationField,
   ),
 );
 
@@ -31,7 +33,9 @@ class _EntryDialog extends StatefulWidget {
     this.heading,
     this.submitLabel,
     required this.contexts,
+    this.locationField,
   });
+  final Widget? locationField;
   final EntryKind kind;
   final TaskState taskState;
   final EntryDraft? initialDraft;
@@ -117,6 +121,7 @@ class _EntryDialogState extends State<_EntryDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (widget.locationField != null) widget.locationField!,
               TextFormField(
                 controller: _title,
                 autofocus: true,
@@ -300,13 +305,15 @@ Future<String?> showRenameDialog(
   BuildContext context,
   String title, {
   String heading = 'Ordner umbenennen',
+  Widget? locationField,
 }) => showDialog<String>(
   context: context,
-  builder: (_) => _RenameDialog(title, heading),
+  builder: (_) => _RenameDialog(title, heading, locationField),
 );
 
 class _RenameDialog extends StatefulWidget {
-  const _RenameDialog(this.title, this.heading);
+  const _RenameDialog(this.title, this.heading, this.locationField);
+  final Widget? locationField;
   final String heading;
   final String title;
   @override
@@ -324,10 +331,19 @@ class _RenameDialogState extends State<_RenameDialog> {
   @override
   Widget build(BuildContext context) => AlertDialog(
     title: Text(widget.heading),
-    content: TextField(
-      controller: _controller,
-      autofocus: true,
-      decoration: const InputDecoration(labelText: 'Name'),
+    content: SizedBox(
+      width: 440,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.locationField != null) widget.locationField!,
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            decoration: const InputDecoration(labelText: 'Name'),
+          ),
+        ],
+      ),
     ),
     actions: [
       TextButton(
@@ -402,6 +418,66 @@ Future<MoveTarget?> showMoveDialog(
                   context,
                   MoveTarget(target.section, target.id),
                 ),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Abbrechen'),
+        ),
+      ],
+    ),
+  );
+}
+
+Future<MoveTarget?> showCreationDestination(
+  BuildContext context,
+  List<Entry> entries,
+) {
+  String path(Entry entry) => [
+    entry.section.label,
+    ...ancestorsOf(entry, entries).reversed.map((e) => e.title),
+    entry.title,
+  ].join(' / ');
+  final targets =
+      entries
+          .where(
+            (e) =>
+                e.kind.isContainer &&
+                !e.inTrash &&
+                !isArchived(e, entries) &&
+                !e.completed &&
+                !ancestorsOf(e, entries).any((p) => p.completed),
+          )
+          .toList()
+        ..sort((a, b) => path(a).compareTo(path(b)));
+  return showDialog<MoveTarget>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Ablage wählen'),
+      content: SizedBox(
+        width: 480,
+        height: 360,
+        child: ListView(
+          children: [
+            for (final section in [
+              ParaSection.inbox,
+              ParaSection.areas,
+              ParaSection.resources,
+            ])
+              ListTile(
+                title: Text(section.label),
+                subtitle: const Text('Oberste Ebene'),
+                onTap: () => Navigator.pop(context, MoveTarget(section, null)),
+              ),
+            for (final entry in targets)
+              ListTile(
+                title: Text(path(entry)),
+                leading: Icon(entryIcon(entry.kind), size: 18),
+                onTap: () =>
+                    Navigator.pop(context, MoveTarget(entry.section, entry.id)),
               ),
           ],
         ),

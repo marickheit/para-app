@@ -96,7 +96,6 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   final _archiveCollapsed = <String>{};
   final _expandedRoots = <String>{};
   bool _railExpanded = false;
-  String? _creationFolderId;
   bool _acceptingDrop = false;
   late StreamSubscription<List<Entry>> _subscription;
   late StreamSubscription<List<Entry>> _trashSubscription;
@@ -350,21 +349,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       _view = view;
       _rootId = null;
       _selectedId = null;
-      _creationFolderId = null;
       _tab = 'content';
     });
     _focusWorkspace();
-    if (!_taskNavigation &&
-        view != WorkspaceView.archive &&
-        view != WorkspaceView.trash) {
-      final roots = _explorerRoots;
-      final first =
-          roots.where((e) => !e.kind.isContainer).firstOrNull ??
-          roots.firstOrNull;
-      if (first != null && first.kind != EntryKind.folder) {
-        await _open(first, guarded: false);
-      }
-    }
   }
 
   Future<void> _open(Entry entry, {bool guarded = true}) async {
@@ -389,7 +376,6 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       });
       return;
     }
-    _creationFolderId = current.kind == EntryKind.folder ? current.id : null;
     if (current.kind == EntryKind.folder && current.parentId == null) {
       _expandedRoots.add(current.id);
     }
@@ -418,8 +404,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               ParaSection.areas => WorkspaceView.areas,
               ParaSection.resources => WorkspaceView.resources,
               ParaSection.inbox =>
-                current.kind == EntryKind.idea ||
-                        current.taskState == TaskState.someday
+                root != null
+                    ? WorkspaceView.inbox
+                    : current.kind == EntryKind.idea ||
+                          current.taskState == TaskState.someday
                     ? WorkspaceView.someday
                     : current.kind == EntryKind.task &&
                           current.taskState == TaskState.next
@@ -438,30 +426,40 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         _contentSelection[root.id] = current.id;
       }
       _tab = current.kind == EntryKind.task ? 'tasks' : 'content';
-      if (current.kind.isContainer && current.kind != EntryKind.folder) {
-        _expandedRoots.add(current.id);
-        final docs = _sorted(
-          _descendants(current)
-              .where(
-                (e) => e.kind == EntryKind.note || e.kind == EntryKind.file,
-              )
-              .toList(),
-        );
-        final remembered = _find(_contentSelection[current.id]);
-        _selectedId =
-            remembered != null && docs.any((e) => e.id == remembered.id)
-            ? remembered.id
-            : (docs
-                          .where(
-                            (e) =>
-                                e.parentId == current.id &&
-                                e.kind == EntryKind.note,
-                          )
-                          .firstOrNull ??
-                      docs.firstOrNull)
-                  ?.id;
+      if (current.kind.isContainer) {
+        if (current.parentId == null) {
+          _expandedRoots.add(current.id);
+        } else {
+          _collapsed.remove(current.id);
+        }
+        _tab = current.kind == EntryKind.folder ? 'content' : 'overview';
       }
     });
+  }
+
+  Future<void> _tapContainer(Entry entry) async {
+    final direct =
+        _selectedId == entry.id || (_rootId == entry.id && _selectedId == null);
+    if (!direct) {
+      await _open(entry);
+      return;
+    }
+    if (!await _canLeave() || !mounted) return;
+    final parent = _find(entry.parentId);
+    if (parent != null) {
+      await _open(parent, guarded: false);
+    } else {
+      await _navigate(_view);
+    }
+    if (mounted) {
+      setState(() {
+        if (entry.parentId == null) {
+          _expandedRoots.remove(entry.id);
+        } else {
+          _collapsed.add(entry.id);
+        }
+      });
+    }
   }
 
   Future<void> _select(Entry? entry) async {
@@ -598,52 +596,6 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     }
   }
 
-  Future<void> _showRootDetails(Entry root) async {
-    if (_busy) return;
-    final edit = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(root.title),
-        content: SizedBox(
-          width: 420,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  root.kind.label,
-                  style: Theme.of(context).textTheme.labelMedium,
-                ),
-                if (root.goal.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Text(root.goal),
-                ],
-                if (root.dueDate != null) ...[
-                  const SizedBox(height: 12),
-                  Text('Fällig am ${dateLabel(root.dueDate!)}'),
-                ],
-                if (root.completed) const Text('Abgeschlossen'),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Schließen'),
-          ),
-          if (!isArchived(root, _entries))
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Details bearbeiten'),
-            ),
-        ],
-      ),
-    );
-    if (edit == true && mounted) await _entryAction(root, 'edit');
-  }
-
   (ParaSection, String?) _creationLocation(EntryKind kind) {
     if ({
       EntryKind.project,
@@ -651,9 +603,17 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       EntryKind.resource,
       EntryKind.idea,
     }.contains(kind)) {
-      return (ParaSection.inbox, null);
+      return (
+        switch (kind) {
+          EntryKind.project => ParaSection.projects,
+          EntryKind.area => ParaSection.areas,
+          EntryKind.resource => ParaSection.resources,
+          _ => ParaSection.inbox,
+        },
+        null,
+      );
     }
-    final selected = _find(_creationFolderId) ?? _selected;
+    final selected = _selected;
     if (selected != null &&
         selected.kind == EntryKind.folder &&
         !isArchived(selected, _entries)) {
@@ -694,6 +654,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         : capture
         ? (ParaSection.inbox, null)
         : _creationLocation(kind);
+    var target = DropDestination(location.$1, location.$2, '');
     final taskState = _view == WorkspaceView.someday
         ? TaskState.someday
         : _view == WorkspaceView.waiting
@@ -701,37 +662,38 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         : _view == WorkspaceView.clarify ||
               _view == WorkspaceView.inbox && location.$2 == null
         ? TaskState.inbox
-        : TaskState.next;
+        : _root != null || destination?.parentId != null
+        ? TaskState.next
+        : TaskState.inbox;
     final draft = await showEntryDialog(
       context,
       kind,
       taskState: kind == EntryKind.task ? taskState : TaskState.inbox,
       contexts: _contexts,
+      locationField: _locationField(
+        () => target,
+        (value) => target = value,
+        fixed: {
+          EntryKind.project,
+          EntryKind.area,
+          EntryKind.resource,
+          EntryKind.idea,
+        }.contains(kind),
+      ),
     );
     if (draft == null || !mounted) return;
     await _run('Inhalt wird angelegt …', () async {
       final entry = await widget.repository.create(
         kind: kind,
         draft: draft,
-        section: location.$1,
-        parentId: location.$2,
+        section: target.section,
+        parentId: target.parentId,
       );
       await _refresh();
       if (kind == EntryKind.task) {
         if (mounted) {
-          setState(() {
-            _selectedId = null;
-            if (_root != null && belongsTo(entry, _root!.id, _entries)) {
-              _tab = 'tasks';
-            } else {
-              _rootId = null;
-              _view = entry.taskState == TaskState.someday
-                  ? WorkspaceView.someday
-                  : entry.taskState == TaskState.waiting
-                  ? WorkspaceView.waiting
-                  : WorkspaceView.actions;
-            }
-          });
+          setState(() => _taskFilter = const TaskFilter());
+          await _open(entry, guarded: false);
         }
       } else {
         await _open(entry, guarded: false);
@@ -741,22 +703,23 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 
   Future<void> _createText({DropDestination? destination}) async {
     if (!await _canLeave() || !mounted) return;
+    var target = destination ?? _destination(EntryKind.file);
     final name = await showRenameDialog(
       context,
       'Neue Textdatei.txt',
       heading: 'Neue Textdatei',
+      locationField: _locationField(() => target, (value) => target = value),
     );
     if (name == null || name.trim().isEmpty || !mounted) return;
     final filename = name.toLowerCase().endsWith('.txt')
         ? name.trim()
         : '${name.trim()}.txt';
-    final location = _creationLocation(EntryKind.file);
     await _run('Textdatei wird angelegt …', () async {
       final entry = await widget.repository.importFile(
         name: filename,
         bytes: const Stream.empty(),
-        section: destination?.section ?? location.$1,
-        parentId: destination?.parentId ?? location.$2,
+        section: target.section,
+        parentId: target.parentId,
       );
       await _refresh();
       await _open(entry, guarded: false);
@@ -766,19 +729,44 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     });
   }
 
+  Future<DropDestination?> _importDestination(
+    DropDestination? initial, {
+    bool folder = false,
+  }) async {
+    var target = initial ?? _destination(EntryKind.file);
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Importieren'),
+        content: SizedBox(
+          width: 460,
+          child: _locationField(() => target, (value) => target = value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Abbrechen'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(folder ? 'Ordner auswählen …' : 'Dateien auswählen …'),
+          ),
+        ],
+      ),
+    );
+    return accepted == true ? target : null;
+  }
+
   Future<void> _importFolder({DropDestination? destination}) async {
     if (!await _canLeave() || !mounted) return;
-    final location = _creationLocation(EntryKind.file);
+    final target = await _importDestination(destination, folder: true);
+    if (target == null || !mounted) return;
     try {
       final path = await getDirectoryPath(
         confirmButtonText: 'Ordner hinzufügen',
       );
       if (path != null && mounted) {
-        await _receiveFiles(
-          [XFile(path)],
-          destination ??
-              DropDestination(location.$1, location.$2, 'Ordner hinzufügen'),
-        );
+        await _receiveFiles([XFile(path)], target);
       }
     } catch (e) {
       if (mounted) showMessage(context, errorLabel(e));
@@ -939,15 +927,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 
   Future<void> _importFiles({DropDestination? destination}) async {
     if (!await _canLeave() || !mounted) return;
-    final location = _creationLocation(EntryKind.file);
+    final target = await _importDestination(destination);
+    if (target == null || !mounted) return;
     try {
       final files = await openFiles();
       if (!mounted) return;
-      await _receiveFiles(
-        files,
-        destination ??
-            DropDestination(location.$1, location.$2, 'Dateien hinzufügen'),
-      );
+      await _receiveFiles(files, target);
     } catch (error) {
       if (mounted) showMessage(context, errorLabel(error));
     }
@@ -1329,16 +1314,19 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       ];
     }
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(10, 0, 6, 14),
-      children: [
-        if (roots.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(8),
-            child: Text('Der Papierkorb ist leer.'),
-          ),
-        for (final root in roots) ...rows(root, 0),
-      ],
+    return Material(
+      type: MaterialType.transparency,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(10, 0, 6, 14),
+        children: [
+          if (roots.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(8),
+              child: Text('Der Papierkorb ist leer.'),
+            ),
+          for (final root in roots) ...rows(root, 0),
+        ],
+      ),
     );
   }
 
@@ -1733,7 +1721,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         ? 'Archivierte Inhalte'
         : _taskNavigation
         ? 'Aufgaben verwalten'
-        : 'Neu in: ${folder?.title ?? location.$1.label}';
+        : _categoryKind != null && folder == null
+        ? 'Keine Ablage ausgewählt'
+        : 'Neu in: ${_destinationPath(DropDestination(location.$1, location.$2, ""))}';
     return Container(
       key: const ValueKey('explorer-sidebar'),
       decoration: BoxDecoration(
@@ -1756,6 +1746,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                     ),
                   ),
                 ),
+                if (_root != null || _selected != null)
+                  IconButton(
+                    tooltip: 'Zur Kategorieübersicht',
+                    onPressed: () => _navigate(_view),
+                    icon: const Icon(Icons.arrow_back, size: 16),
+                  ),
                 _newMenu(),
                 if (!_taskNavigation && _view != WorkspaceView.trash)
                   IconButton(
@@ -1935,13 +1931,16 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     final expanded = root
         ? _expandedRoots.contains(entry.id)
         : !_collapsed.contains(entry.id);
-    final selected = _selectedId == entry.id && _tab != 'tasks';
+    final target = _creationLocation(EntryKind.note).$2;
+    final selected = entry.kind.isContainer
+        ? target == entry.id
+        : _selectedId == entry.id;
     return _entrySurface(
       entry,
       Container(
         key: ValueKey('tree-entry-${entry.id}'),
         decoration: BoxDecoration(
-          color: selected ? c.selected : null,
+          color: selected ? c.selection : null,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
@@ -1950,23 +1949,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               child: InkWell(
                 borderRadius: BorderRadius.circular(6),
                 onTap: () async {
-                  if (entry.kind == EntryKind.folder) {
-                    setState(() {
-                      _creationFolderId = entry.id;
-                      if (root) {
-                        if (!_expandedRoots.add(entry.id)) {
-                          _expandedRoots.remove(entry.id);
-                        }
-                      } else if (!_collapsed.add(entry.id)) {
-                        _collapsed.remove(entry.id);
-                      }
-                    });
-                  } else if (container) {
-                    final wasOpen = expanded;
-                    await _open(entry);
-                    if (mounted && wasOpen) {
-                      setState(() => _expandedRoots.remove(entry.id));
-                    }
+                  if (container) {
+                    await _tapContainer(entry);
                   } else {
                     await _open(entry);
                   }
@@ -2127,90 +2111,168 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     );
   }
 
+  EntryKind? get _categoryKind => switch (_view) {
+    WorkspaceView.projects => EntryKind.project,
+    WorkspaceView.areas => EntryKind.area,
+    WorkspaceView.resources => EntryKind.resource,
+    _ => null,
+  };
+
+  bool get _canCreate =>
+      !_busy &&
+      !{
+        WorkspaceView.archive,
+        WorkspaceView.trash,
+        WorkspaceView.done,
+        WorkspaceView.cancelled,
+      }.contains(_view);
+
   List<EntryKind> get _newKinds {
-    if (_root != null) {
+    if (_creationLocation(EntryKind.note).$2 != null) {
       return [EntryKind.note, EntryKind.task, EntryKind.folder, EntryKind.file];
     }
-    return switch (_view) {
-      WorkspaceView.projects => [EntryKind.project],
-      WorkspaceView.areas => [
-        EntryKind.area,
-        EntryKind.note,
-        EntryKind.folder,
-        EntryKind.file,
+    if (_categoryKind != null) return [_categoryKind!];
+    if (_view == WorkspaceView.someday) return [EntryKind.idea, EntryKind.task];
+    if (_taskNavigation) return [EntryKind.task];
+    return [
+      EntryKind.note,
+      EntryKind.task,
+      EntryKind.idea,
+      EntryKind.folder,
+      EntryKind.file,
+    ];
+  }
+
+  String _destinationPath(DropDestination destination) {
+    final parent = _find(destination.parentId);
+    return [
+      destination.section.label,
+      if (parent != null) ...[
+        ...ancestorsOf(parent, _entries).reversed.map((e) => e.title),
+        parent.title,
       ],
-      WorkspaceView.resources => [
-        EntryKind.resource,
-        EntryKind.note,
-        EntryKind.folder,
-        EntryKind.file,
-      ],
-      WorkspaceView.someday => [EntryKind.idea, EntryKind.task],
-      WorkspaceView.actions ||
-      WorkspaceView.waiting ||
-      WorkspaceView.allTasks ||
-      WorkspaceView.clarify ||
-      WorkspaceView.done ||
-      WorkspaceView.cancelled => [EntryKind.task],
-      _ => [
-        EntryKind.note,
-        EntryKind.task,
-        EntryKind.idea,
-        EntryKind.folder,
-        EntryKind.file,
-      ],
-    };
+    ].join(' / ');
+  }
+
+  DropDestination _destination(EntryKind kind) {
+    final location = _creationLocation(kind);
+    return DropDestination(location.$1, location.$2, '');
+  }
+
+  List<(String, String)> get _newActions => [
+    for (final kind in _newKinds)
+      (
+        kind.name,
+        kind == EntryKind.file
+            ? 'Dateien hinzufügen …'
+            : '${kind.label} anlegen',
+      ),
+    if (_newKinds.contains(EntryKind.file)) ...[
+      ('text', 'Neue Textdatei …'),
+      ('folder-import', 'Ordner hinzufügen …'),
+    ],
+    if (_categoryKind != null && !_newKinds.contains(_categoryKind))
+      (
+        _categoryKind!.name,
+        switch (_categoryKind!) {
+          EntryKind.project => 'Weiteres Projekt anlegen …',
+          EntryKind.area => 'Weiteren Bereich anlegen …',
+          _ => 'Weitere Ressourcensammlung anlegen …',
+        },
+      ),
+  ];
+
+  Future<void> _newAction(String action) async {
+    if (!_canCreate) return;
+    if (action == 'text') {
+      await _createText();
+    } else if (action == 'folder-import') {
+      await _importFolder();
+    } else if (action == EntryKind.file.name) {
+      await _importFiles();
+    } else {
+      await _create(EntryKind.values.byName(action));
+    }
+  }
+
+  Future<void> _showNewChooser() async {
+    if (!_canCreate || !await _canLeave() || !mounted) return;
+    final action = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(
+          _categoryKind != null && _newKinds.contains(_categoryKind)
+              ? 'Neu in: ${_destinationPath(_destination(_categoryKind!))}'
+              : 'Neu in: ${_destinationPath(_destination(EntryKind.note))}',
+        ),
+        children: [
+          for (final action in _newActions)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, action.$1),
+              child: Text(action.$2),
+            ),
+        ],
+      ),
+    );
+    if (action != null && mounted) await _newAction(action);
   }
 
   Widget _newMenu() => PopupMenuButton<String>(
-    enabled:
-        !_busy &&
-        _view != WorkspaceView.archive &&
-        _view != WorkspaceView.trash,
+    enabled: _canCreate,
     tooltip: 'Neuen Inhalt anlegen',
-    onSelected: (action) {
-      if (action == 'text') {
-        _createText();
-      } else if (action == 'folder-import') {
-        _importFolder();
-      } else if (action == EntryKind.file.name) {
-        _importFiles();
-      } else {
-        _create(EntryKind.values.byName(action));
-      }
-    },
+    onSelected: _newAction,
     itemBuilder: (_) => [
-      for (final kind in _newKinds)
-        PopupMenuItem(
-          value: kind.name,
-          child: Row(
-            children: [
-              Icon(entryIcon(kind), size: 16),
-              const SizedBox(width: 9),
-              Text(
-                kind == EntryKind.file
-                    ? 'Dateien hinzufügen …'
-                    : '${kind.label} anlegen',
-              ),
-            ],
-          ),
+      PopupMenuItem<String>(
+        enabled: false,
+        child: Text(
+          'Neu in: ${_destinationPath(_destination(_categoryKind != null && _newKinds.contains(_categoryKind) ? _categoryKind! : EntryKind.note))}',
         ),
-      if (!_taskNavigation &&
-          (_root != null ||
-              _view == WorkspaceView.inbox ||
-              _view == WorkspaceView.areas ||
-              _view == WorkspaceView.resources)) ...[
-        const PopupMenuItem(value: 'text', child: Text('Neue Textdatei …')),
-        const PopupMenuItem(
-          value: 'folder-import',
-          child: Text('Ordner hinzufügen …'),
-        ),
+      ),
+      for (final action in _newActions) ...[
+        if (_categoryKind?.name == action.$1 &&
+            !_newKinds.contains(_categoryKind))
+          const PopupMenuDivider(),
+        PopupMenuItem(value: action.$1, child: Text(action.$2)),
       ],
-      if (_view == WorkspaceView.projects && _root != null)
-        const PopupMenuItem(value: 'project', child: Text('Projekt anlegen')),
     ],
     icon: const Icon(LucideIcons.plus, size: 18),
     padding: EdgeInsets.zero,
+  );
+
+  Widget _locationField(
+    DropDestination Function() value,
+    void Function(DropDestination) change, {
+    bool fixed = false,
+  }) => StatefulBuilder(
+    builder: (context, update) => Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Ablage: ${_destinationPath(value())}',
+            key: const ValueKey('creation-location'),
+          ),
+          if (!fixed)
+            TextButton(
+              onPressed: () async {
+                final selected = await showCreationDestination(
+                  context,
+                  _entries,
+                );
+                if (selected != null && context.mounted) {
+                  update(
+                    () => change(
+                      DropDestination(selected.section, selected.parentId, ''),
+                    ),
+                  );
+                }
+              },
+              child: const Text('Ablage ändern …'),
+            ),
+        ],
+      ),
+    ),
   );
 
   Widget _projectTabs({bool compact = false}) {
@@ -2226,18 +2288,15 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           for (final tab in [
+            ('overview', 'Übersicht', LucideIcons.layoutDashboard),
             ('content', 'Inhalte', LucideIcons.files),
             ('tasks', 'Aufgaben', LucideIcons.listTodo),
           ])
             TextButton.icon(
               onPressed: () => _switchTab(tab.$1),
               style: TextButton.styleFrom(
-                backgroundColor: (_tab == 'tasks') == (tab.$1 == 'tasks')
-                    ? c.selected
-                    : null,
-                foregroundColor: (_tab == 'tasks') == (tab.$1 == 'tasks')
-                    ? c.accent
-                    : c.ink,
+                backgroundColor: _tab == tab.$1 ? c.selected : null,
+                foregroundColor: _tab == tab.$1 ? c.accent : c.ink,
                 padding: EdgeInsets.symmetric(
                   horizontal: compact ? 5 : 8,
                   vertical: 4,
@@ -2306,9 +2365,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                       ),
                     )
                   : Tooltip(
-                      message: 'Projektdetails',
+                      message: 'Übersicht öffnen',
                       child: InkWell(
-                        onTap: () => _showRootDetails(heading),
+                        onTap: () => _switchTab('overview'),
                         child: Text(
                           title,
                           maxLines: 1,
@@ -2445,7 +2504,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       selected: _selectedId == entry.id,
       selectedTileColor: Theme.of(context).colorScheme.secondaryContainer,
       trailing: _entryMenu(entry),
-      onTap: () => entry.kind.isContainer ? _open(entry) : _select(entry),
+      onTap: () => entry.kind.isContainer ? _tapContainer(entry) : _open(entry),
     ),
     surface: 'list',
   );
@@ -2468,7 +2527,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     if (_view == WorkspaceView.archive) return _archiveView(constraints);
     if (_taskNavigation) return _buildGlobalView(constraints);
     final entry = _selected;
-    final content = entry != null && !entry.kind.isContainer
+    final content = entry == null
+        ? _buildGlobalView(constraints)
+        : !entry.kind.isContainer
         ? _editorFor(entry)
         : EmptyState(
             icon: _view.icon,
@@ -2476,7 +2537,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
             description:
                 'Öffne einen Inhalt im Explorer oder füge etwas hinzu.',
             action: TextButton.icon(
-              onPressed: () => _create(_newKinds.first),
+              onPressed: () => _showNewChooser(),
               icon: const Icon(LucideIcons.plus, size: 16),
               label: Text('${_newKinds.first.label} anlegen'),
             ),
@@ -2486,7 +2547,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         : _view == WorkspaceView.resources
         ? ParaSection.resources
         : ParaSection.inbox;
-    if (_view == WorkspaceView.projects) return content;
+    if (_view == WorkspaceView.projects ||
+        (_categoryKind != null && _selected == null)) {
+      return content;
+    }
     return _dropRegion(
       'section-content',
       DropDestination(section, null, 'Hinzufügen zu: ${section.label}'),
@@ -2531,10 +2595,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                   WorkspaceView.archive,
                   WorkspaceView.actions,
                   WorkspaceView.waiting,
+                  WorkspaceView.done,
+                  WorkspaceView.cancelled,
                 }.contains(_view)
                 ? null
                 : TextButton.icon(
-                    onPressed: () => _create(_newKinds.first),
+                    onPressed: () => _showNewChooser(),
                     icon: const Icon(Icons.add, size: 17),
                     label: Text('${_newKinds.first.label} anlegen'),
                   ),
@@ -2584,7 +2650,27 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         .toList();
     return ListView(
       padding: const EdgeInsets.all(20),
+      key: ValueKey('overview-${root.id}'),
       children: [
+        Text(root.title, style: Theme.of(context).textTheme.headlineSmall),
+        const SizedBox(height: 12),
+        Text('Beschreibung', style: Theme.of(context).textTheme.titleMedium),
+        FutureBuilder<NoteSnapshot>(
+          key: ValueKey('${root.id}-${root.revision}'),
+          future: widget.repository.readNote(root.id),
+          builder: (context, snapshot) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Text(
+              snapshot.hasError
+                  ? 'Beschreibung konnte nicht geladen werden.'
+                  : snapshot.data?.text.isNotEmpty == true
+                  ? snapshot.data!.text
+                  : snapshot.connectionState == ConnectionState.waiting
+                  ? 'Beschreibung wird geladen …'
+                  : 'Noch keine Beschreibung.',
+            ),
+          ),
+        ),
         Wrap(
           spacing: 8,
           runSpacing: 4,
@@ -2637,7 +2723,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
-            onPressed: () => _entryAction(root, 'edit'),
+            onPressed: isArchived(root, _entries)
+                ? null
+                : () => _entryAction(root, 'edit'),
             icon: const Icon(Icons.edit_outlined, size: 17),
             label: Text(
               root.kind == EntryKind.project
@@ -2685,14 +2773,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
             contentPadding: EdgeInsets.zero,
             leading: Icon(entryIcon(note.kind), size: 20),
             title: Text(note.title),
-            onTap: () async {
-              if (await _canLeave() && mounted) {
-                setState(() {
-                  _tab = 'content';
-                  _selectedId = note.id;
-                });
-              }
-            },
+            onTap: () => _open(note),
           ),
       ],
     );
@@ -2735,11 +2816,14 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
           child: Row(
             children: [
               IconButton(
-                onPressed: () => _select(
-                  _find(folder.parentId)?.kind == EntryKind.folder
-                      ? _find(folder.parentId)
-                      : null,
-                ),
+                onPressed: () async {
+                  final parent = _find(folder.parentId);
+                  if (parent != null) {
+                    await _open(parent);
+                  } else {
+                    await _navigate(_view);
+                  }
+                },
                 tooltip: 'Übergeordneter Ordner',
                 icon: const Icon(Icons.arrow_back, size: 18),
               ),
@@ -2770,7 +2854,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                           leading: Icon(entryIcon(child.kind), size: 20),
                           title: Text(child.title),
                           trailing: _entryMenu(child),
-                          onTap: () => _select(child),
+                          onTap: () => _open(child),
                         ),
                         surface: 'folder-content',
                       ),
@@ -2783,6 +2867,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 
   Widget _contents(Entry root, double width) {
     final selected = _selected;
+    if (selected == null && root.kind == EntryKind.folder) {
+      return _folderContents(root);
+    }
     if (selected != null) {
       return selected.kind == EntryKind.folder
           ? _folderContents(selected)
@@ -2988,7 +3075,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 },
                 icon: const Icon(LucideIcons.listFilter, size: 17),
               ),
-              if (_root == null || !isArchived(_root!, _entries))
+              if (_canCreate &&
+                  (_root == null || !isArchived(_root!, _entries)))
                 TextButton.icon(
                   onPressed: () => _create(EntryKind.task),
                   icon: const Icon(LucideIcons.plus, size: 15),
@@ -3091,10 +3179,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   }
 
   Widget _buildRootView(Entry root, BoxConstraints constraints) =>
-      root.kind == EntryKind.folder || _tab == 'content'
+      _tab == 'content'
       ? _contents(root, constraints.maxWidth)
       : _tab == 'tasks'
       ? _tasks(root, constraints.maxWidth)
+      : root.kind == EntryKind.folder
+      ? _folderContents(root)
       : _overview(root);
 
   @override
@@ -3120,9 +3210,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       const SingleActivator(LogicalKeyboardKey.keyS, control: true): () =>
           _editor.currentState?.save(),
       const SingleActivator(LogicalKeyboardKey.keyN, meta: true): () =>
-          _create(EntryKind.note),
+          _showNewChooser(),
       const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
-          _create(EntryKind.note),
+          _showNewChooser(),
     },
     child: Focus(
       focusNode: _workspaceFocus,

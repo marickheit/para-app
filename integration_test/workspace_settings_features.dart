@@ -366,5 +366,6 @@ void registerWorkspaceSettingsTests() {
         await root.delete(recursive: true);
       }
     },
+    skip: !Platform.isMacOS,
   );
 }

@@ -1,8 +1,14 @@
 # Arbeitsstand
 
-Stand: 26. Oktober 2026 · Version 0.7.2+9.
+Stand: 26. Oktober 2026 · Version 0.7.3+10.
 
 ## Implementiert
+
+- Auswahl, Übersicht und Anlegen 0.7.3: Kategorien ohne automatische Auswahl,
+  graues Anlageziel, Containerklick wählt/klappt auf, erneuter Klick wählt ab/zu.
+  Übersicht mit Beschreibung und Aktionen; Plus und Cmd/Ctrl+N mit denselben
+  Regeln. Weitere Haupttypen bleiben erreichbar, explizite Zielpfade/-auswahl in
+  Anlegedialogen und Import. [Umsetzung und Abnahme](ANLEGEN_UMSETZUNGSPLAN.md).
 
 - Flutter-Grundlayout mit Symbolleiste, Explorer, Editor und Suche.
 - Dateien/Notizen bearbeiten, importieren, verschieben und verknüpfen; unterstützte
@@ -22,6 +28,16 @@ Stand: 26. Oktober 2026 · Version 0.7.2+9.
 [Arbeitsbereiche](ARBEITSBEREICHE.md) · [Aufgabenangaben](GTD_AUSBAU.md).
 
 ## Prüfstand
+
+- Auswahl/Übersicht/Anlegen 0.7.3: Analyse ohne Befund und alle 82 Flutter-Tests
+  erfolgreich. Zehn neue native Linux-Abläufe sowie alle zwölf auf Linux
+  anwendbaren bisherigen Bedienabläufe erfolgreich. Der macOS-spezifische
+  Ordnerrechte-/Bookmark-Test wird auf Linux ausdrücklich übersprungen;
+  erneute native macOS-Prüfung offen. Projektübersicht visuell geprüft.
+  Ausschließlich temporäre synthetische Arbeitsbereiche. Details im
+  [Anlege-Umsetzungsplan](ANLEGEN_UMSETZUNGSPLAN.md). Linux-Release gebaut und
+  lokal als 0.7.3 installiert, alle kopierten Dateien gegen den Build geprüft.
+  Rückfallkopie der vorherigen App vorhanden; laufende App nicht beendet.
 
 - Projektanlage 0.7.2 gemäß [Plan](MCP_PROJEKTE_PLAN.md): `create_project`
   in App, MCP und Skill. Ergebnis/Termin Pflicht, feste oberste Projektebene.

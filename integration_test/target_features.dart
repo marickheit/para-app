@@ -258,7 +258,7 @@ void registerTargetFeatureTests() {
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const ValueKey('nav-projects')));
         await tester.pumpAndSettle();
-        // Alphabetic project order may select the other project; open the reference explicitly.
+        // Category navigation keeps selection empty; open the project explicitly.
         await tester.tap(find.byKey(ValueKey('tree-entry-${project.id}')));
         await tester.pumpAndSettle();
         if (find

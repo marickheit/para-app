@@ -219,3 +219,23 @@ Beim Kopieren werden Dateien gegen den Sicherungsschnappschuss per SHA-256 gepr�
 
 Regelmäßige automatische Sicherungen, geführte Auswahl früherer Sicherungsstände
 und ein allgemeines Absturzjournal für alle Datei-/Datenbankänderungen bleiben offen.
+
+## Auswahl und Anlageziele
+
+Seit 0.7.3 bestimmen `_rootId`, `_selectedId` und der Elterncontainer einer
+geöffneten Datei das sichtbare Anlageziel. Kein separat gemerktes Ordnerziel.
+Kategorie-Wechsel setzt die Auswahl zurück; Container öffnen zunächst die
+Übersicht und klappen auf. Erneuter Klick schließt den Container und öffnet den
+Elterncontainer oder die Kategorieübersicht. Der Editor-Wechselschutz gilt auch
+für diese Übergänge. Die bestehenden session.v1-Felder speichern die Auswahl
+weiterhin; keine Schema-/Speicherformatänderung.
+
+Plus und Cmd/Ctrl+N verwenden gemeinsame Typ-/Zielregeln. Projekt, Bereich,
+Ressourcensammlung und Idee haben feste Ablagen. Gewöhnliche Inhalte verwenden
+ein explizites Zielobjekt aus Kategorie und optionaler Eltern-ID; ein bewusst
+leerer Elternwert ersetzt ein vorher ausgewähltes Ordnerziel vollständig.
+Kontextaktionen übergeben das angeklickte Ziel. Inhalt-/TXT-Dialog und Import
+zeigen den vollständigen Pfad und können gültige aktive Ziele auswählen.
+Projektwurzel ist kein Ziel für gewöhnliche Inhalte. Bereits vorhandene freie
+Wurzelinhalte in Bereiche/Ressourcen bleiben zulässig. Lokale Neuanlage ist im
+Archiv/Papierkorb und in abgeschlossenen Aufgabenlisten deaktiviert.

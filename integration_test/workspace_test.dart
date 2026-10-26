@@ -64,11 +64,22 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const ValueKey('nav-projects')));
         await tester.pumpAndSettle();
+        await tester.tap(find.byKey(ValueKey('tree-entry-${project.id}')));
+        await tester.pumpAndSettle();
         expect(
-          find.textContaining('Ein fertiger Arbeitsplatz'),
+          find.descendant(
+            of: find.byKey(const ValueKey('workspace-header')),
+            matching: find.textContaining('Ein fertiger Arbeitsplatz'),
+          ),
           findsOneWidget,
         );
-        expect(find.textContaining('15.12.2026'), findsOneWidget);
+        expect(
+          find.descendant(
+            of: find.byKey(const ValueKey('workspace-header')),
+            matching: find.textContaining('15.12.2026'),
+          ),
+          findsOneWidget,
+        );
         await tester.tap(find.byKey(ValueKey('tree-entry-${source.id}')));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Raumideen').last);
@@ -175,11 +186,15 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.byTooltip('Navigation öffnen'));
         await tester.pumpAndSettle();
+        await tester.tap(find.byKey(ValueKey('tree-entry-${project.id}')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byTooltip('Navigation öffnen'));
+        await tester.pumpAndSettle();
         await tester.tap(find.byKey(ValueKey('tree-entry-${folder.id}')));
         await tester.pumpAndSettle();
-        expect(find.byKey(ValueKey('tree-entry-${note.id}')), findsNothing);
-        await tester.tap(find.byKey(ValueKey('tree-entry-${folder.id}')));
+        await tester.tap(find.byTooltip('Navigation öffnen'));
         await tester.pumpAndSettle();
+        expect(find.byKey(ValueKey('tree-entry-${note.id}')), findsOneWidget);
         await tester.tap(find.byKey(ValueKey('tree-entry-${note.id}')));
         await tester.pumpAndSettle();
         expect(find.text('Ein Gedanke.'), findsOneWidget);

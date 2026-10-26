@@ -62,6 +62,10 @@ void registerCompactExplorerTests() {
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const ValueKey('nav-projects')));
         await tester.pumpAndSettle();
+        await tester.tap(find.byKey(ValueKey('tree-entry-${project.id}')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(ValueKey('tree-entry-${note.id}')));
+        await tester.pumpAndSettle();
         final row = find.byKey(ValueKey('tree-entry-${note.id}'));
         expect(
           find.descendant(

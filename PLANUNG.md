@@ -1,6 +1,6 @@
 # P.A.R.A. – Produktstand
 
-Stand: 26. Oktober 2026 · lokale App 0.7.2 für macOS und Linux.
+Stand: 26. Oktober 2026 · lokale App 0.7.3 für macOS und Linux.
 
 ## Ziel und Grundregeln
 
@@ -18,9 +18,14 @@ Stand: 26. Oktober 2026 · lokale App 0.7.2 für macOS und Linux.
 
 - **Oberfläche:** Bestätigte Symbolleisten-/Explorer-Vorlage in Flutter umgesetzt.
   Links Symbole oder Symbole mit Namen, daneben der vollständige Datei-/Ordnerbaum,
-  rechts direkt der Editor. Eine gemeinsame kompakte Kopfzeile wechselt Inhalte/Aufgaben.
+  rechts Containerübersicht oder Editor. Eine gemeinsame kompakte Kopfzeile
+  wechselt Übersicht, Inhalte und Aufgaben. Containerklick wählt sichtbar aus
+  und klappt auf; erneuter Klick wählt ab und klappt zu.
 - **Ablage:** Inbox, Projekte, Bereiche, Ressourcen und Archiv. Ordner per Klick
-  auf-/zuklappen. Plus und Kontextmenü legen Inhalte am angezeigten Ziel an.
+  auf-/zuklappen. Kategorien öffnen ohne automatische Auswahl. Plus und Strg/Cmd+N
+  bieten dieselbe Typauswahl: ohne Container nur Haupttypen der Kategorie, mit
+  Auswahl Inhalte im grau markierten Ziel. Kontextmenüs gelten für ihren Container;
+  Dialoge zeigen den Zielpfad und erlauben bei normalen Inhalten einen Zielwechsel.
 - **Editor:** Markdown-Notizen und kleine UTF-8-TXT-/Markdown-Dateien bearbeiten,
   Vorschau und explizites Speichern; Schutz ungespeicherter Änderungen. Dateiinfos
   stehen hinter einem kleinen Info-Symbol. Umbenennen erhält UUIDs und Links.

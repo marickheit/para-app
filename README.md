@@ -1,6 +1,6 @@
 # P.A.R.A. Workspace
 
-Lokale Flutter-App 0.7.2 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS.
+Lokale Flutter-App 0.7.3 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS.
 Linux-x64-Release-Build und ein nativer Bedientest sind geprüft; die vollständige
 Linux-Bedienung und Android sind noch nicht geprüft.
 
@@ -12,13 +12,30 @@ Linux-Bedienung und Android sind noch nicht geprüft.
   Inbox, Projekte, Bereiche, Ressourcen und Archiv öffnen den jeweiligen Explorer.
   „Alle Aufgaben“ öffnet die GTD-Ansichten, darunter steht der Papierkorb. Cmd/Ctrl+\ blendet die ganze Navigation
   ein/aus; schmale Fenster öffnen sie über den Kopfzeilenbutton.
-- **Explorer:** Projekte haben ein Flaggensymbol, Ordner ein Ordnersymbol.
-  Ordner per Zeilenklick auf-/zuklappen; Notizen und Dateien direkt im Baum öffnen.
-  Die gemeinsame Kopfzeile wechselt im Projekt zwischen Inhalten und Aufgaben.
-  Ein Klick auf den Projektkopf öffnet Ergebnis, Termin und die Bearbeitung der Details.
-- **Anlegen:** Plus zeigt die verfügbaren Inhaltstypen sowie Datei-/Ordnerimport.
-  „Neu in: …“ nennt das Ziel. Rechtsklick auf einen Container legt darin Inhalte an.
-  Cmd/Ctrl+N erstellt eine Markdown-Notiz; „Neue Textdatei …“ erstellt eine TXT-Datei.
+- **Explorer und Auswahl:** Ein Kategorie-Klick zeigt ihre Übersicht ohne automatische
+  Auswahl. Projekt, Bereich, Ressourcensammlung oder Ordner anklicken: auswählen
+  und aufklappen. Das wirksame Anlageziel ist grau hinterlegt. Erneut anklicken:
+  abwählen und zuklappen; bei Unterordnern zurück zum Elterncontainer.
+  „Zur Kategorieübersicht“ setzt die Auswahl zurück. Eine geöffnete Datei verwendet
+  ihren Elterncontainer als sichtbares Anlageziel.
+- **Containerübersicht:** Projekte, Bereiche und Ressourcensammlungen öffnen mit
+  Beschreibung, Ergebnis/Termin (bei Projekten), nächsten Aktionen und Unterlagen.
+  Kopfzeilenreiter wechseln zwischen Übersicht, Inhalten und Aufgaben. Klick auf
+  den Namen im Kopf führt zur Übersicht; Beschreibungen dort zum Bearbeiten öffnen.
+- **Anlegen:** Plus und Cmd/Ctrl+N bieten dieselbe Typauswahl. Ohne ausgewählten
+  Container stehen in Projekte/Bereiche/Ressourcen nur die jeweiligen Haupttypen
+  zur Verfügung. Mit Auswahl entstehen Notizen, Aufgaben, Ordner, Textdateien
+  und Datei-/Ordnerimporte im markierten Ziel. Ein weiteres Projekt/ein weiterer
+  Bereich/eine weitere Sammlung bleibt als getrennte Menüaktion erreichbar.
+  Dialoge zeigen den vollständigen Ablagepfad; „Ablage ändern …“ wechselt bei
+  normalen Inhalten das Ziel. Kontextmenüs gelten für den angeklickten Container.
+  TXT-Anlage und Import verwenden dieselben Zielregeln. Die Inbox erlaubt alle
+  dort üblichen Inhaltstypen; in Archiv/Papierkorb und abgeschlossenen
+  Aufgabenlisten ist lokale Neuanlage auch per Tastatur gesperrt.
+- **Neue Aufgaben:** Ablage und Status sind getrennt. Im Container ist „Nächste
+  Aktion“, in globalen offenen Listen „Noch zu klären“ vorbelegt; „Warten auf“
+  und „Irgendwann“ belegen ihren Status vor. Nach Anlage öffnet die App die Aufgabe
+  in der passenden Ansicht und setzt aktive Aufgabenfilter zurück.
 - **Bearbeiten:** Im Dateikopf „Bearbeiten“ wählen. Markdown hat Quelltext und
   Vorschau; TXT wird als Text angezeigt. Speichern über Button oder Cmd/Ctrl+S.
   Beim Wechsel bleiben ungespeicherte Änderungen durch Speichern/Verwerfen/Abbrechen geschützt.
@@ -166,6 +183,8 @@ npm run build --prefix mcp
 flutter analyze
 flutter test
 flutter test -d macos integration_test/workspace_test.dart
+# Auf Linux: -d linux; neue Auswahl-/Anlageabläufe separat prüfen:
+flutter test -d linux integration_test/creation_test.dart
 ```
 
 Nach Änderungen an Drift-Tabellen die Bindings erneut erzeugen.
