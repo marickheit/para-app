@@ -58,6 +58,34 @@ test('real SDK stdio connection exposes shared contract and forwards structured 
     await writeFile(path, JSON.stringify({ ...config, opening_id: 'opening-2' }));
     await client.callTool({ name: 'workspace_info', arguments: {} });
     assert.equal(requests[1].opening_id, 'opening-1');
+    const entry = '00000000-0000-4000-8000-000000000001';
+    const existing = { id: entry, expected_revision: 1, request_id: 'schema-write' };
+    const invalidCalls = [
+      ['create_area', { title: 'Area', parent_id: entry, request_id: 'invalid' }],
+      ['create_resource', { title: 'Collection', section: 'inbox', request_id: 'invalid' }],
+      ['create_folder', { title: 'Folder', request_id: 'invalid' }],
+      ['update_entry', existing],
+      ['update_entry', { ...existing, due_date: '2026-02-29' }],
+      ['edit_text', { ...existing, expected_body_hash: 'a'.repeat(64), operation: 'replace', text: 'new' }],
+      ['edit_text', { ...existing, expected_body_hash: 'a'.repeat(64), operation: 'replace', text: 'new', old_text: '' }],
+      ['edit_text', { ...existing, expected_body_hash: 'a'.repeat(64), operation: 'append', text: 'new', old_text: 'old' }],
+      ['edit_text', { ...existing, expected_body_hash: 'invalid', operation: 'append', text: 'new' }],
+      ['create_note', { title: 'Too large UTF-8', text: 'ä'.repeat(524289), request_id: 'invalid' }],
+      ['search', { query: 'find', detail: 'everything' }],
+      ['edit_text', { ...existing, expected_body_hash: 'a'.repeat(64), operation: 'replace', text: 'new', old_text: '\ud83d' }],
+      ['edit_text', { ...existing, expected_body_hash: 'a'.repeat(64), operation: 'append', text: '\ude00' }],
+      ['create_area', { title: 'Broken \ud83d', request_id: 'invalid' }],
+      ['update_entry', { ...existing, goal: 'Broken \ude00' }],
+    ];
+    for (const [name, args] of invalidCalls) {
+      const response = await client.callTool({ name, arguments: args });
+      assert.equal(response.isError, true, name);
+    }
+    assert.equal(requests.length, 2, 'Invalid arguments must never reach the app bridge.');
+    const scoped = { query: 'find', parent_id: entry, section: 'areas', kind: 'note', detail: 'compact' };
+    assert.notEqual((await client.callTool({ name: 'search', arguments: scoped })).isError, true);
+    assert.deepEqual(requests[2].arguments, scoped);
+
   } finally { await client.close(); await new Promise(resolve => server.close(resolve)); await rm(dir, { recursive: true }); }
 });
 
@@ -68,7 +96,10 @@ test('redirect never forwards credentials and ambiguous writes report unknown ou
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   await writeFile(path, JSON.stringify({ version: 1, token, endpoint: `http://127.0.0.1:${server.address().port}/v1/call`, opening_id: 'test' }), { mode: 0o600 });
   try {
-    await assert.rejects(new BridgeClient(path).call('create_note', {}), { code: 'outcome_unknown' });
+    for (const tool of ['create_note', 'create_task', 'create_project', 'create_area', 'create_resource', 'create_folder', 'update_entry', 'edit_text', 'update_text', 'update_task', 'set_task_state']) {
+      await assert.rejects(new BridgeClient(path).call(tool, {}), { code: 'outcome_unknown' }, tool);
+    }
+    await assert.rejects(new BridgeClient(path).call('list_entries', {}), { code: 'app_unavailable' });
   } finally { await new Promise(resolve => server.close(resolve)); await rm(dir, { recursive: true }); }
 });
 
@@ -92,7 +123,7 @@ test('server without a path discovers the Linux connection automatically',
       args: [fileURLToPath(new URL('../dist/server.js', import.meta.url))],
       env: { ...process.env, XDG_STATE_HOME: dir },
     }));
-    assert.equal((await client.listTools()).tools.length, 14);
+    assert.equal((await client.listTools()).tools.length, 19);
     const result = await client.callTool({ name: 'workspace_info', arguments: {} });
     assert.notEqual(result.isError, true);
     assert.equal(result.structuredContent.write, false);
@@ -101,4 +132,24 @@ test('server without a path discovers the Linux connection automatically',
     await new Promise(resolve => server.close(resolve));
     await rm(dir, { recursive: true });
   }
+});
+
+
+test('empty or oversized successful HTTP responses leave write outcome unknown', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'para-mcp-response-'));
+  const path = join(dir, 'connection.json');
+  let empty = true;
+  const server = createServer((_, res) => {
+    if (empty) { res.writeHead(204); res.end(); }
+    else { res.setHeader('Content-Type', 'application/json'); res.end('x'.repeat(2 * 1024 * 1024 + 1025)); }
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  await writeFile(path, JSON.stringify({ version: 1, token, endpoint: `http://127.0.0.1:${server.address().port}/v1/call`, opening_id: 'response-test' }), { mode: 0o600 });
+  try {
+    await assert.rejects(new BridgeClient(path).call('edit_text', {}), { code: 'outcome_unknown' });
+    await assert.rejects(new BridgeClient(path).call('read_text', {}), { code: 'invalid_response' });
+    empty = false;
+    await assert.rejects(new BridgeClient(path).call('edit_text', {}), { code: 'outcome_unknown' });
+    await assert.rejects(new BridgeClient(path).call('read_text', {}), { code: 'too_large' });
+  } finally { await new Promise(resolve => server.close(resolve)); await rm(dir, { recursive: true }); }
 });

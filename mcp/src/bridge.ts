@@ -29,7 +29,7 @@ export class BridgeClient {
   async call(tool: string, args: Record<string, unknown>) {
     // Pin the opening for this MCP process; never silently follow a replacement file.
     this.connection ??= await readConnection(this.path);
-    const write = ['create_note', 'create_task', 'update_text', 'update_task', 'set_task_state'].includes(tool);
+    const write = ['create_note', 'create_task', 'create_project', 'create_area', 'create_resource', 'create_folder', 'update_entry', 'edit_text', 'update_text', 'update_task', 'set_task_state'].includes(tool);
     const body = JSON.stringify({ version: 1, opening_id: this.connection.opening_id, tool, arguments: args });
     if (Buffer.byteLength(body) > 2 * 1024 * 1024) throw new BridgeError('too_large', 'Anfrage zu groß.');
     let response;
@@ -47,14 +47,14 @@ export class BridgeClient {
     let text = '';
     let size = 0;
     const decoder = new TextDecoder();
-    if (!response.body) throw new BridgeError('invalid_response', 'Leere App-Antwort.');
+    if (!response.body) throw new BridgeError(write ? 'outcome_unknown' : 'invalid_response', 'Leere App-Antwort; Ergebnis in der App prüfen.');
     const reader = response.body.getReader();
     try {
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
         size += value.byteLength;
-        if (size > 2 * 1024 * 1024 + 1024) throw new BridgeError('too_large', 'App-Antwort zu groß.');
+        if (size > 2 * 1024 * 1024 + 1024) throw new BridgeError(write ? 'outcome_unknown' : 'too_large', 'App-Antwort zu groß; Ergebnis in der App prüfen.');
         text += decoder.decode(value, { stream: true });
       }
       text += decoder.decode();

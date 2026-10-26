@@ -102,3 +102,8 @@ Sicherungsabbild und erneuert dessen Bindung, damit auch eine Rückholung an die
 Adresse keine alte Freigabe übernimmt. Quelle am Ziel explizit erneut auswählen.
 Der externe Eingangsordner samt `.para-ingest/completed/` gehört nicht zum Export;
 dessen Originale separat sichern, falls sie zusätzlich aufbewahrt werden sollen.
+
+MCP-Erweiterung 0.8.1 verwendet dieselben Repository-Speicherfunktionen und Schema 6;
+keine zusätzliche Migration. Bereiche, Ressourcensammlungen und Ordner sowie deren
+Texte/Links werden wie per App angelegte Inhalte gesichert. Gezielte Textänderungen
+verwenden den bestehenden Textverlauf, soweit der jeweilige Inhalt ihn unterstützt.

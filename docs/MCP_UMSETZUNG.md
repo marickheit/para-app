@@ -1,6 +1,6 @@
 # MCP – Umsetzung und Prüfstand
 
-Stand: 26. Oktober 2026 · App 0.7.2+9 · MCP-Paket 0.2.0.
+Stand: 26. Oktober 2026 · App 0.8.1+12 · MCP-Paket 0.3.0.
 Beauftragter Umfang gemäß [Architekturplan](MCP_PLAN.md),
 [Einrichtung und Grenzen](MCP.md).
 
@@ -9,17 +9,30 @@ Beauftragter Umfang gemäß [Architekturplan](MCP_PLAN.md),
 1. [x] Authentifizierte lokale Bridge, sichere Verbindungsdatei und macOS-Release-Berechtigung.
 2. [x] Konsistente Repository-Snapshots und Schutz sämtlicher Editorentwürfe.
 3. [x] Acht Lese-Werkzeuge mit Filtern, Suche, Verweisen und Seitencursor.
-4. [x] Sechs Schreib-Werkzeuge mit Revision/Hash und Wiederholungsschutz.
+4. [x] Elf Schreib-Werkzeuge mit Revision/Hash und Wiederholungsschutz.
 5. [x] Einstellungen zur Freigabe, Widerruf und eigenständiges stdio-Paket in `mcp/`.
 6. [x] Vertrags-, Sicherheits-, Konkurrenz-, Rückholungs- und echte stdio-Prüfungen.
 7. [x] Signierte macOS-Release-Testapp, Bedienungsdoku und unabhängige Code-Reviews.
 
 Freigabe gilt für die aktuelle App-Öffnung; keine Bestätigung jeder Einzelaktion.
 Die Berechtigungspräferenz im Root aktiviert nach Neustart/Kopie keine Verbindung.
-Das Inhaltsformat bleibt Schema 5. Kein neuer Datenordner und keine Migration
+Das Inhaltsformat bleibt Schema 6. Kein neuer Datenordner und keine Migration
 für MCP. Der MCP-Prozess öffnet selbst keine Datenbank oder Nutzdateien.
 
 ## Prüfnachweise
+
+- Erweiterung 0.8.1: elf neue isolierte Diensttests; vollständige Flutter-Suite
+  mit 111 Tests und sieben Node-Tests erfolgreich. Echter stdio-Client gegen
+  temporäres Repository und native Linux-Testapp prüft alle 19 Werkzeuge,
+  neue Anlage-/Änderungspfade, Pagination, JSON-Budget und Unicode.
+  Binärdateien bleiben beim Umbenennen bytegleich; Konflikte, Editorzustand,
+  Mehrdeutigkeit, ungültige Surrogate und Größenlimits überschreiben nichts.
+  Neue Inhalte nach unabhängiger Sicherungsrückholung und Wiederöffnen geprüft.
+  Unabhängiges Entwurfs-/Code-Nachreview ohne Blocker; Skillformat und vier
+  synthetische Nutzerabläufe geprüft. [Vertrag](MCP_ERWEITERUNG_PLAN.md).
+  Analyse ohne Befund, Linux-Release/MCP lokal mit vollständigen Rückfallkopien
+  aktualisiert und Builddateien per SHA-256 geprüft. Installierter Server nochmals
+  nativ mit allen 19 Werkzeugen erfolgreich geprüft; Skill-Verweis gültig.
 
 - Projektanlage 0.7.2: Pflichtangaben und Kalenderdaten an App/MCP-Grenzen,
   Nur-Lesen-Schutz, parallele doppelte Requests, Text/Links, Projektaufgaben

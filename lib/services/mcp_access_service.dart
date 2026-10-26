@@ -27,6 +27,11 @@ const mcpWriteTools = {
   'create_note',
   'create_task',
   'create_project',
+  'create_area',
+  'create_resource',
+  'create_folder',
+  'update_entry',
+  'edit_text',
   'update_text',
   'update_task',
   'set_task_state',
@@ -132,10 +137,16 @@ class McpAccessService {
             visible.where((e) => e.id == id).firstOrNull ??
             (throw const McpException('not_found', 'Inhalt nicht verfügbar.'));
         Map<String, dynamic> meta(Entry e) => _metadata(e, all);
+        Map<String, dynamic> receipt(Entry e) => _compact(meta(e));
         Map<String, dynamic> result;
         if (tool == 'workspace_info') {
           result = {
             'bridge_version': 1,
+            'api_version': 2,
+            'default_page_size': 20,
+            'default_text_length': 4000,
+            'response_budget_bytes': 65536,
+            'tools': [...mcpReadTools, ...mcpWriteTools],
             'opening_id': openingId,
             'write': canWrite,
             'archive': allowArchive,
@@ -171,21 +182,14 @@ class McpAccessService {
             }
             final text = snapshot.note.text;
             final offset = (a['offset'] as int?) ?? 0;
-            final length = (a['length'] as int?) ?? 65536;
+            final length = (a['length'] as int?) ?? 4000;
             if (offset > text.length) {
               throw const McpException(
                 'invalid_input',
                 'Textposition außerhalb des Inhalts.',
               );
             }
-            final end = (offset + length).clamp(0, text.length);
-            result.addAll({
-              'text': text.substring(offset, end),
-              'body_hash': snapshot.note.hash,
-              'offset': offset,
-              'next_offset': end < text.length ? end : null,
-              'total_characters': text.length,
-            });
+            result = _textPage(entry, text, snapshot.note.hash, offset, length);
           }
         } else if (tool == 'get_links') {
           final entry = require(a['id'] as String);
@@ -291,7 +295,10 @@ class McpAccessService {
           try {
             if (tool == 'create_note' ||
                 tool == 'create_task' ||
-                tool == 'create_project') {
+                tool == 'create_project' ||
+                tool == 'create_area' ||
+                tool == 'create_resource' ||
+                tool == 'create_folder') {
               if (a['parent_id'] != null) {
                 final parent = require(a['parent_id'] as String);
                 if (!parent.kind.isContainer || isArchived(parent, all)) {
@@ -306,6 +313,9 @@ class McpAccessService {
                 kind: switch (tool) {
                   'create_note' => EntryKind.note,
                   'create_project' => EntryKind.project,
+                  'create_area' => EntryKind.area,
+                  'create_resource' => EntryKind.resource,
+                  'create_folder' => EntryKind.folder,
                   _ => EntryKind.task,
                 },
                 draft: EntryDraft(
@@ -330,10 +340,15 @@ class McpAccessService {
                 ),
                 parentId: a['parent_id'] as String?,
               );
-              result = meta(created);
+              result = receipt(created);
             } else {
               final entry = require(target);
-              if (tool != 'update_text' && entry.kind != EntryKind.task) {
+              if (!{
+                    'update_text',
+                    'edit_text',
+                    'update_entry',
+                  }.contains(tool) &&
+                  entry.kind != EntryKind.task) {
                 throw const McpException('invalid_input', 'Aufgabe benötigt.');
               }
               if (entry.revision != a['expected_revision']) {
@@ -343,18 +358,51 @@ class McpAccessService {
                 );
               }
               final current = await repository.readSnapshot(entry.id);
-              if (!current.note.editable) {
+              if (tool != 'update_entry' && !current.note.editable) {
                 throw const McpException(
                   'unsupported',
                   'Text ist nicht bearbeitbar.',
                 );
               }
-              if (tool == 'update_text' &&
+              if ({'update_text', 'edit_text'}.contains(tool) &&
                   current.note.hash != a['expected_body_hash']) {
                 throw const McpException(
                   'conflict',
                   'Text wurde geändert. Erneut lesen.',
                 );
+              }
+              if (tool == 'update_entry' &&
+                  entry.kind != EntryKind.project &&
+                  (a.containsKey('goal') || a.containsKey('due_date'))) {
+                throw const McpException(
+                  'invalid_input',
+                  'Projektdaten nur bei Projekten ändern.',
+                );
+              }
+              var body = current.note.text;
+              if (tool == 'update_text') body = a['text'] as String;
+              if (tool == 'edit_text') {
+                final insertion = a['text'] as String;
+                if (a['operation'] == 'append') {
+                  body += insertion;
+                } else {
+                  final old = a['old_text'] as String;
+                  final at = body.indexOf(old);
+                  // Also count overlapping matches: ambiguity must never select a target.
+                  if (at < 0 || body.indexOf(old, at + 1) >= 0) {
+                    throw const McpException(
+                      'text_mismatch',
+                      'Textstelle fehlt oder ist nicht eindeutig.',
+                    );
+                  }
+                  body = body.replaceRange(at, at + old.length, insertion);
+                }
+                if (utf8.encode(body).length > 1048576) {
+                  throw const McpException(
+                    'too_large',
+                    'Neuer Gesamttext überschreitet 1 MiB.',
+                  );
+                }
               }
               _check();
               final saved = await repository.saveSnapshot(
@@ -363,11 +411,11 @@ class McpAccessService {
                 expectedBodyHash: current.note.hash,
                 draft: EntryDraft(
                   title: a['title'] as String? ?? entry.title,
-                  body: tool == 'update_text'
-                      ? a['text'] as String
-                      : current.note.text,
-                  goal: entry.goal,
-                  dueDate: entry.dueDate,
+                  body: body,
+                  goal: a['goal'] as String? ?? entry.goal,
+                  dueDate: a['due_date'] == null
+                      ? entry.dueDate
+                      : DateTime.parse(a['due_date'] as String),
                   context: entry.context,
                   taskState: a['state'] == null
                       ? entry.taskState
@@ -386,7 +434,7 @@ class McpAccessService {
                   updateTaskDetails: tool == 'update_task',
                 ),
               );
-              result = {...meta(saved.entry), 'body_hash': saved.note.hash};
+              result = {...receipt(saved.entry), 'body_hash': saved.note.hash};
             }
           } finally {
             if (target != null) guard.release(target);
@@ -481,14 +529,36 @@ class McpAccessService {
         );
       }
     }
-    final end = (offset + (a['limit'] as int? ?? 50)).clamp(0, items.length);
-    return {
-      'items': items.sublist(offset, end),
+    final end = (offset + (a['limit'] as int? ?? 20)).clamp(0, items.length);
+    final selected = <Map<String, dynamic>>[];
+    Map<String, dynamic> response(int next) => {
+      'items': selected,
       'total': items.length,
-      'next_cursor': end < items.length
-          ? base64Url.encode(utf8.encode(jsonEncode([fingerprint, end])))
+      'next_cursor': next < items.length
+          ? base64Url.encode(utf8.encode(jsonEncode([fingerprint, next])))
           : null,
     };
+    var next = offset;
+    while (next < end) {
+      final item = items[next];
+      selected.add(
+        a['detail'] == 'full' || !item.containsKey('kind')
+            ? item
+            : _compact(item),
+      );
+      if (_jsonBytes(response(next + 1)) > 65536) {
+        selected.removeLast();
+        if (selected.isEmpty) {
+          throw const McpException(
+            'too_large',
+            'Einzelner Treffer zu groß. Kompakte Metadaten verwenden.',
+          );
+        }
+        break;
+      }
+      next++;
+    }
+    return response(next);
   }
 
   String _snippet(String text, String query) {
@@ -496,6 +566,97 @@ class McpAccessService {
     final start = (at - 60).clamp(0, text.length);
     return text.substring(start, (start + 240).clamp(0, text.length));
   }
+}
+
+int _jsonBytes(Object value) => utf8.encode(jsonEncode(value)).length;
+
+Map<String, dynamic> _compact(Map<String, dynamic> item) {
+  final keys = <String>{
+    'id',
+    'title',
+    'kind',
+    'section',
+    'parent_id',
+    'revision',
+    'link',
+    'snippet',
+    if (item['kind'] == 'project') ...{'goal', 'due_date'},
+    if (item['kind'] == 'task') ...{
+      'project_id',
+      'state',
+      'context_ids',
+      'estimated_minutes',
+      'energy',
+    },
+  };
+  return {
+    for (final key in keys)
+      if (item.containsKey(key)) key: item[key],
+  };
+}
+
+bool _wellFormed(String value) {
+  for (var i = 0; i < value.length; i++) {
+    final unit = value.codeUnitAt(i);
+    if (unit >= 0xd800 && unit <= 0xdbff) {
+      if (++i >= value.length) return false;
+      final low = value.codeUnitAt(i);
+      if (low < 0xdc00 || low > 0xdfff) return false;
+    } else if (unit >= 0xdc00 && unit <= 0xdfff) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool _insideSurrogate(String text, int offset) =>
+    offset > 0 &&
+    offset < text.length &&
+    text.codeUnitAt(offset - 1) >= 0xd800 &&
+    text.codeUnitAt(offset - 1) <= 0xdbff &&
+    text.codeUnitAt(offset) >= 0xdc00 &&
+    text.codeUnitAt(offset) <= 0xdfff;
+
+Map<String, dynamic> _textPage(
+  Entry entry,
+  String text,
+  String hash,
+  int offset,
+  int length,
+) {
+  if (_insideSurrogate(text, offset)) {
+    throw const McpException(
+      'invalid_input',
+      'Textposition liegt innerhalb eines Unicode-Zeichens.',
+    );
+  }
+  Map<String, dynamic> response(int end) => {
+    'id': entry.id,
+    'revision': entry.revision,
+    'body_hash': hash,
+    'text': text.substring(offset, end),
+    'offset': offset,
+    'next_offset': end < text.length ? end : null,
+    'total_characters': text.length,
+  };
+  var end = (offset + length).clamp(0, text.length);
+  if (_insideSurrogate(text, end)) end--;
+  // A one-code-unit request at an emoji still returns one complete character.
+  if (end == offset && offset < text.length) end = offset + 2;
+  if (_jsonBytes(response(end)) > 65536) {
+    var low = offset, high = end;
+    while (low < high) {
+      final middle = (low + high + 1) ~/ 2;
+      if (_jsonBytes(response(middle)) <= 65536) {
+        low = middle;
+      } else {
+        high = middle - 1;
+      }
+    }
+    end = low;
+    if (_insideSurrogate(text, end)) end--;
+  }
+  return response(end);
 }
 
 Object? _canonical(Object? value) {
@@ -510,13 +671,13 @@ Object? _canonical(Object? value) {
 }
 
 void _validate(String tool, Map<String, dynamic> a) {
-  const page = {'limit', 'cursor', 'include_archive'};
+  const page = {'limit', 'cursor', 'include_archive', 'detail'};
   const location = {'parent_id', 'section'};
   const task = {'context_ids', 'estimated_minutes', 'energy', 'state'};
   final allowed = switch (tool) {
     'workspace_info' => <String>{},
     'list_entries' => {...page, ...location, 'kind'},
-    'search' => {...page, 'query'},
+    'search' => {...page, ...location, 'kind', 'query'},
     'get_entry' => {'id', 'include_archive'},
     'read_text' => {'id', 'include_archive', 'offset', 'length'},
     'list_tasks' => {
@@ -533,6 +694,25 @@ void _validate(String tool, Map<String, dynamic> a) {
     'list_contexts' => {...page},
     'get_links' => {...page, 'id', 'direction'},
     'create_project' => {'title', 'goal', 'due_date', 'text', 'request_id'},
+    'create_area' || 'create_resource' => {'title', 'text', 'request_id'},
+    'create_folder' => {...location, 'title', 'text', 'request_id'},
+    'update_entry' => {
+      'id',
+      'expected_revision',
+      'request_id',
+      'title',
+      'goal',
+      'due_date',
+    },
+    'edit_text' => {
+      'id',
+      'expected_revision',
+      'expected_body_hash',
+      'request_id',
+      'operation',
+      'text',
+      'old_text',
+    },
     'create_note' => {...location, 'title', 'text', 'request_id'},
     'create_task' => {...location, ...task, 'title', 'text', 'request_id'},
     'update_text' => {
@@ -558,6 +738,18 @@ void _validate(String tool, Map<String, dynamic> a) {
     'read_text': ['id'],
     'get_links': ['id', 'direction'],
     'create_project': ['title', 'goal', 'due_date', 'request_id'],
+    'create_area': ['title', 'request_id'],
+    'create_resource': ['title', 'request_id'],
+    'create_folder': ['title', 'request_id'],
+    'update_entry': ['id', 'expected_revision', 'request_id'],
+    'edit_text': [
+      'id',
+      'expected_revision',
+      'expected_body_hash',
+      'request_id',
+      'operation',
+      'text',
+    ],
     'create_note': ['title', 'request_id'],
     'create_task': ['title', 'request_id'],
     'update_text': [
@@ -576,6 +768,21 @@ void _validate(String tool, Map<String, dynamic> a) {
   );
   if (a.keys.any((k) => !allowed.contains(k)) ||
       (required[tool] ?? []).any((k) => !a.containsKey(k))) {
+    invalid();
+  }
+  if (tool == 'create_folder' &&
+      !a.containsKey('parent_id') &&
+      !a.containsKey('section')) {
+    invalid();
+  }
+  if (tool == 'update_entry' &&
+      !{'title', 'goal', 'due_date'}.any(a.containsKey)) {
+    invalid();
+  }
+  if (tool == 'edit_text' &&
+      (a['operation'] == 'replace'
+          ? a['old_text'] is! String || (a['old_text'] as String).isEmpty
+          : a.containsKey('old_text'))) {
     invalid();
   }
   for (final entry in a.entries) {
@@ -607,14 +814,25 @@ void _validate(String tool, Map<String, dynamic> a) {
         invalid();
       }
     } else {
-      if (v is! String || v.length > (k == 'text' ? 1048576 : 4096)) invalid();
-      if (k == 'text' && utf8.encode(v as String).length > 1048576) invalid();
+      if (v is! String ||
+          v.length > ({'text', 'old_text'}.contains(k) ? 1048576 : 4096)) {
+        invalid();
+      }
+      if (!_wellFormed(v as String)) invalid();
+      if ({'text', 'old_text'}.contains(k) &&
+          utf8.encode(v).length > 1048576) {
+        invalid();
+      }
+      if (k == 'expected_body_hash' &&
+          !RegExp(r'^[a-f0-9]{64}$').hasMatch(v)) {
+        invalid();
+      }
       if ({'title', 'goal', 'query', 'request_id'}.contains(k) &&
-          (v as String).trim().isEmpty) {
+          (v).trim().isEmpty) {
         invalid();
       }
       if (k == 'due_date') {
-        final date = DateTime.tryParse(v as String);
+        final date = DateTime.tryParse(v);
         if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(v) ||
             date == null ||
             date.year < 1 ||
@@ -632,6 +850,8 @@ void _validate(String tool, Map<String, dynamic> a) {
       'kind' => EntryKind.values.map((e) => e.name),
       'state' => TaskState.values.map((e) => e.name),
       'energy' || 'max_energy' => EnergyLevel.values.map((e) => e.name),
+      'operation' => ['append', 'replace'],
+      'detail' => ['compact', 'full'],
       'direction' => ['incoming', 'outgoing'],
       _ => null,
     };

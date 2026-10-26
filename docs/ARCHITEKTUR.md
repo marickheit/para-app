@@ -272,3 +272,18 @@ liegen daneben nur die geräteabhängigen Ordnerfreigaben in
 Format-3-Sicherungen nehmen Zwischenkopien mit und invalidieren im Abbild die
 Quellenbindung. Verifizierte interne Zwischenstände können unabhängig fertiggestellt
 werden; externe Quellenbereinigung setzt eine gültige aktuelle lokale Bindung voraus.
+
+## MCP-Ablage und kompakte Antworten (0.8.1)
+
+API-Funktionsstand 2 ergänzt Bereichs-, Ressourcen- und Ordneranlage sowie
+Metadatenänderung und exaktes Anhängen/eindeutiges Ersetzen von Textstellen.
+Alle Schreibpfade verwenden die exklusive Repository-Warteschlange,
+`saveSnapshot`, Wiederholungserkennung und Editorschutz. Binärdateien können
+bytegleich umbenannt werden. Projektpflichten und feste Hauptablagen bleiben.
+Kein neues Datenformat; Schema 6 und Bridgeformat 1 bleiben erhalten.
+
+Listen projizieren erst nach vollständigem Cursorfingerabdruck auf kompakte
+Metadaten. Standard 20 Treffer, vollständige Felder auf Abruf. Textabschnitte
+standardmäßig 4.000 UTF-16-Codeeinheiten; Text und Listen jeweils maximal 64 KiB
+serialisiertes JSON mit Fortsetzung. Unicode-Paare bleiben zusammen. Schreibbelege
+enthalten keine Beschreibungstexte. App, Server und Skill gemeinsam aktualisieren.

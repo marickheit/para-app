@@ -1,6 +1,6 @@
 # KI-Anbindung über MCP
 
-Stand: Version 0.7.2. MCP läuft lokal mit der geöffneten App auf macOS und Linux.
+Stand: App 0.8.1, MCP-Paket 0.3.0, API-Funktionsstand 2. MCP läuft lokal mit der geöffneten App auf macOS und Linux.
 Der Server liegt im Repository unter `mcp/`. Er öffnet selbst keine Nutzdaten.
 
 ## Einrichten
@@ -98,9 +98,9 @@ ungültige Verbindungsdatei übrig bleiben; eine neue Freigabe ersetzt sie siche
 
 | Lesen | Zweck |
 | --- | --- |
-| `workspace_info` | Version, Verbindung und Rechte |
+| `workspace_info` | Version, Verbindung, Rechte, Werkzeugumfang und Antwortlimits |
 | `list_entries` | Inhalte nach Ablage, Elternobjekt und Art auflisten |
-| `search` | Unscharfe Namen und vorhandenen Textindex mit kurzen Ausschnitten durchsuchen |
+| `search` | Namen/Textindex mit kurzen Ausschnitten; Kategorie, Art und direkte Eltern filtern |
 | `get_entry` | Metadaten und Revision eines Inhalts lesen |
 | `read_text` | Gespeicherten Text, Revision und Text-Hash lesen |
 | `list_tasks` | Status, Projekt, Kontexte, Zeit und Energie filtern |
@@ -111,6 +111,10 @@ ungültige Verbindungsdatei übrig bleiben; eine neue Freigabe ersetzt sie siche
 | --- | --- |
 | `create_note`, `create_task` | Im aktiven Bestand anlegen |
 | `create_project` | Projekt mit Ergebnis und Termin unter Projekte anlegen |
+| `create_area`, `create_resource` | Bereich beziehungsweise Ressourcensammlung auf oberster Ebene anlegen |
+| `create_folder` | Ordner an einem ausdrücklich gewählten aktiven Ziel anlegen |
+| `update_entry` | Titel/Dateiname ändern; bei Projekten zusätzlich Ergebnis und Termin |
+| `edit_text` | Exakt anhängen oder eine eindeutige Textstelle ersetzen |
 | `update_text` | Text mit Revision und Hash ersetzen |
 | `update_task` | Explizite Aufgabenfelder ändern |
 | `set_task_state` | Aufgabenstatus mit Revisionsprüfung setzen |
@@ -122,6 +126,25 @@ optional. Projekte stehen immer auf oberster Ebene unter Projekte. `parent_id`,
 neuen Projekt mit dessen zurückgegebener ID als `parent_id` anlegen. Fehlen Ergebnis
 oder Termin, muss der Assistent nachfragen. Vorhandene Inhalte in Projekte
 umwandeln bleibt eine App-Aktion.
+
+`create_area` und `create_resource` benötigen `title` und `request_id`, optional
+`text`. Ihre Kategorie ist fest; Eltern-ID, Aufgabenstatus und Projektangaben
+sind nicht erlaubt. `create_folder` benötigt zusätzlich `parent_id` oder
+`section`; gewöhnliche Inhalte dürfen nicht direkt unter Projekte liegen.
+
+`update_entry` benötigt ID, Revision und Request-ID sowie mindestens eines von
+`title`, `goal`, `due_date`. Ergebnis und Termin sind ausschließlich bei Projekten
+erlaubt und dürfen nicht geleert werden. Beschreibungen bleiben erhalten;
+Dateien lassen sich einschließlich Binäranhängen bytegleich umbenennen.
+
+`edit_text` benötigt ID, Revision, vollständigen Text-Hash, Request-ID,
+`operation` und `text`. `append` hängt exakt an, ohne automatischen Zeilenumbruch.
+`replace` benötigt zusätzlich ein nichtleeres `old_text`, das im aktuellen Text
+genau einmal vorkommen muss (auch überlappende Treffer zählen). Andernfalls
+`text_mismatch` ohne Änderung. Gesamttext nach Änderung höchstens 1 MiB UTF-8.
+Ein aktueller Textabschnitt liefert bereits den Hash des vollständigen Texts;
+für gezielte Änderungen ist kein vollständiger Texttransfer nötig. Vollständige
+Textersetzungen über `update_text` erfordern weiterhin vollständiges Lesen.
 
 Ausgelassene Aufgabenfelder bleiben erhalten. `null` leert Zeit beziehungsweise
 Energie, `context_ids: []` leert Kontexte. Statuswerte: `inbox`, `next`, `waiting`,
@@ -147,12 +170,24 @@ Textverlauf; der vorhandene App-Umfang bleibt maßgeblich.
 - Kein Dateiimport/-export, beliebiger Dateipfad, SQL, Shell, Rootwechsel,
   Verschieben, Archivieren, endgültiges Löschen oder Rückspielen von Sicherungen.
   Binäranhänge liefern nur Metadaten; Textsuche verwendet die Grenzen aus README.
-- Listen: höchstens 100 Objekte pro Seite. Seitencursor bei Änderung des jeweiligen
-  Ergebnisses ungültig; dann neu beginnen. Suche erhält die Trefferrelevanz.
-- Textabschnitt: standardmäßig 65.536, höchstens 262.144 UTF-16-Codeeinheiten;
-  `next_offset` führt zum nächsten Abschnitt. Textänderung höchstens 1 MiB UTF-8;
+- Listen: standardmäßig 20, höchstens 100 Objekte; `detail: compact` ist Standard,
+  `detail: full` liefert alle Metadaten. Kompakt enthält Identität, Titel, Typ,
+  Ablage, Eltern-ID, Revision und Link, bei Projekten Ziel/Termin und bei Aufgaben
+  Projekt/Status/Kontexte/Minuten/Energie. Suche ergänzt kurze Ausschnitte.
+  Ergebnisnutzlast maximal 64 KiB JSON, bei Bedarf weniger Treffer mit `next_cursor`.
+  Ein einzelner übergroßer Treffer ergibt `too_large`, keine stille Kürzung.
+  Seitencursor werden auch bei Änderungen ausgeblendeter Metadaten ungültig;
+  dann neu beginnen. Suche erhält die Trefferrelevanz. Elternfilter sind direkt.
+- Textabschnitt: standardmäßig 4.000, höchstens 262.144 UTF-16-Codeeinheiten und
+  maximal 64 KiB JSON einschließlich Escape-Zeichen; `next_offset` führt weiter.
+  Unicode-Surrogatpaare bleiben zusammen (ein einzelnes Emoji kann eine
+  Ein-Zeichen-Anforderung überschreiten). Positionen mitten im Paar sind ungültig.
+  Antwort enthält ID, Revision, vollständigen Hash, Text und Abschnittsangaben.
+  Textänderung höchstens 1 MiB UTF-8;
   größerer Text wird abgelehnt, nie still abgeschnitten. Gesamtanfrage/-antwort
-  etwa 2 MiB; höchstens acht gleichzeitige Bridge-Anfragen.
+  etwa 2 MiB; höchstens acht gleichzeitige Bridge-Anfragen. Das 64-KiB-Budget
+  gilt vor der MCP-Darstellung als Text und `structuredContent`; ob der Client
+  beide Fassungen in den Modellkontext lädt, bestimmt der Client.
 - Jeder Schreibaufruf braucht eine eindeutige `request_id`. Identische Wiederholung
   liefert für 30 Minuten ab Annahme in derselben Verbindung das ursprüngliche
   Ergebnis; parallele Duplikate warten auf denselben Vorgang. Maximal 1.000
@@ -163,7 +198,7 @@ Textverlauf; der vorhandene App-Umfang bleibt maßgeblich.
   Widerruf verhindert noch wartende Änderungen und lässt bereits laufende
   Speichervorgänge geordnet abschließen.
 - `read_only`, `editor_busy`, `conflict`, `stale_cursor`, `revoked`,
-  `opening_changed`, `not_found` und `too_large` benennen behandelbare Fehler.
+  `opening_changed`, `not_found`, `text_mismatch` und `too_large` benennen behandelbare Fehler.
   `outcome_unknown`: Ergebnis in der App prüfen. Bei `connection_file` neu
   freigeben; bei `connection_rejected` Freigabe prüfen und MCP-Prozess neu starten.
 
@@ -196,7 +231,12 @@ macOS-Test mit Sandbox steht noch aus.
 
 Intern: stdio → TypeScript-SDK → authentifizierte HTTP-Bridge ausschließlich auf
 127.0.0.1 → App-Dienst → Repository. Bridge-Vertrag und `mcp.v1`-Präferenz sind
-Version 1; Inhaltsformat bleibt Schema 5. Die lokale Verbindungsdatei liegt
+Version 1; Inhaltsformat bleibt Schema 6. API-Funktionsstand 2
+ändert kompakte Antwortfelder und Standardgrößen: App, Server und Skill gemeinsam
+aktualisieren; bestehende Clients müssen Cursor und Textfortsetzungen beachten.
+Schreibantworten enthalten kompakte Metadaten und bei Änderungen den Text-Hash,
+keine Beschreibungstexte. MCP kann übertragenen Gesprächskontext nicht entfernen.
+Die lokale Verbindungsdatei liegt
 außerhalb des Roots und ist kein Bestandteil von Sicherungen.
 
 [Umsetzungsstand und Prüfungen](MCP_UMSETZUNG.md) · [Plan](MCP_PLAN.md)

@@ -1,1 +1,1 @@
-{"bridge_version":1,"read_tools":["workspace_info","list_entries","search","get_entry","read_text","list_tasks","list_contexts","get_links"],"write_tools":["create_note","create_task","create_project","update_text","update_task","set_task_state"]}
+{"bridge_version":1,"read_tools":["workspace_info","list_entries","search","get_entry","read_text","list_tasks","list_contexts","get_links"],"write_tools":["create_note","create_task","create_project","update_text","update_task","set_task_state","create_area","create_resource","create_folder","update_entry","edit_text"]}

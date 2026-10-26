@@ -76,7 +76,7 @@ Future<void> _assertBlocked(_EditorRepository repo, String request) async {
     access.call('update_text', {
       'id': repo.entry.id,
       'expected_revision': 1,
-      'expected_body_hash': 'hash',
+      'expected_body_hash': '0' * 64,
       'text': 'remote',
       'request_id': request,
     }),

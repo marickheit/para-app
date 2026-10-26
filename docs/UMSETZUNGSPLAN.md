@@ -4,6 +4,12 @@ Stand: 26. Oktober 2026 · Version 0.8.0+11.
 
 ## Implementiert
 
+- MCP-Ablage und kompakte Antworten: Bereiche/Ressourcensammlungen/Ordner anlegen,
+  Titel/Projektdaten ändern und Texte gezielt anhängen/eindeutig ersetzen.
+  19 Werkzeuge, kompakte Standardseiten (20), Textabschnitte (4.000) und
+  64-KiB-JSON-Budget mit Fortsetzung. Schema 6 unverändert.
+  [Vertrag und Umsetzungsplan](MCP_ERWEITERUNG_PLAN.md).
+
 - Automatischer Eingangsordner 0.8.0: rekursive, bytegetreue Inbox-Übernahme,
   Ruhephase, dauerhafte Jobs und stabile UUIDs, geprüfte Zwischenkopien sowie
   Original-Rückholbereich. App-Laufzeit, Pause, Neustart und lokale Quellenbindung.
@@ -22,11 +28,14 @@ Stand: 26. Oktober 2026 · Version 0.8.0+11.
 - GTD-Listen mit projektweisen nächsten Aktionen und getrenntem Aufgabenabschluss.
 - Mehrere Kontexte, optionale Minuten und Energie; Chips und kombinierbare Filter.
 - Kontextverwaltung, wählbare Arbeitsbereiche, vollständiges Kopieren und gespeicherte Ansicht.
+- Automatischer rekursiver Inbox-Eingang bei laufender App, persistentes Journal,
+  geprüfte Zwischenkopien und externe Originalaufbewahrung; siehe
+  [Umsetzung](EINGANGSORDNER_UMSETZUNGSPLAN.md).
 - Schema 6: vollständige Rückfallkopie vor Migrationen aus 1–5, Root-Sperre und
   Ablehnung unbekannter neuerer Datenformate.
 - Lokaler MCP-Server im Repository: sofortige Zugriffsauswahl und automatische
   sichere Verbindungsablage auf macOS/Linux, acht Lese- und
-  sechs Schreib-Werkzeuge über die laufende App. Revisions-/Hashschutz,
+  elf Schreib-Werkzeuge über die laufende App. Revisions-/Hashschutz,
   Schutz offener Editorentwürfe und Widerruf beim Rootwechsel.
 
 [Bedienung](../README.md) · [MCP-Einrichtung](MCP.md) ·
@@ -34,6 +43,18 @@ Stand: 26. Oktober 2026 · Version 0.8.0+11.
 [Arbeitsbereiche](ARBEITSBEREICHE.md) · [Aufgabenangaben](GTD_AUSBAU.md).
 
 ## Prüfstand
+
+- MCP 0.8.1 / Server 0.3.0: vollständige Flutter-Suite mit 111 Tests erfolgreich,
+  davon elf neue isolierte Erweiterungstests; sieben Node-Tests erfolgreich.
+  Echter stdio-Client prüft alle 19 Werkzeuge gegen Repository und native Linux-
+  Testapp, einschließlich Antwortbudgets, Pagination und Unicode. Unabhängige
+  Entwurfs-/Codeprüfung ohne verbleibende Blocker, Skill mit vier synthetischen
+  Abläufen geprüft. Unabhängige Sicherungsrückholung und Wiederöffnen erfolgreich.
+  Alle App-Testdaten temporär; kein Nutzerbestand als Testumgebung.
+  Analyse ohne Befund; Linux-Release und MCP lokal mit vollständigen Rückfallkopien
+  installiert, Builddateien per SHA-256 geprüft. Installierter MCP-Server erneut
+  nativ mit allen 19 Werkzeugen geprüft; Skill-Verweis gültig.
+  Neuer macOS-Nativnachweis weiterhin offen.
 
 - Eingangsordner 0.8.0: Analyse ohne Befund, 100 Flutter-Tests einschließlich
   18 neuer Import-/Wiederanlauf-/Integritätstests. Nativer Linux-Test für neue
@@ -93,6 +114,10 @@ Stand: 26. Oktober 2026 · Version 0.8.0+11.
 
 ## Weitere offene Arbeit
 
+- Dateifläche besser nutzen und Tabs vergleichen: drei neue
+  [interaktive Mocks](mockups/DATEI_TABS.md) mit breiter Ansicht, Fokus und Split.
+  HTML-Bedienabläufe und schmale Darstellung in Chromium geprüft;
+  Variantenauswahl und Flutter-Umsetzung offen.
 - Regelmäßige automatische Sicherungen, geführte Auswahl älterer Sicherungsstände,
   allgemeiner Wiederanlauf für Datei-/Datenbankänderungen und App-Updater.
 - Wochenrückblick, Projektprüfung, Wiederholungen und externe Dateiverweise sind

@@ -1,6 +1,6 @@
 ---
 name: para-workspace
-description: "Projekte, gespeicherte Notizen und GTD-Aufgaben in der P.A.R.A.-App über deren MCP-Verbindung suchen, lesen, anlegen und gezielt ändern. Verwenden bei Bezug auf den P.A.R.A.-Arbeitsbereich; nicht für allgemeine Produktivitätsberatung oder Entwicklung am App-Quellcode."
+description: "Projekte, Bereiche, Ressourcensammlungen, Notizen und GTD-Aufgaben in der P.A.R.A.-App über deren MCP-Verbindung suchen, lesen, anlegen und gezielt ändern. Verwenden bei Bezug auf den P.A.R.A.-Arbeitsbereich; nicht für allgemeine Produktivitätsberatung oder Entwicklung am App-Quellcode."
 ---
 
 # P.A.R.A.-Arbeitsbereich benutzen
@@ -37,6 +37,11 @@ Werkzeuge auf App-Inhalte zu, nicht über SQLite, Dateien oder Shell-Umgehungen.
 - `search` findet Namen und unterstützte Textinhalte; `list_entries` und
   `list_tasks` listen nach Ablage, Inhaltstyp oder Aufgabenangaben.
   Verwende bekannte UUIDs direkt.
+- Listen liefern standardmäßig 20 kompakte Treffer; Suche mit `section`, `kind`
+  und `parent_id` eingrenzen (Elternfilter: direkte Kinder). Nur benötigte Seiten
+  laden. Für vollständige Metadaten `get_entry` oder `detail: full` verwenden.
+  `read_text` liefert standardmäßig 4.000 UTF-16-Codeeinheiten. Listen und Texte
+  sind je Antwort auf 64 KiB JSON begrenzt; Fortsetzungsmarker beachten.
 - Wenn der Auftrag einen einzelnen Inhalt oder Container meint und mehrere
   Treffer passen, löse das Ziel vor dem Lesen oder Ändern eindeutig auf. Frage
   anhand verfügbarer Merkmale wie Ablage, Projektergebnis oder Termin nach;
@@ -51,6 +56,9 @@ Werkzeuge auf App-Inhalte zu, nicht über SQLite, Dateien oder Shell-Umgehungen.
   Textabschnitte. Für vollständige Zusammenfassungen und vor Textersetzungen den
   vollständigen Text lesen; zusammengehörige Abschnitte müssen dieselbe Revision
   und denselben `body_hash` haben.
+  Für kleine gezielte Änderungen ist `edit_text` möglich, ohne den vollständigen
+  Inhalt zu übertragen; dafür genügt ein aktueller Abschnitt mit Revision und
+  vollständigem `body_hash`.
   Bei Änderungen während des Lesens erneut beginnen, bei wiederholtem Wechsel
   keine Ersetzung vornehmen. Bei Größenlimits niemals still kürzen.
 - Für Kontexte `list_contexts` verwenden und Namen auf vorhandene IDs abbilden;
@@ -80,12 +88,28 @@ Werkzeuge auf App-Inhalte zu, nicht über SQLite, Dateien oder Shell-Umgehungen.
   Fehlt `create_project` im verbundenen Server, App/MCP aktualisieren und neu
   verbinden; keine Aufgabe als Projekt ausgeben. Umwandlung vorhandener Inhalte
   in Projekte weiterhin in der App erledigen lassen.
+- `create_area` und `create_resource`: Titel, optional `text`, `request_id`.
+  Feste oberste Ebene in Bereiche beziehungsweise Ressourcen; keine Eltern-ID,
+  frei wählbare Kategorie oder Projektpflichtfelder. `create_folder` braucht
+  neben Titel/Request-ID ein ausdrückliches Ziel (`parent_id` oder `section`).
+- `update_entry` ändert Titel aller Inhaltstypen (auch Dateinamen); `goal` und
+  `due_date` nur bei Projekten. Mindestens ein Änderungsfeld, aktuelle Revision
+  und Request-ID angeben. Ausgelassene Felder und Beschreibung bleiben erhalten.
+  Ergebnis und Termin eines Projekts dürfen nicht geleert werden.
+- `edit_text` führt kleine Änderungen serverseitig aus: `operation: append`
+  hängt `text` exakt an (Zeilenumbrüche selbst angeben); `operation: replace`
+  ersetzt ein nichtleeres `old_text` nur bei genau einem Vorkommen durch `text`.
+  Beide brauchen aktuelle `expected_revision`, `expected_body_hash` aus
+  `read_text` und eigene Request-ID. Nur beauftragte, eindeutig bezeichnete
+  Stellen ändern; fehlende/mehrdeutige Stellen (`text_mismatch`) erst neu lesen
+  und klären. Neuer Gesamttext höchstens 1 MiB UTF-8, keine stille Kürzung.
 - Aufgabenstatus: `inbox` (noch zu klären), `next` (nächste Aktion), `waiting`
   (warten auf), `someday` (Irgendwann / Vielleicht), `done` (erledigt),
   `cancelled` (nicht mehr relevant). Irgendwann enthält Ideen und zurückgestellte
   Aufgaben, keine Projekte. Kein `active`- oder Projekt-Irgendwann-Status erfinden.
-- Vor `update_task` oder `set_task_state` den aktuellen Inhalt lesen und dessen
-  `revision` als `expected_revision` verwenden. `update_text` ersetzt den gesamten
+- Vor `update_entry`, `update_task` oder `set_task_state` über `get_entry` die
+  aktuellen Metadaten lesen und dessen `revision` als `expected_revision`
+  verwenden. Zum Umbenennen ist kein Textabruf nötig. `update_text` ersetzt den gesamten
   gespeicherten Text: aktuelle `expected_revision` und den ganzen `body_hash`
   aus `read_text` als `expected_body_hash` mitgeben. Unbeteiligten Text erhalten.
 - Ausgelassene Aufgabenfelder bleiben erhalten. `null` leert Minuten/Energie;
@@ -110,6 +134,11 @@ Werkzeuge auf App-Inhalte zu, nicht über SQLite, Dateien oder Shell-Umgehungen.
 - Import, Verschieben, Archivieren, endgültiges Löschen, Rootwechsel und
   Wiederherstellung von Textversionen sind nicht über diese Werkzeuge verfügbar.
   Grenzen benennen und den passenden Schritt in der App erklären.
+
+Schreibantworten sind kompakte Belege mit ID, Revision und Link sowie passenden
+Projekt-/Aufgabenfeldern; sie enthalten keinen vollständigen Beschreibungstext.
+`workspace_info.api_version: 2` kennzeichnet den erweiterten Vertrag. Bei fehlenden
+Werkzeugen App und MCP gemeinsam aktualisieren und den Client neu verbinden.
 
 Berichte konkret, welche Inhalte gefunden oder tatsächlich geändert wurden.
 Verwende zurückgelieferte `link`-Werte für Verweise und erfinde keine IDs oder
