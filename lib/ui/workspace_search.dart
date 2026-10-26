@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,32 +12,73 @@ Future<Entry?> showWorkspaceSearch(
   BuildContext context,
   List<Entry> entries, {
   bool filesOnly = false,
+  WorkspaceRepository? repository,
 }) => showDialog<Entry>(
   context: context,
-  builder: (_) => _WorkspaceSearch(entries: entries, filesOnly: filesOnly),
+  builder: (_) => _WorkspaceSearch(
+    entries: entries,
+    filesOnly: filesOnly,
+    repository: repository,
+  ),
 );
 
 class _WorkspaceSearch extends StatefulWidget {
-  const _WorkspaceSearch({required this.entries, required this.filesOnly});
+  const _WorkspaceSearch({
+    required this.entries,
+    required this.filesOnly,
+    this.repository,
+  });
   final List<Entry> entries;
   final bool filesOnly;
+  final WorkspaceRepository? repository;
   @override
   State<_WorkspaceSearch> createState() => _WorkspaceSearchState();
 }
 
 class _WorkspaceSearchState extends State<_WorkspaceSearch> {
+  late List<Entry> _entries;
+  SearchIndexStatus _indexStatus = const SearchIndexStatus();
+  StreamSubscription<List<Entry>>? _entriesSubscription;
+  StreamSubscription<SearchIndexStatus>? _indexSubscription;
   String _query = '';
   int _active = 0;
   final _focus = FocusNode();
   final _scroll = ScrollController();
   List<WorkspaceSearchHit> get _rows => searchWorkspace(
-    widget.entries,
+    _entries,
     _query,
     filesOnly: widget.filesOnly,
   ).take(80).toList();
   @override
   void initState() {
     super.initState();
+    _entries = widget.entries;
+    final repository = widget.repository;
+    if (repository != null) {
+      _entriesSubscription = repository.watchEntries().listen((entries) {
+        if (!mounted) return;
+        final previous = _rows;
+        final selectedId = previous.isEmpty
+            ? null
+            : previous[_active.clamp(0, previous.length - 1)].entry.id;
+        setState(() {
+          _entries = entries;
+          final rows = _rows;
+          final selected = rows.indexWhere((hit) => hit.entry.id == selectedId);
+          _active = selected >= 0
+              ? selected
+              : rows.isEmpty
+              ? 0
+              : _active.clamp(0, rows.length - 1);
+        });
+      });
+      if (!widget.filesOnly) {
+        _indexStatus = repository.searchIndexStatus;
+        _indexSubscription = repository.watchSearchIndex().listen((status) {
+          if (mounted) setState(() => _indexStatus = status);
+        });
+      }
+    }
     _focus.onKeyEvent = (_, event) {
       if (event is KeyDownEvent || event is KeyRepeatEvent) {
         if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
@@ -73,6 +115,8 @@ class _WorkspaceSearchState extends State<_WorkspaceSearch> {
 
   @override
   void dispose() {
+    unawaited(_entriesSubscription?.cancel());
+    unawaited(_indexSubscription?.cancel());
     _focus.dispose();
     _scroll.dispose();
     super.dispose();
@@ -110,6 +154,7 @@ class _WorkspaceSearchState extends State<_WorkspaceSearch> {
                         _active = 0;
                       }),
                       onSubmitted: (_) {
+                        final rows = _rows;
                         if (rows.isNotEmpty) {
                           Navigator.pop(
                             context,
@@ -153,6 +198,21 @@ class _WorkspaceSearchState extends State<_WorkspaceSearch> {
                 ),
               ),
             ),
+            if (!widget.filesOnly &&
+                (_indexStatus.updating || _indexStatus.failures > 0))
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 7),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _indexStatus.updating
+                        ? 'Suchinhalte werden aktualisiert …'
+                        : 'Einige Suchinhalte konnten nicht aktualisiert werden.',
+                    key: const ValueKey('search-index-status'),
+                    style: TextStyle(fontSize: 11, color: c.soft),
+                  ),
+                ),
+              ),
             Expanded(
               child: rows.isEmpty
                   ? const Center(child: Text('Keine passenden Inhalte'))
@@ -166,7 +226,7 @@ class _WorkspaceSearchState extends State<_WorkspaceSearch> {
                           entry.section.label,
                           ...ancestorsOf(
                             entry,
-                            widget.entries,
+                            _entries,
                           ).reversed.map((e) => e.title),
                           entryFileLabel(entry),
                         ].join(' / ');
@@ -196,7 +256,7 @@ class _WorkspaceSearchState extends State<_WorkspaceSearch> {
                               maxLines: 2,
                             ),
                             subtitle: Text(
-                              '$path${isArchived(entry, widget.entries) ? ' · Archiviert' : ''}${hit.contentMatch ? '\nInhalt: ${entry.searchText.replaceAll(RegExp(r'\s+'), ' ').characters.take(100)}' : ''}',
+                              '$path${isArchived(entry, _entries) ? ' · Archiviert' : ''}${hit.contentMatch ? '\nInhalt: ${entry.searchText.replaceAll(RegExp(r'\s+'), ' ').characters.take(100)}' : ''}',
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(fontSize: 11, color: c.soft),

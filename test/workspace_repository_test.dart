@@ -315,6 +315,7 @@ void main() {
       p.join(directory.path, 'notes', '${source.id}.md'),
     ).writeAsString('Suchwort ${markdownLink(target)}');
     repo = await LocalWorkspaceRepository.open(directory);
+    await repo.searchIndexReady;
     expect((await current(source.id)).searchText, contains('Suchwort'));
     expect((await repo.backlinks(target.id)).single.id, source.id);
   });

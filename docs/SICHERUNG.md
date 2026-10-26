@@ -123,3 +123,14 @@ Rückholung durch Kopieren und unabhängiges Öffnen geprüft; normale Exporte e
 auch die neue Sitzung. Bereits vorhandene `.migration-backups` werden nicht erneut
 in Exporte hineinkopiert. Vorschautabs und ungespeicherte Entwürfe sind keine
 Sicherungsinhalte. Rückfall mit passender alter App und deren Sicherungsstand.
+
+## Suchcache ab 0.9.1
+
+Schema 6, Sicherungsformat 3 und maßgebliche Nutzerdaten bleiben unverändert.
+Die neue App übernimmt ältere Bestände ohne Schema-Konvertierung; fehlende
+Format-1-Suchcachemarken werden im Hintergrund ergänzt. Sicherungen enthalten
+Suchtext, Links und Cachemarken in der Datenbank. Andere Dateimetadaten nach
+Rückholung lösen einen erneuten Abgleich aus. Beschädigte/veraltete Cachemarken
+ersetzen keine Inhalte und dürfen neu aufgebaut werden. Währenddessen bleiben
+die bisherigen Treffer/Links verfügbar. Unabhängige Rückholung wird zusammen
+mit UUIDs, Texten, Anhängen, Archiv, Papierkorb und Textversionen geprüft.

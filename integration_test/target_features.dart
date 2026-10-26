@@ -246,6 +246,7 @@ void registerTargetFeatureTests() {
             dueDate: DateTime(2026, 12, 15),
           ),
         );
+        await repo.searchIndexReady;
         expect(
           (await repo.getEntries())
               .singleWhere((e) => e.id == pdf.id)

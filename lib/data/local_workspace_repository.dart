@@ -13,6 +13,7 @@ import 'workspace_storage.dart';
 import '../services/file_formats.dart';
 import '../domain/ingest.dart';
 part 'ingest_repository.dart';
+part 'search_index_repository.dart';
 
 class LocalWorkspaceRepository implements WorkspaceRepository {
   LocalWorkspaceRepository._(
@@ -30,6 +31,24 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
   final DateTime Function() _now;
   final _uuid = const Uuid();
   Future<void> _pending = Future.value();
+  final _indexChanges = StreamController<SearchIndexStatus>.broadcast();
+  final _indexCancel = StreamController<void>.broadcast(sync: true);
+  final _indexRequests = <String>{};
+  final _indexFailures = <String>{};
+  Future<void>? _indexFuture;
+  bool _indexScan = false;
+  SearchIndexStatus _indexStatus = const SearchIndexStatus();
+  @override
+  SearchIndexStatus get searchIndexStatus => _indexStatus;
+  @override
+  Stream<SearchIndexStatus> watchSearchIndex() => _indexChanges.stream;
+
+  /// Completes after the current reconciliation and any work queued during it.
+  Future<void> get searchIndexReady async {
+    while (_indexFuture != null) {
+      await _indexFuture;
+    }
+  }
 
   static Future<LocalWorkspaceRepository> open(
     Directory root, {
@@ -57,7 +76,7 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
       );
       await repo._recoverPurges();
       await repo._backfillArchives();
-      await repo._rebuildIndex();
+      repo._startIndex();
       return repo;
     } catch (_) {
       await db?.close();
@@ -565,6 +584,9 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
               ))
               .go();
           await (database.delete(
+            database.workspaceSettings,
+          )..where((e) => e.key.equals(_indexKey(entry.id)))).go();
+          await (database.delete(
             database.noteVersions,
           )..where((e) => e.entryId.equals(entry.id))).go();
         }
@@ -1035,7 +1057,9 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
       }
       rethrow;
     }
-    if (row.kind == EntryKind.file.name) await _indexFile(await _require(id));
+    if (row.kind == EntryKind.file.name) {
+      await _indexFile(await _require(id));
+    }
   }
 
   @override
@@ -1333,51 +1357,6 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
     }
   }
 
-  Future<void> _indexFile(EntryRow row) async {
-    String? text;
-    try {
-      final file = _attachment(row);
-      if (isSearchableTextName(row.fileName ?? '')) {
-        text = await readSmallTextFile(file);
-      } else if (p.extension(row.fileName ?? '').toLowerCase() == '.pdf' &&
-          _pdfTextExtractor != null &&
-          await file.length() <= 100 * 1024 * 1024) {
-        text = await _pdfTextExtractor(file.path);
-      }
-    } catch (_) {
-      // Unsupported, protected or missing files remain accessible by name.
-    }
-    final body = text ?? '';
-    if (body != row.searchText) {
-      await (database.update(database.entries)
-            ..where((e) => e.id.equals(row.id)))
-          .write(EntriesCompanion(searchText: Value(body)));
-    }
-    if (isMarkdownName(row.fileName ?? '')) await _indexLinks(row.id, body);
-  }
-
-  Future<void> _rebuildIndex() async {
-    final rows = await database.select(database.entries).get();
-    await database.transaction(() async {
-      await database.delete(database.entryLinks).go();
-      for (final row in rows) {
-        if (row.kind == EntryKind.file.name) {
-          await _indexFile(row);
-          continue;
-        }
-        final file = _note(row.id);
-        if (!await file.exists()) continue; // The editor reports missing files.
-        final body = await file.readAsString();
-        await _indexLinks(row.id, body);
-        if (body != row.searchText) {
-          await (database.update(database.entries)
-                ..where((e) => e.id.equals(row.id)))
-              .write(EntriesCompanion(searchText: Value(body)));
-        }
-      }
-    });
-  }
-
   Future<List<Entry>> _linked(String id, {required bool incoming}) async {
     final rows =
         await (database.select(database.entryLinks)..where(
@@ -1504,7 +1483,11 @@ class LocalWorkspaceRepository implements WorkspaceRepository {
   Future<void> close() async {
     if (_closed) return;
     _closed = true;
+    _indexCancel.add(null);
+    await _indexFuture;
     await _pending;
+    await _indexChanges.close();
+    await _indexCancel.close();
     try {
       await database.close();
     } finally {

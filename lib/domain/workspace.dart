@@ -263,8 +263,18 @@ bool belongsTo(Entry entry, String parentId, List<Entry> entries) =>
     entry.parentId == parentId ||
     ancestorsOf(entry, entries).any((e) => e.id == parentId);
 
+/// Progress of derived search data; authoritative contents remain available.
+class SearchIndexStatus {
+  const SearchIndexStatus({this.updating = false, this.failures = 0});
+  final bool updating;
+  final int failures;
+}
+
 /// This application boundary is also usable by a future MCP adapter.
 abstract class WorkspaceRepository {
+  SearchIndexStatus get searchIndexStatus;
+  Stream<SearchIndexStatus> watchSearchIndex();
+
   /// Runs a short application operation without interleaving repository writes.
   Future<T> exclusive<T>(Future<T> Function() operation);
   Future<EntrySnapshot> readSnapshot(String id);

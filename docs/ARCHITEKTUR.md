@@ -66,7 +66,8 @@ Textdateien werden zunächst temporär geschrieben und dann umbenannt. Der Edito
 prüft Revision und Text-Hash vor dem Speichern und verweigert das Überschreiben
 veralteter oder extern geänderter Texte. Fehlende Markdown-Dateien werden als
 Fehler angezeigt. Externe Bearbeitung während der Benutzung wird nicht live
-überwacht; beim erneuten Öffnen der App werden Such- und Linkindizes neu aufgebaut.
+überwacht; beim erneuten Öffnen der App werden Such- und Linkindizes im Hintergrund
+abgeglichen. Unveränderte Dateien verwenden den vorhandenen Suchtext.
 
 Das Arbeitsverzeichnis ist derzeit für einen laufenden App-Prozess vorgesehen.
 Ein exklusiver Dateilock (`.para.lock`) und eine zusätzliche Sperre im Prozess
@@ -271,7 +272,7 @@ Prüfsummen. Unter `ingest/<job-UUID>/` liegen bytegetreue Zwischenkopien. Nach 
 werden Inhaltsdatensätze und Journalzustand gemeinsam veröffentlicht. Ein gescheiterter
 Datenbankabschluss lässt den Job unveröffentlicht; vorhandene Zielkennungen werden
 nicht überschrieben. Der Suchindex ist abgeleitet und wird nach Veröffentlichung
-aktualisiert beziehungsweise beim nächsten Öffnen neu aufgebaut.
+aktualisiert beziehungsweise beim nächsten Öffnen im Hintergrund abgeglichen.
 
 Native Linux-/macOS-Funktionen verwenden Dateiidentitäten und kopieren im Hintergrund
 mit `O_NOFOLLOW`, exklusiver Zielanlage und `fsync`. Der während des Lesens
@@ -302,3 +303,26 @@ Metadaten. Standard 20 Treffer, vollständige Felder auf Abruf. Textabschnitte
 standardmäßig 4.000 UTF-16-Codeeinheiten; Text und Listen jeweils maximal 64 KiB
 serialisiertes JSON mit Fortsetzung. Unicode-Paare bleiben zusammen. Schreibbelege
 enthalten keine Beschreibungstexte. App, Server und Skill gemeinsam aktualisieren.
+
+## Inkrementeller Suchindex ab 0.9.1
+
+`search_index_repository.dart` gleicht Dateien nach dem Öffnen ab. Suchtext und
+Links bleiben bis zum erfolgreichen Ersatz nutzbar. Format-1-Cachemarken unter
+`search-index.v1.<UUID>` in `workspace_settings` enthalten relativen Pfad, Größe,
+mtime/ctime und Indexer-/PDF-Funktionskennung. Fehlende, beschädigte oder andere
+Marken lösen eine neue Extraktion aus. Schema 6 und Sicherungsformat 3 bleiben.
+
+Extraktion läuft außerhalb der exklusiven Schreibzone und Transaktionen. Der
+kurze Abschluss prüft erneut Existenz, Revision, Dateiname und Signatur und
+schreibt Suchtext, ausgehende Links und Marke gemeinsam. Veraltete Ergebnisse
+werden verworfen und einmal neu versucht, Fehler erhalten den vorherigen Index.
+Notiz-/Textspeichern aktualisiert Inhalte/Links unmittelbar; PDF-Import und
+PDF-Umbenennung verwenden den Hintergrunddienst. Notizmarken werden erst nach
+geprüftem Abgleich gesetzt. Bei Cachetreffern werden Markdown-Links aus gespeichertem
+Suchtext erneut aufgelöst, ohne die Datei zu lesen. Kein globales Linklöschen.
+
+Schließen beendet den Verbraucher; laufende native Extraktion kann noch auslaufen,
+hat aber keinen späten Datenbankabschluss. Der Suchdialog abonniert Einträge und
+Status. Metadatensignaturen sind keine Inhalts-Hashes; externe Änderungen während
+der App-Laufzeit werden erst beim nächsten Öffnen erkannt. Änderungen mit komplett
+identischen Metadaten können unerkannt bleiben. [Prüfstand](STARTZEIT_UMSETZUNGSPLAN.md).

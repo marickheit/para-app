@@ -1,6 +1,6 @@
 # P.A.R.A. Workspace
 
-Lokale Flutter-App 0.9.0 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS.
+Lokale Flutter-App 0.9.1 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS.
 Linux-x64-Release und 27 native Bedienabläufe für Oberfläche, Arbeitsbereiche
 und Anlage sind geprüft. Die neue native macOS-Abnahme und Android sind offen.
 
@@ -187,7 +187,13 @@ Der MCP-Server liegt unter `mcp/`; Node.js ab 22 erforderlich.
   keine Tabellenbearbeitung. Textsuche in UTF-8-CSV bis 16 MiB.
 - PDF-Suche: auslesbarer Text, erste 100 Seiten und höchstens 2 MiB Text bei Dateien
   bis 100 MiB. Keine Bildtexterkennung/OCR. Andere Dateien bleiben nach Namen suchbar.
-- Der Suchindex wird beim Öffnen wieder aufgebaut und beim Speichern/Import aktualisiert.
+- Start und Suche: Der vorhandene Suchindex ist sofort verfügbar. Beim Öffnen
+  werden geänderte Inhalte im Hintergrund aktualisiert; unveränderte Dateien
+  werden nicht erneut ausgelesen. PDF-Importe werden ebenfalls im Hintergrund
+  durchsuchbar, Namen sofort. Eine offene Suche zeigt den Fortschritt und neue
+  Treffer automatisch. Fehler erhalten den bisherigen Index; erneuter Versuch
+  beim nächsten Öffnen. Externe Dateiänderungen werden beim nächsten Öffnen
+  erkannt; vollständig identische Dateimetadaten können Änderungen verbergen.
 - Keine automatische Cloud-Synchronisierung, Wiederholungen oder Erinnerungen.
 
 ## Lokal entwickeln

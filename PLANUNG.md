@@ -1,6 +1,6 @@
 # P.A.R.A. – Produktstand
 
-Stand: 26. Oktober 2026 · lokale App 0.9.0 für macOS und Linux.
+Stand: 26. Oktober 2026 · lokale App 0.9.1 für macOS und Linux.
 
 ## Ziel und Grundregeln
 
@@ -54,6 +54,9 @@ Stand: 26. Oktober 2026 · lokale App 0.9.0 für macOS und Linux.
 - **Suche:** Schwebendes Fenster über Lupe oder Cmd/Ctrl+F; unscharfe Namen und
   Inhalte unterstützter Dateien, Notizen und Aufgabenkontexte. Cmd/Ctrl+K bleibt
   als bisheriges Kürzel, Cmd/Ctrl+O wechselt nur nach Namen. Keine OCR.
+- **Startzeit:** Vorhandenen Suchindex sofort verwenden; Änderungen und neue PDFs
+  im Hintergrund indexieren. Unveränderte Dateien nicht erneut auslesen. Offene
+  Suche aktualisiert Treffer und zeigt laufende Arbeit/Fehler.
 - **Archiv und Sicherung:** Jahr → Herkunft → ursprüngliche Ordner. Einzelne
   Inhalte lassen sich an einen aktiven Zielort zurückholen; Projektabschluss
   archiviert das Projekt. Vollständiger lokaler Sicherungsexport einschließlich

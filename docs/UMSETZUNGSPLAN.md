@@ -1,8 +1,14 @@
 # Arbeitsstand
 
-Stand: 26. Oktober 2026 · Version 0.9.0+13.
+Stand: 26. Oktober 2026 · Version 0.9.1+14.
 
 ## Implementiert
+
+- Startzeit 0.9.1: vorhandener Index sofort nutzbar, geänderte Dateien und PDF-
+  Importe im Hintergrund indexieren; unveränderte Dateien nicht erneut auslesen.
+  Suchdialog mit aktuellen Treffern und Fortschritt/Fehlern. Abgeleiteter Cache
+  Format 1, Schema 6 und Sicherungsformat 3 bleiben erhalten.
+  [Ablauf und Prüfnachweise](STARTZEIT_UMSETZUNGSPLAN.md).
 
 - Dateifläche und Tabs 0.9.0: A mit optionalem Fokusmodus B, ziehbarer Explorer-
   Breite und Textlesebreite. Vorschau-/dauerhafte Dateitabs, gemeinsame UUID-Tabfolge,
@@ -49,6 +55,17 @@ Stand: 26. Oktober 2026 · Version 0.9.0+13.
 [Arbeitsbereiche](ARBEITSBEREICHE.md) · [Aufgabenangaben](GTD_AUSBAU.md).
 
 ## Prüfstand
+
+- Startzeit 0.9.1: Plan-/Codereviews durch Subagenten, Analyse ohne Befund,
+  133 Flutter-Tests erfolgreich. 15 neue Index- und drei Suchdialogtests prüfen
+  Cacheübernahme, Konkurrenz, Fehler, Lebensdauer und unabhängige Rückholung.
+  Nativer Start-/Live-Suchtest mit echtem PDF-Extractor erfolgreich; beim
+  Wiederöffnen keine erneute Extraktion. Alle zwölf bisherigen Linux-Abläufe
+  erfolgreich, ein macOS-spezifischer Test übersprungen. Linux-Release lokal
+  installiert, alle 25 Paketdateien gegen den Build geprüft; vollständige Daten-
+  und App-Rückfallkopien erhalten. Installierte App isoliert mit temporären XDG-
+  Verzeichnissen gestartet. Keine Nutzerdaten als Testumgebung; neue macOS-
+  Abnahme offen. [Details](STARTZEIT_UMSETZUNGSPLAN.md).
 
 - Dateifläche/Tabs 0.9.0: Analyse ohne Befund, alle 115 Flutter-Tests erfolgreich.
   Vier neue Modell-/Resize-/Übernahmetests mit unabhängiger Rückholung von Texten,

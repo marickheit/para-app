@@ -682,6 +682,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       context,
       _entries,
       filesOnly: filesOnly,
+      repository: widget.repository,
     );
     if (result != null && mounted) {
       if (result.kind == EntryKind.task || result.kind == EntryKind.idea) {
