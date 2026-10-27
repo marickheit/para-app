@@ -33,7 +33,8 @@ Stand: 27. Oktober 2026 · lokale App 0.10.0 für macOS und Linux.
   Quelltext und Lesen. Live rendert inaktive Blöcke; Return schließt einen Absatz
   ab, Shift+Return bricht im Absatz um. Keine grüne Blockmarkierung. Kompakte
   Aktionen direkt im Dateitabstreifen: Aa mit Format-/Linkhilfe und Undo/Redo,
-  Tabellenraster und direkte Zell-/Zeilen-/Spaltenbearbeitung. Gerenderte Checkboxen
+  Tabellenraster und direkte Zell-/Zeilen-/Spaltenbearbeitung. Tabellen in
+  Inhaltsbreite mit begrenzten Spalten, Textumbruch und horizontalem Scrollen. Gerenderte Checkboxen
   auch in Lesen änderbar; Änderungen weiterhin ausdrücklich speichern und beim Wechsel
   schützen. Infos, Verlauf, Lesebreite und Notiztitel im Menü „Weitere Dateiaktionen“.
   TXT sowie Aufgaben-/Containerformulare behalten ihre bisherige Bedienung.

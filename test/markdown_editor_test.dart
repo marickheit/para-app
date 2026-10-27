@@ -61,6 +61,57 @@ Future<void> modifiedKey(
 }
 
 void main() {
+  for (final mode in [MarkdownEditorMode.live, MarkdownEditorMode.read]) {
+    testWidgets('tables use bounded content width and scroll in $mode', (
+      t,
+    ) async {
+      final longText = List.filled(30, 'Long cell text').join(' ');
+      final h = Harness('| A | B |\n| --- | --- |\n| one | two |');
+      h.view.value = (mode, false);
+      await t.pumpWidget(h.app());
+      await t.pumpAndSettle();
+      final table = find.byType(Table);
+      expect(t.getSize(table).width, lessThan(300));
+      if (mode == MarkdownEditorMode.live) {
+        await t.tap(find.text('one'));
+        await t.pumpAndSettle();
+        expect(t.getSize(table).width, lessThan(300));
+        await t.enterText(
+          find.byKey(const ValueKey('markdown-cell-input')),
+          longText,
+        );
+        await t.pumpAndSettle();
+        expect(t.getSize(table).width, lessThanOrEqualTo(640));
+        expect(t.takeException(), isNull);
+      }
+      await h.close(t);
+
+      final wide = Harness(
+        '| A | B | C |\n| --- | --- | --- |\n| $longText | $longText | $longText |',
+      );
+      wide.view.value = (mode, false);
+      t.view.physicalSize = const Size(400, 800);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.resetPhysicalSize);
+      addTearDown(t.view.resetDevicePixelRatio);
+      await t.pumpWidget(wide.app());
+      await t.pumpAndSettle();
+      expect(t.getSize(table).width, lessThanOrEqualTo(960));
+      expect(t.getSize(table).height, greaterThan(60));
+      final horizontal = find.byWidgetPredicate(
+        (w) => w is Scrollable && w.axisDirection == AxisDirection.right,
+      );
+      expect(horizontal, findsOneWidget);
+      final scroll = t.state<ScrollableState>(horizontal).position;
+      expect(scroll.maxScrollExtent, greaterThan(0));
+      await t.drag(horizontal, const Offset(-250, 0));
+      await t.pumpAndSettle();
+      expect(scroll.pixels, greaterThan(0));
+      expect(wide.changes, 0);
+      expect(t.takeException(), isNull);
+      await wide.close(t);
+    });
+  }
   testWidgets('opening and mode changes preserve original text without editing', (
     t,
   ) async {

@@ -67,6 +67,7 @@ void main() {
         final guard = McpEditorGuard.forRepository(repo);
         expect(guard.acquire(note.id), true);
         guard.release(note.id);
+        expect(t.getSize(find.byType(Table)).width, lessThan(400));
         await captureSurface(t, 'para-markdown-live-0100');
         await tap(find.text('Erster Absatz'));
         await t.sendKeyEvent(LogicalKeyboardKey.enter);

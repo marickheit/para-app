@@ -20,7 +20,8 @@ versionsgebundene Abnahmen und unverbindliche Entwürfe ein.
   Übernahme von Format 1. [Bedienvertrag](DATEI_TABS_UMSETZUNGSPLAN.md).
 - **Markdown-Editor:** Live als Standard, Quelltext und Lesen mit bedienbaren
   Checkboxen; Return rendert den abgeschlossenen Absatz. 1,2-fache Zeilenhöhe
-  und 6 Pixel Blockabstand. Gemeinsame kompakte
+  und 6 Pixel Blockabstand. Tabellen in Inhaltsbreite mit begrenzten
+  Spalten, Textumbruch und horizontalem Scrollen. Gemeinsame kompakte
   Tab-/Aktionszeile, Aa-Menü, Tabellenraster und direkte Zell-/Strukturänderungen,
   textbezogenes Undo/Redo. Explizites Speichern, MCP-/Konflikt-/Wechselschutz und
   gesperrte Archive/Papierkörbe bleiben. Keine Formatmigration.
@@ -51,11 +52,12 @@ versionsgebundene Abnahmen und unverbindliche Entwürfe ein.
 
 ## Prüfstand
 
-- **Editor 0.10.0:** Analyse ohne Befund, alle 168 Flutter-Tests erfolgreich.
+- **Editor 0.10.0:** Analyse ohne Befund, zuletzt alle 170 Flutter-Tests erfolgreich.
   28 native Linuxfälle einschließlich neuer Editorbedienung und bestehender
   Datei-/Anlage-/Workspaceabläufe erfolgreich; ein macOS-Fall übersprungen.
-  Kompakte Abstände erneut geprüft: 168 Flutter-Tests, sieben MCP-Tests und
-  nativer Linux-Editortest erfolgreich. Linux-Release neu installiert, 25
+  Inhaltsbreite, Spaltenbegrenzung, Umbruch und Scrollen in Live/Lesen geprüft;
+  nativer Linux-Editortest mit kompakter Tabellenbreite erneut erfolgreich.
+  Sieben MCP-Tests bei der vorherigen Abstandskorrektur erfolgreich. Linux-Release neu installiert, 25
   Paketdateien geprüft und installierten Build mit temporärem Root gestartet.
   Neue Darstellung beim nächsten App-Start verfügbar. [Reviews, Nachweise und Installationsgrenzen](MARKDOWN_EDITOR_UMSETZUNGSPLAN.md).
   Die folgenden Nachweise behalten ihre tatsächliche Versionsbindung; eine neue

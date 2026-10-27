@@ -28,6 +28,9 @@ Absatz ab und rendert ihn, Shift+Return bleibt innerhalb des Absatzes.
   Dokumentkopf darunter. Schmale Fenster dürfen die gemeinsame Zeile umbrechen.
 - Aa: Überschrift, Fett, Kursiv, Listen/Checklisten, Code, externer Link, vorhandene
   interne Verknüpfung, Syntaxhilfe sowie Undo/Redo mit Tastenkürzeln.
+- Tabellen in Live und Lesen linksbündig in Inhaltsbreite; Spalten 72–320 Pixel
+  einschließlich Zellabstand. Lange Texte umbrechen, breite Tabellen horizontal
+  mit Scrollbalken bewegen. Keine gespeicherten manuellen Spaltenbreiten.
 - Tabellenanlage über 8×6-Raster: Maus/Fokus markiert Größe, Klick fügt ein.
   Erste Zeile ist Kopfzeile. Zelltext direkt bearbeiten; lokale Buttons fügen
   darunter/rechts ein oder löschen ausgewählte Datenzeile/Spalte. Kopfzeile und
@@ -131,13 +134,23 @@ Subagenten geprüft; abschließend keine verbleibenden Blocker.
   mit dem Build verglichen. Installierter Build startet mit isolierten XDG-
   Verzeichnissen und erzeugt dort Schema 6.
 
+## Nachprüfung Inhaltsbreite · Linux · 27. Oktober 2026
+
+- Analyse ohne Befund; alle 170 Flutter-Tests erfolgreich, darunter zwei neue
+  Layouttests für Live und Lesen: kompakte Tabellen, begrenzte Spalten,
+  Textumbruch, horizontales Scrollen und direkte Zellbearbeitung.
+- Nativer Linux-Editortest einschließlich kompakter Tabellenbreite erfolgreich;
+  die native Darstellung anhand des Testbilds geprüft.
+- Release neu gebaut und installiert, 25 Paketdateien per SHA-256 verglichen.
+  Installierten Build mit isolierten XDG-Verzeichnissen und Schema 6 gestartet.
+
 ## Lokale Installation
 
 - Linux-Release 0.10.0+16 ohne `PARA_DATA_DIR`-/`PARA_CONFIG_DIR`-Buildoverride
   unter `$HOME/.local/opt/para-workspace` installiert. Vorhandener Starter und
   App-Kennung unverändert; die neue Darstellung gilt beim nächsten App-Start.
 - Vorheriges App-Bundle vollständig unter
-  `$HOME/.local/opt/para-workspace-backup-before-lineheight-12-20261027T071905Z`
+  `$HOME/.local/opt/para-workspace-backup-before-content-tables-20261027T084811Z`
   erhalten. Installationsbeleg mit Paketprüfsummen liegt außerhalb des
   Repositories in `$HOME/.local/opt/para-workspace-installation.json`.
 - Installierten Build ausschließlich mit temporären XDG-Verzeichnissen gestartet.

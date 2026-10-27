@@ -650,6 +650,8 @@ class MarkdownEditorState extends State<MarkdownEditor> {
         h2Padding: const EdgeInsets.only(top: 5),
         blockSpacing: 6,
         listBullet: const TextStyle(fontSize: 13),
+        tableColumnWidth: const _ContentColumnWidth(),
+        tableScrollbarThumbVisibility: true,
       ),
     );
   }
@@ -834,142 +836,153 @@ class MarkdownEditorState extends State<MarkdownEditor> {
               ),
             ],
           ),
-        Table(
-          border: TableBorder.all(color: colors.line),
-          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-          children: [
-            for (var r = 0; r < cells.length; r++)
-              TableRow(
-                decoration: r == 0
-                    ? BoxDecoration(color: colors.sidebar)
-                    : null,
-                children: [
-                  for (var c = 0; c < cells[r].length; c++)
-                    Builder(
-                      builder: (context) {
-                        final cellSelected =
-                            selected && _cell!.row == r && _cell!.column == c;
-                        return GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: _locked
-                              ? null
-                              : () {
-                                  widget.onEditing();
-                                  setState(() {
-                                    _start = _end = null;
-                                    _cell = (
-                                      start: block.start,
-                                      row: r,
-                                      column: c,
+        _ScrollableTable(
+          child: Table(
+            key: ValueKey('markdown-table-${block.start}'),
+            defaultColumnWidth: const _ContentColumnWidth(),
+            border: TableBorder.all(color: colors.line),
+            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+            children: [
+              for (var r = 0; r < cells.length; r++)
+                TableRow(
+                  decoration: r == 0
+                      ? BoxDecoration(color: colors.sidebar)
+                      : null,
+                  children: [
+                    for (var c = 0; c < cells[r].length; c++)
+                      Builder(
+                        builder: (context) {
+                          final cellSelected =
+                              selected && _cell!.row == r && _cell!.column == c;
+                          return GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: _locked
+                                ? null
+                                : () {
+                                    widget.onEditing();
+                                    setState(() {
+                                      _start = _end = null;
+                                      _cell = (
+                                        start: block.start,
+                                        row: r,
+                                        column: c,
+                                      );
+                                    });
+                                    _cellValue = TextEditingValue(
+                                      text: cells[r][c],
+                                      selection: TextSelection.collapsed(
+                                        offset: cells[r][c].length,
+                                      ),
                                     );
-                                  });
-                                  _cellValue = TextEditingValue(
-                                    text: cells[r][c],
-                                    selection: TextSelection.collapsed(
-                                      offset: cells[r][c].length,
-                                    ),
-                                  );
-                                  _restoreCellValue = null;
-                                  _source.selection = TextSelection.collapsed(
-                                    offset: block.start,
-                                  );
-                                },
-                          child: Container(
-                            key: ValueKey('markdown-cell-${block.start}-$r-$c'),
-                            decoration: cellSelected
-                                ? BoxDecoration(
-                                    border: Border.all(color: colors.soft),
-                                  )
-                                : null,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 6,
-                            ),
-                            child: cellSelected
-                                ? _TableCellInput(
-                                    key: ValueKey(
-                                      'cell-input-${block.start}-$r-$c',
-                                    ),
-                                    value: cells[r][c],
-                                    locked: _locked,
-                                    canMutate: () => !_locked,
-                                    restoredValue: _restoreCellValue,
-                                    onValueChanged: (value) {
-                                      if (_cell ==
-                                          (
-                                            start: block.start,
-                                            row: r,
-                                            column: c,
-                                          )) {
-                                        _cellValue = value;
-                                      }
-                                    },
-                                    onChanged: (value) {
-                                      if (_locked ||
-                                          _cell !=
-                                              (
-                                                start: block.start,
-                                                row: r,
-                                                column: c,
-                                              )) {
-                                        return;
-                                      }
-                                      final currentBlocks = markdownBlocks(
-                                        _source.text,
-                                      );
-                                      final current = currentBlocks
-                                          .where((b) => b.start == block.start)
-                                          .firstOrNull;
-                                      final model = current == null
-                                          ? null
-                                          : MarkdownSourceTable.tryParse(
-                                              current.text(_source.text),
-                                            );
-                                      if (current != null &&
-                                          model != null &&
-                                          r < model.cells.length &&
-                                          c < model.cells.first.length) {
-                                        change(
-                                          (current) =>
-                                              current.replaceCell(r, c, value),
-                                          r,
-                                          c,
+                                    _restoreCellValue = null;
+                                    _source.selection = TextSelection.collapsed(
+                                      offset: block.start,
+                                    );
+                                  },
+                            child: Container(
+                              key: ValueKey(
+                                'markdown-cell-${block.start}-$r-$c',
+                              ),
+                              decoration: cellSelected
+                                  ? BoxDecoration(
+                                      border: Border.all(color: colors.soft),
+                                    )
+                                  : null,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 6,
+                              ),
+                              child: cellSelected
+                                  ? _TableCellInput(
+                                      key: ValueKey(
+                                        'cell-input-${block.start}-$r-$c',
+                                      ),
+                                      value: cells[r][c],
+                                      locked: _locked,
+                                      canMutate: () => !_locked,
+                                      restoredValue: _restoreCellValue,
+                                      onValueChanged: (value) {
+                                        if (_cell ==
+                                            (
+                                              start: block.start,
+                                              row: r,
+                                              column: c,
+                                            )) {
+                                          _cellValue = value;
+                                        }
+                                      },
+                                      onChanged: (value) {
+                                        if (_locked ||
+                                            _cell !=
+                                                (
+                                                  start: block.start,
+                                                  row: r,
+                                                  column: c,
+                                                )) {
+                                          return;
+                                        }
+                                        final currentBlocks = markdownBlocks(
+                                          _source.text,
                                         );
-                                      }
-                                    },
-                                    onNext: (back) {
-                                      var row = r, col = c + (back ? -1 : 1);
-                                      if (col < 0) {
-                                        if (row == 0) return;
-                                        row--;
-                                        col = cells.first.length - 1;
-                                      }
-                                      if (col >= cells.first.length) {
-                                        if (row == cells.length - 1) return;
-                                        row++;
-                                        col = 0;
-                                      }
-                                      _restoreCellValue = null;
-                                      setState(
-                                        () => _cell = (
-                                          start: block.start,
-                                          row: row,
-                                          column: col,
-                                        ),
-                                      );
-                                    },
-                                  )
-                                : _inlineCell(
-                                    cells[r][c].isEmpty ? ' ' : cells[r][c],
-                                    references,
-                                  ),
-                          ),
-                        );
-                      },
-                    ),
-                ],
-              ),
-          ],
+                                        final current = currentBlocks
+                                            .where(
+                                              (b) => b.start == block.start,
+                                            )
+                                            .firstOrNull;
+                                        final model = current == null
+                                            ? null
+                                            : MarkdownSourceTable.tryParse(
+                                                current.text(_source.text),
+                                              );
+                                        if (current != null &&
+                                            model != null &&
+                                            r < model.cells.length &&
+                                            c < model.cells.first.length) {
+                                          change(
+                                            (current) => current.replaceCell(
+                                              r,
+                                              c,
+                                              value,
+                                            ),
+                                            r,
+                                            c,
+                                          );
+                                        }
+                                      },
+                                      onNext: (back) {
+                                        var row = r, col = c + (back ? -1 : 1);
+                                        if (col < 0) {
+                                          if (row == 0) return;
+                                          row--;
+                                          col = cells.first.length - 1;
+                                        }
+                                        if (col >= cells.first.length) {
+                                          if (row == cells.length - 1) return;
+                                          row++;
+                                          col = 0;
+                                        }
+                                        _restoreCellValue = null;
+                                        setState(
+                                          () => _cell = (
+                                            start: block.start,
+                                            row: row,
+                                            column: col,
+                                          ),
+                                        );
+                                      },
+                                    )
+                                  : _inlineCell(
+                                      cells[r][c].isEmpty ? ' ' : cells[r][c],
+                                      references,
+                                    ),
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+            ],
+          ),
         ),
       ],
     );
@@ -1313,4 +1326,47 @@ class _MarkdownTablePickerState extends State<MarkdownTablePicker> {
       ),
     );
   }
+}
+
+// No flex: short tables keep their natural width. Clamp both intrinsic limits
+// so long words wrap too, instead of forcing an arbitrarily wide column.
+class _ContentColumnWidth extends IntrinsicColumnWidth {
+  const _ContentColumnWidth();
+
+  @override
+  double minIntrinsicWidth(Iterable<RenderBox> cells, double containerWidth) =>
+      super.minIntrinsicWidth(cells, containerWidth).clamp(72.0, 320.0);
+
+  @override
+  double maxIntrinsicWidth(Iterable<RenderBox> cells, double containerWidth) =>
+      super.maxIntrinsicWidth(cells, containerWidth).clamp(72.0, 320.0);
+}
+
+class _ScrollableTable extends StatefulWidget {
+  const _ScrollableTable({required this.child});
+  final Widget child;
+
+  @override
+  State<_ScrollableTable> createState() => _ScrollableTableState();
+}
+
+class _ScrollableTableState extends State<_ScrollableTable> {
+  final _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Scrollbar(
+    controller: _scroll,
+    thumbVisibility: true,
+    child: SingleChildScrollView(
+      controller: _scroll,
+      scrollDirection: Axis.horizontal,
+      child: widget.child,
+    ),
+  );
 }

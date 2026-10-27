@@ -83,7 +83,9 @@ Die neue native macOS-Abnahme und Android sind offen.
   Die gemeinsame Texthistorie umfasst auch Checkboxen und Tabellenaktionen und
   bleibt bei Moduswechsel und Speichern bestehen; ein tatsächliches Neuladen
   des Inhalts setzt sie zurück. Sie ist kein gespeicherter Versionsverlauf.
-- **Tabellen:** Über den Tabellenbutton im 8×6-Raster mit der Maus die Größe wählen
+- **Tabellen:** In Live und Lesen linksbündig in Inhaltsbreite, mit 72–320 Pixel
+  breiten Spalten. Lange Texte brechen um; bei Platzmangel horizontal scrollen.
+  Über den Tabellenbutton im 8×6-Raster mit der Maus die Größe wählen
   und anklicken; Tastaturfokus markiert ebenfalls die Größe. Die erste Zeile ist
   die Kopfzeile. In Live eine Zelle anklicken und direkt bearbeiten. Die dann
   eingeblendeten Buttons fügen Zeilen darunter oder Spalten rechts hinzu und

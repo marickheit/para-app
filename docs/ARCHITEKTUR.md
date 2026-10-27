@@ -129,6 +129,10 @@ vom Renderer tatsächlich als Kästchen dargestellten Listenpunkte; komplexe
 lose/verschachtelte Listen können reine Darstellung bleiben. Sicher erkannte Tabellen
 haben lokale Zell-/Strukturaktionen unter Erhalt von Spaltenausrichtung und
 unberührten Zelltexten; unsichere Konstrukte bleiben über Quelltext bearbeitbar.
+Live- und Lesetabellen verwenden intrinsische Spaltenbreiten ohne Flexanteil,
+begrenzt auf 72–320 Pixel einschließlich Zellabstand. Lange Texte umbrechen;
+horizontale Scrollbereiche mit eigenen Controllern halten breite Tabellen
+innerhalb der Editorfläche. Die Breiten sind reine Darstellung ohne Formatänderung.
 Dokumentweite Referenzdefinitionen werden beim Rendern einzelner Blöcke ergänzt.
 
 Return erzeugt im normalen Absatz eine Markdown-Absatzgrenze, Shift+Return einen
