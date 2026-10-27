@@ -1,6 +1,6 @@
 # Anlegen: umgesetzter Umfang und verbleibender Vorschlag
 
-Stand: 26. Oktober 2026 · App 0.9.2. Die Überarbeitung der Auswahl-/Anlageziele
+Stand: 27. Oktober 2026 · App 0.10.0. Die Überarbeitung der Auswahl-/Anlageziele
 ist seit 0.7.3 umgesetzt. Verbindlich sind [Bedienung](../README.md) und
 [Umsetzung/Prüfungen](ANLEGEN_UMSETZUNGSPLAN.md).
 

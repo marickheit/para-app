@@ -1,6 +1,6 @@
 # Kritische Bewertung der Zieloberfläche
 
-Stand: 26. Oktober 2026 · Flutter 0.9.2. Kritische Bewertung der Referenz und ihrer Flutter-Umsetzung.
+Stand: 27. Oktober 2026 · Flutter 0.10.0. Kritische Bewertung der Referenz und ihrer Flutter-Umsetzung.
 Optionale Vorschläge sind keine weitere Funktionsfreigabe. Verbindliche Anforderungen stehen im [UI-Umzug](UI_UMZUG.md).
 
 ## Bewusste Gegenprüfung
@@ -27,8 +27,11 @@ Optionale Vorschläge sind keine weitere Funktionsfreigabe. Verbindliche Anforde
   Seit 0.9.0 lassen sich Explorer-Breite und Fokusmodus B direkt einstellen;
   eine Mindestbreite für den Inhalt begrenzt den Explorer am schmalen Fenster.
   Tabs und ein kompakter Dateikopf schaffen mehr Platz für Dateien.
-- Der MD-Editor zeigt Quelltext oder Vorschau. Ein vollständiger Obsidian-artiger
-  Live-Preview-Editor mit eingebetteten Links/Dateien ist damit noch nicht entschieden.
+- Der Markdown-Editor bietet seit 0.10.0 Live, Quelltext und Lesen mit einem
+  gemeinsamen Entwurf. Live bearbeitet Textblöcke und sichere Tabellen direkt;
+  für blockübergreifende Änderungen bleibt Quelltext maßgeblich. Komplexe
+  Markdown-Listen und Tabellensyntax haben Render-/Interaktionsgrenzen, ohne
+  die Quelle zu beschneiden. [Vertrag und Prüfungen](MARKDOWN_EDITOR_UMSETZUNGSPLAN.md).
 - Die Formulierungen für „Erledigt“ und „Nicht mehr relevant“ sind verständlich;
   Symbol und Text trennen beide Zustände. Wiederaufnahme und dauerhafte Speicherung
   sind umgesetzt; ein zusätzlicher Verlauf ist nicht beschlossen.
@@ -43,7 +46,8 @@ Optionale Vorschläge sind keine weitere Funktionsfreigabe. Verbindliche Anforde
 2. Splits und Tabgruppen erst bei Bedarf ergänzen. Explorer-Ausblenden und
    ziehbare Breite sind bereits in 0.9.0 umgesetzt; [Prüfungen](DATEI_TABS_UMSETZUNGSPLAN.md).
 3. Mehrfachauswahl und Sammelaktionen erst ergänzen, wenn der Einzelablauf stabil ist.
-4. Live Preview / Autosave ausdrücklich gegen den bestehenden Speicherablauf abwägen.
+4. Autosave ausdrücklich gegen den bestehenden Speicherablauf abwägen; Live
+   und textbezogenes Undo/Redo sind bereits umgesetzt.
 5. Cmd+F als globale Suche ist bestätigt; eine spätere Dokumentsuche braucht eine
    klare Abgrenzung und ein zusätzliches Kürzel.
 6. Weitere Menüinhalte erst bei konkretem Bedarf ergänzen; Daten & Sicherung und Einstellungen sind vorhanden.

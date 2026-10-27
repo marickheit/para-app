@@ -1,7 +1,7 @@
 # P.A.R.A. MCP
 
 Lokaler stdio-Server 0.3.0 für die laufende P.A.R.A.-App ab Version 0.8.1
-(aktueller App-Stand 0.9.2), API-Funktionsstand 2 mit 19 Werkzeugen.
+(aktueller App-Stand 0.10.0), API-Funktionsstand 2 mit 19 Werkzeugen.
 Node.js >=22; offizielles MCP TypeScript SDK 2.4.0 (stabile v2-Linie,
 Protokoll 2026-07-28 mit SDK-Unterstützung älterer Clients).
 Abhängigkeiten sind einschließlich Lockdatei festgelegt.

@@ -1,6 +1,6 @@
 # GTD-Ausbau: Aufgabenangaben und weitere Vorschläge
 
-Stand 0.9.2; Aufgabenangaben seit 0.6: Zeitbedarf, mehrere Kontexte, Energie, Chips, Kontextverwaltung und
+Stand 0.10.0; Aufgabenangaben seit 0.6: Zeitbedarf, mehrere Kontexte, Energie, Chips, Kontextverwaltung und
 Filter sind implementiert. Weitere GTD-Funktionen unten bleiben Vorschläge.
 
 ## Aufgabenangaben in 0.6

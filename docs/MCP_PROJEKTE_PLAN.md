@@ -1,6 +1,6 @@
 # Projektanlage über MCP
 
-Stand: 26. Oktober 2026 · Vertrag in App 0.9.2/MCP 0.3.0, umgesetzt seit 0.7.2.
+Stand: 27. Oktober 2026 · Vertrag in App 0.10.0/MCP 0.3.0, umgesetzt seit 0.7.2.
 
 ## Umfang
 

@@ -1,6 +1,6 @@
 # Arbeitsstand
 
-Stand: 26. Oktober 2026 · Version 0.9.2+15.
+Stand: 27. Oktober 2026 · Version 0.10.0+16.
 
 Aktueller Umfang und Prüfnachweise; Fachdetails stehen in den verlinkten Verträgen.
 Die [Dokumentationsübersicht](README.md) ordnet aktuelle Anleitungen,
@@ -18,6 +18,13 @@ versionsgebundene Abnahmen und unverbindliche Entwürfe ein.
   volle Breite/optionale Lesebreite, ziehbarer Explorer und Fokusmodus. Explizites
   Speichern und Speicherschutz; gespeicherte Sitzung Format 2 mit gesicherter
   Übernahme von Format 1. [Bedienvertrag](DATEI_TABS_UMSETZUNGSPLAN.md).
+- **Markdown-Editor:** Live als Standard, Quelltext und Lesen mit bedienbaren
+  Checkboxen; Return rendert den abgeschlossenen Absatz. 1,2-fache Zeilenhöhe
+  und 6 Pixel Blockabstand. Gemeinsame kompakte
+  Tab-/Aktionszeile, Aa-Menü, Tabellenraster und direkte Zell-/Strukturänderungen,
+  textbezogenes Undo/Redo. Explizites Speichern, MCP-/Konflikt-/Wechselschutz und
+  gesperrte Archive/Papierkörbe bleiben. Keine Formatmigration.
+  [Bedienvertrag, Reviews und Prüfstand](MARKDOWN_EDITOR_UMSETZUNGSPLAN.md).
 - **Suche/Start:** Vorhandenen Index sofort verwenden, geänderte Dateien und neue
   PDFs im Hintergrund auswerten. Unveränderte Dateien nicht erneut auslesen;
   offene Suche erhält neue Treffer und Status. Abgeleiteter Suchcache Format 1.
@@ -44,6 +51,15 @@ versionsgebundene Abnahmen und unverbindliche Entwürfe ein.
 
 ## Prüfstand
 
+- **Editor 0.10.0:** Analyse ohne Befund, alle 168 Flutter-Tests erfolgreich.
+  28 native Linuxfälle einschließlich neuer Editorbedienung und bestehender
+  Datei-/Anlage-/Workspaceabläufe erfolgreich; ein macOS-Fall übersprungen.
+  Kompakte Abstände erneut geprüft: 168 Flutter-Tests, sieben MCP-Tests und
+  nativer Linux-Editortest erfolgreich. Linux-Release neu installiert, 25
+  Paketdateien geprüft und installierten Build mit temporärem Root gestartet.
+  Neue Darstellung beim nächsten App-Start verfügbar. [Reviews, Nachweise und Installationsgrenzen](MARKDOWN_EDITOR_UMSETZUNGSPLAN.md).
+  Die folgenden Nachweise behalten ihre tatsächliche Versionsbindung; eine neue
+  macOS-Editorabnahme steht aus.
 - **0.9.2:** Analyse ohne Befund, alle 133 Flutter-Tests erfolgreich. Zehn native
   Auswahl-/Anlageabläufe prüfen zusätzlich getrennte Name-/Pfeilklicks für
   Projekt, Bereich, Ressource, Ordner, Archiv und Papierkorb, Entwurferhalt sowie
@@ -87,8 +103,9 @@ synthetische Arbeitsbereiche. Reguläre Nutzerbestände dienen nicht als Testumg
   allgemeines Wiederanlaufjournal und App-Updater.
 - Android, Cloud-Sync, Konfliktauflösung zwischen Geräten und externe Dateiverweise.
 - Splits wie C, Tabgruppen und mehrere gleichzeitig ungespeicherte Editoren
-  zurückgestellt. Autosave, Live Preview, Entwurfsrettung, Mehrfachauswahl,
-  allgemeines Rückgängig und zusätzliche Textformate sind unbestätigte Vorschläge.
+  zurückgestellt. Autosave, Entwurfsrettung, Mehrfachauswahl,
+  allgemeines Rückgängig für Ablageaktionen und zusätzliche Textformate sind
+  unbestätigte Vorschläge; Markdown-Live und Text-Undo gehören zum Editor 0.10.0.
 - Projektprüfung, Wochenrückblick und Wiederholungen sind unbestätigte GTD-Vorschläge.
 - MCP: vorhandene Inhalte in Projekte umwandeln, Verschieben, Dateiimport,
   Archiv-/Papierkorbaktionen sowie dauerhafte/ordnerbezogene Freigaben nicht umgesetzt.

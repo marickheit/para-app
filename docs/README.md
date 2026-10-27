@@ -14,6 +14,7 @@ anzugleichen und Verweise zu prüfen.
 | Architektur, Daten und Kompatibilität | [Architektur](ARCHITEKTUR.md), [Arbeitsbereiche](ARBEITSBEREICHE.md), [Sicherung/Rückholung](SICHERUNG.md) |
 | Oberfläche und Grenzen | [UI-Anforderungen](UI_UMZUG.md), [kritische Bewertung/Vorschläge](UI_REVIEW.md) |
 | Auswahl, Baum und Anlageziele | [Bedienvertrag/Prüfungen](ANLEGEN_UMSETZUNGSPLAN.md), [umgesetzter Umfang/verbleibender Vorschlag](ANLEGEN_VORSCHLAG.md) |
+| Markdown-Editor, Tabellen und Text-Undo | [Bedienvertrag, Reviews und Prüfungen](MARKDOWN_EDITOR_UMSETZUNGSPLAN.md) |
 | Dateitabs, Fokus, Resize und Sitzung | [Bedienvertrag/Prüfungen](DATEI_TABS_UMSETZUNGSPLAN.md) |
 | Start und Suchindex | [Abgleich, Cache und Prüfungen](STARTZEIT_UMSETZUNGSPLAN.md) |
 | Aufgabenangaben und unbestätigte GTD-Vorschläge | [GTD-Ausbau](GTD_AUSBAU.md) |
@@ -36,6 +37,7 @@ die Dokumentation korrigieren und keine zusätzliche Funktion daraus ableiten.
 | [Flutter-Grundumsetzung](FLUTTER_UMZUG_PLAN.md) | Umgesetzte Grundlage mit aktuellem Verweis auf Bedienung und Plattformprüfungen |
 | [Umsetzung 0.6](UMSETZUNG_0_6.md), [Review 0.6](REVIEW_0_6.md) | Versionsgebundene Nachweise für Arbeitsbereiche/Aufgabenangaben; keine aktuelle Vollabnahme |
 | [Oberflächenvarianten](BEDIENKONZEPTE.md) | Vergleichsentwürfe, abgegrenzt von der aktuellen Bedienung |
+| [Markdown-Editor-Entwurf](mockups/MARKDOWN_EDITOR.md) | Interaktive Designvorschau mit Beispieldaten; maßgeblich sind aktueller Editorvertrag und native Implementierung |
 | [Dateitab-Designstudie](mockups/DATEI_TABS.md) | Erläutert HTML-/Bild-Mocks mit synthetischen Inhalten, keine native Funktionsabnahme |
 | [UI-Referenz](mockups/para-zieloberflaeche.html), [Dateitab-Varianten](mockups/para-datei-tabs.html) | Unverbindliche interaktive Beispiele; alte Klickabläufe und Beispieldaten sind keine Produktanforderungen |
 | [Stand statt Entscheidungsprotokoll](ENTSCHEIDUNGEN.md) | Verweise auf die aktuellen Dokumente; keine laufende Gesprächshistorie |
@@ -51,7 +53,9 @@ die Dokumentation korrigieren und keine zusätzliche Funktion daraus ableiten.
 - Oberfläche/Suche: [Workspace](../lib/ui/workspace_screen.dart),
   [Suchdialog](../lib/ui/workspace_search.dart),
   [Indexdienst](../lib/data/search_index_repository.dart),
-  [Formatgrenzen](../lib/services/file_formats.dart).
+  [Formatgrenzen](../lib/services/file_formats.dart),
+  [Markdown-Editor](../lib/ui/markdown_editor.dart),
+  [Markdown-Quellbereiche](../lib/ui/markdown_source.dart).
 - MCP: [Paket/SDK-Versionen](../mcp/package.json),
   [App-Dienst/Werkzeugumfang](../lib/services/mcp_access_service.dart),
   [Vertragsfixture](../test/fixtures/mcp/contract.json).

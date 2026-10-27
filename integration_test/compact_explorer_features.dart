@@ -91,7 +91,7 @@ void registerCompactExplorerTests() {
           tester.getSize(find.byKey(const ValueKey('navigation-rail'))).width,
           164,
         );
-        await tester.tap(find.widgetWithText(TextButton, 'Bearbeiten'));
+        await tester.tap(find.byKey(const ValueKey('markdown-mode-raw')));
         await tester.pumpAndSettle();
         final body = find.byKey(const ValueKey('markdown-body'));
         await tester.enterText(body, 'Noch nicht gespeicherte Gedanken.');

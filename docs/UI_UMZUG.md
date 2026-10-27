@@ -1,12 +1,12 @@
 # Zieloberfläche und Umzug nach Flutter
 
-Stand: 26. Oktober 2026. Verbindliche Nutzeranforderungen und Abnahmekriterien,
+Stand: 27. Oktober 2026. Verbindliche Nutzeranforderungen und Abnahmekriterien,
 kein Gesprächsprotokoll. Bei neuen Entscheidungen diese Beschreibung aktualisieren.
 
 ## Grundlage und Status
 
 Die Symbolleisten-/Explorer-Grundlage ist seit Flutter 0.4 umgesetzt; der aktuelle
-Vertrag beschreibt 0.9.2:
+Vertrag beschreibt 0.10.0:
 Anordnung, Farben, Symbole, Abstände, Editor, gemeinsame Kopfzeile, Dateiaktionen,
 Aufgabenansichten und schmale Navigation orientieren sich eng am Mockup.
 
@@ -28,14 +28,21 @@ nativen Datei-Drops. Die Beispieldaten wurden nicht in den Nutzerarbeitsbereich 
   kann alle Zweige umschalten, Datei-/Tabwechsel, Suche und Links den Zielpfad
   automatisch sichtbar machen. Notizen und Dateien vollständig im Baum anzeigen,
   auch in Ordnern wie „Unterlagen“. Keine feste Beispiel-Ordnerstruktur erzwingen.
-- Unterstützte Dateien im Hauptbereich rendern, Metadaten über ein kleines
-  Info-Symbol zeigen; für andere Formate Download beziehungsweise lokale Dateiaktion.
+- Unterstützte Dateien im Hauptbereich rendern, Metadaten auf Abruf zeigen:
+  bei Markdown über „Weitere Dateiaktionen“ → „Dateiinformationen“, bei anderen
+  Vorschauen über das Info-Symbol. Für andere Formate lokale Dateiaktionen.
 - Markdown-Notizen anlegen, bearbeiten und anzeigen. Auch gängige Textdateien,
   insbesondere TXT, intern bearbeiten. Weitere Textformate einzeln festlegen;
   daraus folgt keine Bearbeitung beliebiger Binär-/Office-Dateien.
-- Explizites Speichern und Schutz ungespeicherter Änderungen beim Wechseln
-  beibehalten. Ein Obsidian-artiger Arbeitsablauf bedeutet hier noch keine
-  Entscheidung für Autosave oder einen bestimmten Live-Preview-Editor.
+- Markdown mit Live als Standard, Quelltext und Lesen; Live rendert inaktive
+  Absätze und zeigt den aktiven Absatz als Syntax ohne grüne Blockmarkierung.
+  Return beginnt einen neuen Absatz, Shift+Return bricht innerhalb des Absatzes
+  um. Explizites Speichern und Wechselschutz bleiben; kein Autosave.
+- Markdown-Aktionen direkt im Dateitabstreifen bündeln. Aa bietet Formatierung,
+  Links, Hilfe und Text-Undo/Redo; Tabellen über ein Größenraster anlegen und
+  anschließend Zellen sowie Zeilen/Spalten direkt bearbeiten. Lesen erlaubt
+  gerenderte Checkboxen; Archiv/Papierkorb bleiben vollständig gesperrt.
+  [Editorvertrag und Grenzen](MARKDOWN_EDITOR_UMSETZUNGSPLAN.md).
 - Sichtbare Anlage-/Importaktion und Rechtsklick für Dateien, Ordner und Projekte;
   Drei-Punkte-Menü bietet dieselben verfügbaren Aktionen. Auch Aufgaben und
   „Irgendwann / Vielleicht“ behalten ihre Aktionen einschließlich Projektumwandlung.
@@ -76,8 +83,12 @@ nativen Datei-Drops. Die Beispieldaten wurden nicht in den Nutzerarbeitsbereich 
   Projekten. Aufgaben in verschobenen Ordnern erhalten ihre neue Zuordnung automatisch.
 - Das native macOS-Find-Menü ist an die schwebende Suche angeschlossen. Cmd/Ctrl+K
   bleibt als bestehendes Kürzel erhalten; Cmd/Ctrl+O bleibt auf Namen beschränkt.
-- Es gibt weiterhin keinen Live-Preview-Editor, kein Autosave, keine Mehrfachauswahl
-  und kein allgemeines Rückgängig für Verschieben/Import.
+- Markdown-Live und textbezogenes Undo/Redo sind seit 0.10.0 umgesetzt.
+  Blockübergreifende Bearbeitung erfolgt im Quelltext; Cmd/Ctrl+A im Live-Textfeld
+  wechselt dorthin mit Gesamtauswahl. Gerenderte Blöcke gemeinsam auswählen/kopieren.
+  Kein Autosave, keine Mehrfachauswahl und kein allgemeines Rückgängig für
+  Verschieben/Import. Komplexe Listen können Checkboxen ohne interaktives
+  Kästchen rendern; der Quelltext bleibt vollständig erhalten.
 
 [Umsetzungsplan](FLUTTER_UMZUG_PLAN.md) · [Aktuelle Prüfungen](UMSETZUNGSPLAN.md).
 
@@ -101,7 +112,7 @@ offen. Mockup-Prüfungen ersetzen diese Nachweise nicht.
 
 ## Noch nicht ausgewählte Vorschläge
 
-- Live Preview und Autosave versus explizites Speichern weiter vergleichen.
+- Autosave gegen den bestehenden expliziten Speicherablauf abwägen.
 - Rückgängig nach Verschieben/Import und übersichtlicher Importbericht.
 - Mehrfachauswahl und Sammelaktionen bei vielen Dateien.
 - Eigene Dokumentsuche zusätzlich zur globalen Suche; Kürzelkonflikt auflösen.
@@ -129,9 +140,10 @@ Die Mocks bleiben Beispieldaten; geteilte Ansichten sind keine App-Funktion.
   Wiederherstellung und gemeinsame Rechtsklick-/Drei-Punkte-Aktionen.
   „Papierkorb leeren“ in der Kopfzeile; endgültige Entfernung mit Bestätigung,
   Umfang und Rückverweisen. Keine automatische Leerung.
-- Versionsverlauf über ein kleines Verlaufssymbol im Notiz-/MD-/TXT-Kopf.
-  Auswahl mit Zeitstempel, Textvorschau und bestätigte Wiederherstellung als neuer
-  Stand. Aktuelle Metadaten und jüngere Texte bleiben erhalten.
+- Gespeicherte Textversionen mit Zeitstempel, Textvorschau und bestätigter
+  Wiederherstellung als neuer Stand; aktuelle Metadaten und jüngere Texte bleiben.
+  Seit 0.10.0 bei Notizen/MD über „Weitere Dateiaktionen“ → „Versionsverlauf“,
+  bei TXT weiterhin über das Verlaufssymbol.
 
 ## Ergänzung in Flutter 0.6
 

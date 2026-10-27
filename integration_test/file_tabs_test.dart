@@ -119,7 +119,7 @@ void main() {
       try {
         await tap(t, tree(note));
         final editor = t.state<EntryEditorState>(find.byType(EntryEditor));
-        await tap(t, find.text('Bearbeiten').first);
+        await tap(t, find.byKey(const ValueKey('markdown-mode-raw')));
         final draft = List.generate(
           40,
           (i) => 'Zeile $i: Entwurf erhalten',
@@ -241,8 +241,12 @@ void main() {
       await tap(t, tree(image));
       expect(t.takeException(), isNull);
       await tap(t, tree(note));
-      await tap(t, find.byKey(const ValueKey('readable-toggle')));
+      await tap(t, find.byTooltip('Weitere Dateiaktionen'));
+      await tap(t, find.text('Lesebreite'));
+      await tap(t, find.byTooltip('Weitere Dateiaktionen'));
       expect(find.text('Volle Breite'), findsOneWidget);
+      await t.sendKeyEvent(LogicalKeyboardKey.escape);
+      await settle(t);
       await t.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
       await t.sendKeyEvent(LogicalKeyboardKey.keyO);
       await t.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);

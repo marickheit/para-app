@@ -361,7 +361,7 @@ void registerCreationTests() {
         await expand(tester, area);
         await tap(tester, tree(folder));
         await tap(tester, tree(note));
-        await tap(tester, find.widgetWithText(TextButton, 'Bearbeiten'));
+        await tap(tester, find.byKey(const ValueKey('markdown-mode-raw')));
         await tester.enterText(
           find.byKey(const ValueKey('markdown-body')),
           'Offener Entwurf',

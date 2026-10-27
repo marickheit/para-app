@@ -13,7 +13,8 @@
   unterscheiden. Bestätigte UI: einklappbare Symbolleiste mit benachbartem
   Projekt-/Datei-Explorer, eine gemeinsame Kopfzeile, Suche/Dateiwechsel auf Abruf
   und mehr Platz für den Editor. Papierkorb links unter „Alle Aufgaben“;
-  Textversionen über einen kleinen Verlaufsbutton im Dateikopf. Aufgaben zeigen
+  Markdown-Editor mit Live, Quelltext und Lesen; kompakte Aktionen im Dateitabstreifen.
+  Textversionen bei Markdown im Dateiaktionsmenü, bei TXT über das Verlaufssymbol. Aufgaben zeigen
   mehrere Kontext-, Zeit- und Energie-Chips unter dem Titel.
 - UI-Mocks enthalten Beispieldaten. Ihre Inhalte oder Klicks sind keine
   verbindlichen Produktentscheidungen.

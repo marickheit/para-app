@@ -1,6 +1,6 @@
 # Umsetzung der bestätigten Zieloberfläche in Flutter
 
-Stand: 26. Oktober 2026. Grundumsetzung ab Flutter 0.4, aktuelle Bedienung 0.9.2.
+Stand: 27. Oktober 2026. Grundumsetzung ab Flutter 0.4, aktuelle Bedienung 0.10.0.
 Die ursprüngliche macOS-Abnahme gilt für den damaligen Stand; aktuelle Linux-
 Nachweise und offene macOS-Nachprüfung stehen im [Arbeitsstand](UMSETZUNGSPLAN.md).
 Referenz:
@@ -19,7 +19,9 @@ Keine neuen optionalen Produktfunktionen aus dem Review vorwegnehmen.
   Dateien direkt anzeigen; Plusmenü, gleiche Kontext-/Drei-Punkte-Aktionen,
   Zielanzeige, Datei-/Ordnerimport und Verschieben in allen aktiven Ablagen.
 - [x] Editor/Vorschau: MD und TXT mit explizitem Speichern und Änderungsschutz;
-  Metadaten über Info, unterstützte Vorschau, lokale Dateiaktion für andere Formate.
+  Markdown seit 0.10.0 mit drei Modi und kompakten Tabaktionen gemäß
+  [Editorvertrag](MARKDOWN_EDITOR_UMSETZUNGSPLAN.md). Metadaten auf Abruf,
+  unterstützte Vorschau, lokale Dateiaktion für andere Formate.
 - [x] Aufgaben/Suche: globale GTD-Ansichten, nächste Aktionen nach Projekt,
   erledigt und nicht mehr relevant unterscheiden/wiederaufnehmen; Suchfenster
   mit Cmd/Ctrl+F, unscharfen Namen, unterstützten Inhalten und Pfeiltasten.

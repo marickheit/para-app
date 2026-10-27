@@ -1,6 +1,6 @@
 # P.A.R.A. – Produktstand
 
-Stand: 26. Oktober 2026 · lokale App 0.9.2 für macOS und Linux.
+Stand: 27. Oktober 2026 · lokale App 0.10.0 für macOS und Linux.
 
 ## Ziel und Grundregeln
 
@@ -29,9 +29,15 @@ Stand: 26. Oktober 2026 · lokale App 0.9.2 für macOS und Linux.
   bieten dieselbe Typauswahl: ohne Container nur Haupttypen der Kategorie, mit
   Auswahl Inhalte im grau markierten Ziel. Kontextmenüs gelten für ihren Container;
   Dialoge zeigen den Zielpfad und erlauben bei normalen Inhalten einen Zielwechsel.
-- **Editor:** Markdown-Notizen und kleine UTF-8-TXT-/Markdown-Dateien bearbeiten,
-  Vorschau und explizites Speichern; Schutz ungespeicherter Änderungen. Dateiinfos
-  stehen hinter einem kleinen Info-Symbol. Umbenennen erhält UUIDs und Links.
+- **Editor:** Markdown-Notizen und kleine UTF-8-MD-Dateien mit Live (Standard),
+  Quelltext und Lesen. Live rendert inaktive Blöcke; Return schließt einen Absatz
+  ab, Shift+Return bricht im Absatz um. Keine grüne Blockmarkierung. Kompakte
+  Aktionen direkt im Dateitabstreifen: Aa mit Format-/Linkhilfe und Undo/Redo,
+  Tabellenraster und direkte Zell-/Zeilen-/Spaltenbearbeitung. Gerenderte Checkboxen
+  auch in Lesen änderbar; Änderungen weiterhin ausdrücklich speichern und beim Wechsel
+  schützen. Infos, Verlauf, Lesebreite und Notiztitel im Menü „Weitere Dateiaktionen“.
+  TXT sowie Aufgaben-/Containerformulare behalten ihre bisherige Bedienung.
+  Umbenennen erhält UUIDs und Links. [Bedienvertrag/Prüfungen](docs/MARKDOWN_EDITOR_UMSETZUNGSPLAN.md).
 - **Vorschau:** PDF, Rasterbilder, SVG und CSV. Andere Dateien als Kopie speichern
   oder mit der Standard-App öffnen. CSV-Vorschau und Inhaltssuche haben Grenzen,
   siehe [Bedienung](README.md). Keine Office-/Binärbearbeitung.
@@ -93,8 +99,9 @@ Stand: 26. Oktober 2026 · lokale App 0.9.2 für macOS und Linux.
 - Geteilte Ansichten wie C erst später bei Bedarf. Tabgruppen und mehrere
   gleichzeitig ungespeicherte Editoren bleiben ebenfalls außerhalb dieser Iteration.
 - Projektprüfung und Wochenrückblick bleiben nicht ausgewählte GTD-Vorschläge.
-- Live Preview/Autosave, Rückgängig, Mehrfachauswahl und weitere Textformate sind
-  unbestätigte Vorschläge, keine bereits umgesetzten Funktionen.
+- Autosave, allgemeines Rückgängig für Verschieben/Import, Mehrfachauswahl und
+  weitere Textformate sind unbestätigte Vorschläge. Markdown-Live-Bearbeitung
+  und textbezogenes Undo/Redo sind seit 0.10.0 umgesetzt.
 - Wiederkehrende Aufgaben, externe Dateiverweise.
 - Große Backups, selektive Verfügbarkeit, Cloud-Anbieter, Konfliktauflösung.
 - Linux-x64-Release-Build geprüft; vollständige native Linux-Bedienung und

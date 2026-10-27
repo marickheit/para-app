@@ -41,9 +41,11 @@ Die bestehenden Speicher- und Projektregeln bleiben die Grundlage.
   Pfeil klappt den Baum auf-/zu; auch im Archiv und Papierkorb ist der Pfeil von
   der Inhaltsauswahl getrennt. Die ältere Mockup-Bedienung ist nicht verbindlich.
   Notizen und Dateien erscheinen im Explorer, auch innerhalb von „Unterlagen“.
-- Dateien öffnen bei unterstützten Formaten eine Vorschau. Ein kleines
-  Info-Symbol zeigt Typ, Größe, Änderungsdatum, Ablageort und Suchunterstützung.
-  Für andere Formate steht ein Download zur Verfügung.
+- Dateien öffnen bei unterstützten Formaten eine Vorschau. Infos auf Abruf zeigen
+  Typ, Größe, Änderungsdatum, Ablageort und Suchunterstützung; Markdown nutzt
+  seit 0.10.0 „Weitere Dateiaktionen“, andere Vorschauen ihr Info-Symbol.
+  [Aktueller Editorvertrag](MARKDOWN_EDITOR_UMSETZUNGSPLAN.md). Andere Formate
+  lassen sich lokal exportieren oder mit der Standard-App öffnen.
 - Lupe oder Cmd+F / Strg+F öffnet eine schwebende Suche mit unscharfem
   Namensabgleich und Inhaltstreffern für unterstützte Formate. Pfeiltasten,
   Enter und Esc bedienen Auswahl, Öffnen und Schließen.

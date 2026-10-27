@@ -1,6 +1,6 @@
 # KI-Anbindung über MCP
 
-Stand: App 0.9.2, MCP-Paket 0.3.0, API-Funktionsstand 2 (seit App 0.8.1). MCP läuft lokal mit der geöffneten App auf macOS und Linux.
+Stand: App 0.10.0, MCP-Paket 0.3.0, API-Funktionsstand 2 (seit App 0.8.1). MCP läuft lokal mit der geöffneten App auf macOS und Linux.
 Der Server liegt im Repository unter `mcp/`. Er öffnet selbst keine Nutzdaten.
 
 ## Einrichten
@@ -158,8 +158,10 @@ angeben; bei Text zusätzlich `expected_body_hash` aus `read_text`.
 Ungespeicherte, ladende oder speichernde Editoren blockieren Änderungen an diesem
 Inhalt. Veraltete Angaben überschreiben nichts; erneut lesen und Änderung neu
 bewerten. Notiz- und unterstützter Dateitext verwendet denselben Textverlauf wie
-Speichern in der App. Aufgabenbeschreibungen haben weiterhin keinen eigenen
-Textverlauf; der vorhandene App-Umfang bleibt maßgeblich.
+Speichern in der App. Auch ungespeicherte Live-, Tabellen- und Checkboxänderungen
+im Markdown-Editor blockieren MCP-Schreibzugriffe auf denselben Inhalt; ein reiner
+Moduswechsel speichert nichts. Aufgabenbeschreibungen haben weiterhin keinen
+eigenen Textverlauf; der vorhandene App-Umfang bleibt maßgeblich.
 
 ## Grenzen und Fehler
 

@@ -1,6 +1,6 @@
 # Dateifläche, Tabs und verstellbarer Explorer
 
-Stand: 26. Oktober 2026 · aktueller Bedienvertrag in Flutter 0.9.2, umgesetzt
+Stand: 27. Oktober 2026 · aktueller Bedienvertrag in Flutter 0.10.0, umgesetzt
 seit 0.9.0. A mit optionalem B und verstellbarem Explorer. Die versionsgebundenen
 Nachweise am Ende gelten für 0.9.0+13; aktueller [Prüfstand](UMSETZUNGSPLAN.md).
 
@@ -21,9 +21,11 @@ Plans. Sie konkretisieren die Auswahl; Mock-Beispieldaten sind keine Produktvorg
 
 ### Dateifläche
 
-- Dateitabs und eine kompakte Pfad-/Aktionszeile bilden den gemeinsamen Kopf.
-  Bei geöffneter Datei keine zusätzliche Container-Kopfzeile darüber stapeln.
-  Containeransichten behalten Übersicht/Inhalte/Aufgaben; das sind keine Dateitabs.
+- Markdown-Dateitabs und Editoraktionen bilden seit 0.10.0 eine gemeinsame
+  kompakte Zeile; keine zweite Markdown- oder Container-Kopfzeile darunter.
+  Schmale Fenster dürfen die Zeile umbrechen. Andere Vorschauen/TXT behalten
+  ihren Dateikopf. Containeransichten behalten Übersicht/Inhalte/Aufgaben.
+  [Aktueller Markdown-Editorvertrag](MARKDOWN_EDITOR_UMSETZUNGSPLAN.md).
 - Der Inhalt erhält die restliche Fensterfläche mit etwa 24 Pixel Außenabstand
   bei Texten. Die bisherige allgemeine Begrenzung auf 760 Pixel entfällt.
 - Markdown und TXT starten breit. Eine Aktion „Lesebreite“ begrenzt auf Wunsch nur
@@ -34,9 +36,10 @@ Plans. Sie konkretisieren die Auswahl; Mock-Beispieldaten sind keine Produktvorg
 - Rasterbilder und SVG proportional in die verfügbare Fläche einpassen; keine
   feste 330-Pixel-Höhe. CSV erhält den verfügbaren Bereich mit eigenem Scrollen.
   Bestehende Format-, Größen- und Suchgrenzen gelten weiter.
-- Titel erscheint einmal als bearbeitbarer Notiztitel oder Dokumentüberschrift;
-  Dateiname bleibt im Tab. Umbenennen, Speichern, Verlauf, Info und Dateiaktionen
-  bleiben erreichbar. Lange Pfade kürzen, vollständigen Pfad auf Abruf zeigen.
+- Dateiname/Notiztitel bleibt im Tab. Markdown-Notizen erhalten keinen zweiten
+  Titeltextblock; „Weitere Dateiaktionen“ bietet „Notiz umbenennen“, Verlauf,
+  Infos und Lesebreite. Änderungen am Titel anschließend speichern. Speichern
+  und sonstige Dateiaktionen bleiben erreichbar; vollständigen Pfad auf Abruf zeigen.
 - Große Vorschauen erhalten begrenzte Layoutmaße; kein PDF-Viewer in einem
   äußeren, unbegrenzt hohen Scrollbereich. Text hat einen eigenen Scrollbereich.
   Nicht unterstützte Dateien behalten Export und Öffnen mit Standard-App.
@@ -99,7 +102,8 @@ Plans. Sie konkretisieren die Auswahl; Mock-Beispieldaten sind keine Produktvorg
   schreibgeschützte Ansicht mit passendem Hinweis. Endgültig entfernte Inhalte
   schließen ihre Tabs; eine extern fehlende Anhangsdatei zeigt einen Fehler,
   ohne Inhalt zu löschen oder eine leere Datei anzulegen.
-- Pro Texttab Bearbeiten/Vorschau und Scrollposition während der Sitzung merken;
+- Pro Texttab Modus und Scrollposition während der Sitzung merken (Markdown ab
+  0.10.0 Live/Quelltext/Lesen, TXT Bearbeiten/Vorschau);
   PDF-Zoom/-Position beim Wechsel bestmöglich erhalten. Keine zweite gleichzeitig
   aktive Editorfläche und kein Ziehen von Tabs in Splits in dieser Iteration.
 
@@ -196,8 +200,9 @@ Sitzungsübernahme erfolgt erst beim Öffnen mit der neuen App und nach Rückfal
 ## Später
 
 Splits wie C, mehrere gleichzeitig ungespeicherte Editoren, Tabgruppen,
-frei verschiebbare Tabs, Live Preview, Autosave und Entwurfswiederherstellung
-gehören nicht zu dieser Iteration.
+frei verschiebbare Tabs, Autosave und Entwurfswiederherstellung gehörten nicht
+zur Tab-Iteration. Markdown-Live ist inzwischen im [Editor 0.10.0](MARKDOWN_EDITOR_UMSETZUNGSPLAN.md)
+umgesetzt; die folgenden ursprünglichen Tabnachweise bleiben an 0.9.0 gebunden.
 
 ## Prüfnachweise 0.9.0
 

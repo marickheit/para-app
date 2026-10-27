@@ -1,6 +1,7 @@
 # MCP – Umsetzung und Prüfstand
 
-Stand: 26. Oktober 2026 · App 0.9.2+15 · MCP-Paket 0.3.0, API 2.
+Vertrag unverändert in App 0.10.0+16 · MCP-Paket 0.3.0, API 2.
+Vorheriger Gesamtstand: 26. Oktober 2026 · App 0.9.2+15.
 Die folgenden Prüfnachweise sind jeweils an ihre App-/Serverversion gebunden;
 aktueller Gesamtprüfstand: [UMSETZUNGSPLAN.md](UMSETZUNGSPLAN.md).
 Beauftragter Umfang gemäß [Architekturplan](MCP_PLAN.md),

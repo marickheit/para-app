@@ -1,6 +1,6 @@
 # Vollständige Arbeitsbereiche
 
-Stand 0.9.2: Arbeitsbereiche lassen sich über Einstellungen öffnen, neu anlegen und
+Stand 0.10.0: Arbeitsbereiche lassen sich über Einstellungen öffnen, neu anlegen und
 kopieren. Inhalte, Einstellungen und Sitzungszustand werden gemeinsam geladen;
 die Auswahl bleibt über Neustarts erhalten.
 

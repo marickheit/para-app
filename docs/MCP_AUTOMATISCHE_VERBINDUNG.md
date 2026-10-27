@@ -1,6 +1,6 @@
 # Automatische lokale MCP-Verbindung
 
-Aktueller Vertrag in App 0.9.2/MCP 0.3.0; umgesetzt seit App 0.7.1.
+Aktueller Vertrag in App 0.10.0/MCP 0.3.0; umgesetzt seit App 0.7.1.
 Die Ergebnisnachweise unten gelten für 0.7.1. Aktuelle Einrichtung und alle
 19 Werkzeuge: [MCP.md](MCP.md).
 

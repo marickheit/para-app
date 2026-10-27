@@ -13,9 +13,11 @@ import 'common.dart';
 import 'dialogs.dart';
 import 'task_details.dart';
 import 'note_history.dart';
+import 'markdown_editor.dart';
 
 class EditorViewMemory {
-  final views = <String, ({bool preview, double offset})>{};
+  final views =
+      <String, ({bool preview, MarkdownEditorMode mode, double offset})>{};
   final previews = FilePreviewMemory();
 }
 
@@ -33,7 +35,11 @@ class EntryEditor extends StatefulWidget {
     this.readable = false,
     this.onToggleReadable,
     this.onEditorState,
+    this.headerInTabStrip = false,
+    this.onHeaderActions,
   });
+  final bool headerInTabStrip;
+  final void Function(String id, Widget actions)? onHeaderActions;
   final Entry entry;
   final List<Entry> entries;
   final WorkspaceRepository repository;
@@ -83,6 +89,13 @@ class EntryEditorState extends State<EntryEditor> {
     _reportEditor();
   }
 
+  final _markdownKey = GlobalKey<MarkdownEditorState>();
+  MarkdownEditorMode _mode = MarkdownEditorMode.live;
+  bool _editorTouched = false;
+  bool get _markdownDocument =>
+      _bodyEditable &&
+      !_plainText &&
+      {EntryKind.note, EntryKind.file}.contains(widget.entry.kind);
   bool _preview = true;
   bool _bodyEditable = true;
   bool _showInfo = false;
@@ -110,7 +123,7 @@ class EntryEditorState extends State<EntryEditor> {
     );
     final id = widget.entry.id,
         dirty = _dirty,
-        editing = !_preview && !_loading;
+        editing = (_markdownDocument ? _editorTouched : !_preview) && !_loading;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && widget.entry.id == id) {
         widget.onEditorState?.call(id, dirty, editing);
@@ -121,6 +134,7 @@ class EntryEditorState extends State<EntryEditor> {
   void _remember(String id) {
     widget.memory?.views[id] = (
       preview: _preview,
+      mode: _mode,
       offset: _scroll.hasClients ? _scroll.offset : 0,
     );
   }
@@ -185,6 +199,7 @@ class EntryEditorState extends State<EntryEditor> {
         return;
       }
       setState(() {
+        _editorTouched = false;
         _title.text = entry.title;
         _body.text = snapshot.text;
         _bodyEditable = snapshot.editable;
@@ -204,9 +219,11 @@ class EntryEditorState extends State<EntryEditor> {
             (snapshot.text.isNotEmpty ||
                 entry.kind == EntryKind.file ||
                 _readOnly);
+        _mode = _readOnly ? MarkdownEditorMode.read : MarkdownEditorMode.live;
         final remembered = widget.memory?.views[id];
         if (remembered != null && !_editRequested && !_readOnly) {
           _preview = remembered.preview;
+          _mode = remembered.mode;
         }
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted && widget.entry.id == id && _scroll.hasClients) {
@@ -250,6 +267,7 @@ class EntryEditorState extends State<EntryEditor> {
   }
 
   void _changed([String? _]) {
+    _editorTouched = true;
     if (!_dirty) setState(() => _dirty = true);
     _reportEditor();
   }
@@ -340,6 +358,11 @@ class EntryEditorState extends State<EntryEditor> {
       widget.entry.id,
     );
     if (entry == null || !mounted) return;
+    if (_locked) return;
+    if (_markdownDocument) {
+      _markdownKey.currentState?.insertText(markdownLink(entry));
+      return;
+    }
     final selection = _body.selection;
     final start = selection.isValid ? selection.start : _body.text.length;
     final end = selection.isValid ? selection.end : start;
@@ -560,10 +583,19 @@ class EntryEditorState extends State<EntryEditor> {
       return;
     }
     if (!_loading && _bodyEditable && !_readOnly) {
-      setState(() => _preview = false);
+      setState(() {
+        _preview = false;
+        _mode = MarkdownEditorMode.live;
+        _editorTouched = true;
+      });
       _reportEditor();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _bodyFocus.requestFocus();
+        if (!mounted) return;
+        if (_markdownDocument) {
+          _markdownKey.currentState?.focusEditor();
+        } else {
+          _bodyFocus.requestFocus();
+        }
       });
     }
   }
@@ -631,7 +663,272 @@ class EntryEditorState extends State<EntryEditor> {
     );
   }
 
+  void _setMarkdownMode(MarkdownEditorMode mode) {
+    setState(() => _mode = mode);
+    _reportEditor();
+  }
+
+  Future<void> _renameDocument() async {
+    if (_locked) return;
+    final controller = TextEditingController(text: _title.text);
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Notiz umbenennen'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Name'),
+          onSubmitted: (value) => Navigator.pop(context, value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Abbrechen'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Übernehmen'),
+          ),
+        ],
+      ),
+    );
+    // Dialog route disposes its text field after its reverse transition.
+    Future<void>.delayed(const Duration(milliseconds: 400), controller.dispose);
+    if (name == null || !mounted || _locked || name.trim().isEmpty) return;
+    _title.text = name.trim();
+    _changed();
+  }
+
+  Future<void> _tablePicker(BuildContext anchor) async {
+    if (_locked || _mode == MarkdownEditorMode.read) return;
+    final box = anchor.findRenderObject() as RenderBox;
+    final overlay = Overlay.of(anchor).context.findRenderObject() as RenderBox;
+    final offset = box.localToGlobal(Offset.zero, ancestor: overlay);
+    final selection = await showMenu<(int, int)>(
+      context: anchor,
+      position: RelativeRect.fromRect(
+        offset & box.size,
+        Offset.zero & overlay.size,
+      ),
+      items: [
+        PopupMenuItem<(int, int)>(
+          enabled: false,
+          child: MarkdownTablePicker(
+            onSelected: (columns, rows) =>
+                Navigator.of(anchor).pop((columns, rows)),
+          ),
+        ),
+      ],
+    );
+    if (selection != null &&
+        mounted &&
+        !_locked &&
+        _mode != MarkdownEditorMode.read) {
+      _markdownKey.currentState?.insertTable(selection.$1, selection.$2);
+    }
+  }
+
+  Widget _markdownActions() {
+    final colors = WorkspaceColors(context);
+    final editable = !_locked && _mode != MarkdownEditorMode.read;
+    final style = TextButton.styleFrom(
+      minimumSize: const Size(0, 28),
+      padding: const EdgeInsets.symmetric(horizontal: 7),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      textStyle: const TextStyle(fontSize: 11),
+    );
+    Widget icon(
+      IconData icon,
+      String tooltip,
+      VoidCallback? onPressed, {
+      Key? key,
+    }) => SizedBox(
+      width: 30,
+      height: 32,
+      child: IconButton(
+        key: key,
+        padding: EdgeInsets.zero,
+        tooltip: tooltip,
+        onPressed: onPressed,
+        icon: Icon(icon, size: 15),
+      ),
+    );
+    final format = PopupMenuButton<String>(
+      key: const ValueKey('markdown-format'),
+      tooltip: 'Formatierung und Hilfe',
+      enabled: editable,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 220),
+      onSelected: (value) {
+        if (_locked || _mode == MarkdownEditorMode.read) return;
+        if (value == 'internal') {
+          _insertLink();
+        } else if (value == 'undo') {
+          _markdownKey.currentState?.undo();
+        } else if (value == 'redo') {
+          _markdownKey.currentState?.redo();
+        } else if (value == 'help') {
+          showDialog<void>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Markdown-Hilfe'),
+              content: const SelectableText(
+                '## Überschrift\n**Fett** · *Kursiv* · `Code`\n- Liste\n1. Nummerierte Liste\n- [ ] Checkliste\n[Text](Adresse)\n\nReturn: neuer Absatz\nShift+Return: Zeilenumbruch\nCmd/Strg+A: gesamten Quelltext auswählen\nCmd/Strg+Z: Rückgängig\nCmd/Strg+Shift+Z: Wiederholen',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Schließen'),
+                ),
+              ],
+            ),
+          );
+        } else {
+          _markdownKey.currentState?.format(value);
+        }
+      },
+      itemBuilder: (_) => [
+        for (final item in const [
+          ('heading', 'Überschrift'),
+          ('bold', 'Fett'),
+          ('italic', 'Kursiv'),
+          ('list', 'Liste'),
+          ('numbered', 'Nummerierte Liste'),
+          ('check', 'Checkliste'),
+          ('code', 'Code'),
+          ('link', 'Weblink'),
+          ('internal', 'Interne Verknüpfung'),
+        ])
+          PopupMenuItem(
+            value: item.$1,
+            enabled:
+                !(_markdownKey.currentState?.editingTable ?? false) ||
+                !const {
+                  'heading',
+                  'list',
+                  'numbered',
+                  'check',
+                }.contains(item.$1),
+            child: Text(item.$2),
+          ),
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          value: 'undo',
+          enabled: _markdownKey.currentState?.canUndo ?? false,
+          child: const Text('Rückgängig'),
+        ),
+        PopupMenuItem(
+          value: 'redo',
+          enabled: _markdownKey.currentState?.canRedo ?? false,
+          child: const Text('Wiederholen'),
+        ),
+        const PopupMenuItem(value: 'help', child: Text('Markdown-Hilfe')),
+      ],
+      child: const SizedBox(
+        width: 30,
+        height: 32,
+        child: Center(child: Text('Aa', style: TextStyle(fontSize: 13))),
+      ),
+    );
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final item in const [
+          (MarkdownEditorMode.live, 'Live'),
+          (MarkdownEditorMode.raw, 'Quelltext'),
+          (MarkdownEditorMode.read, 'Lesen'),
+        ])
+          TextButton(
+            key: ValueKey('markdown-mode-${item.$1.name}'),
+            onPressed: () => _setMarkdownMode(item.$1),
+            style: style.copyWith(
+              backgroundColor: WidgetStatePropertyAll(
+                _mode == item.$1 ? colors.selection : null,
+              ),
+            ),
+            child: Text(item.$2),
+          ),
+        if (!_readOnly) ...[
+          format,
+          Builder(
+            builder: (context) => icon(
+              LucideIcons.table2,
+              'Tabelle einfügen',
+              editable ? () => _tablePicker(context) : null,
+              key: const ValueKey('markdown-table-insert'),
+            ),
+          ),
+          icon(
+            LucideIcons.save,
+            _saving ? 'Speichert …' : 'Speichern',
+            _dirty && !_locked ? save : null,
+            key: const ValueKey('editor-save'),
+          ),
+        ],
+        SizedBox(
+          width: 30,
+          height: 32,
+          child: PopupMenuButton<String>(
+            tooltip: 'Weitere Dateiaktionen',
+            padding: EdgeInsets.zero,
+            icon: const Icon(LucideIcons.ellipsis, size: 15),
+            onSelected: (value) {
+              if (value == 'history') _showHistory();
+              if (value == 'info') setState(() => _showInfo = !_showInfo);
+              if (value == 'width') widget.onToggleReadable?.call();
+              if (value == 'rename') _renameDocument();
+            },
+            itemBuilder: (_) => [
+              if (widget.onToggleReadable != null)
+                PopupMenuItem(
+                  value: 'width',
+                  child: Text(widget.readable ? 'Volle Breite' : 'Lesebreite'),
+                ),
+              const PopupMenuItem(
+                value: 'history',
+                child: Text('Versionsverlauf'),
+              ),
+              const PopupMenuItem(
+                value: 'info',
+                child: Text('Dateiinformationen'),
+              ),
+              if (!_readOnly && widget.entry.kind == EntryKind.note)
+                const PopupMenuItem(
+                  value: 'rename',
+                  child: Text('Notiz umbenennen'),
+                ),
+            ],
+          ),
+        ),
+        if (widget.actionMenu != null)
+          SizedBox(width: 30, child: widget.actionMenu!),
+      ],
+    );
+  }
+
   Widget _bodyView() {
+    if (_markdownDocument) {
+      return MarkdownEditor(
+        key: _markdownKey,
+        controller: _body,
+        mode: _mode,
+        locked: _locked,
+        canMutate: () => !_locked,
+        epoch: _loadGeneration,
+        onChanged: () {
+          if (!_loading) _changed();
+        },
+        onModeChanged: _setMarkdownMode,
+        onEditing: () {
+          if (!_editorTouched && !_locked) {
+            _editorTouched = true;
+            _reportEditor();
+          }
+        },
+        onLink: _tapLink,
+      );
+    }
     if (widget.entry.kind == EntryKind.file && !_bodyEditable) {
       return FilePreview(entry: widget.entry, repository: widget.repository);
     }
@@ -727,6 +1024,14 @@ class EntryEditorState extends State<EntryEditor> {
     }
     final document =
         entry.kind == EntryKind.note || entry.kind == EntryKind.file;
+    if (_markdownDocument && widget.headerInTabStrip) {
+      final id = entry.id, actions = _markdownActions();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && widget.entry.id == id) {
+          widget.onHeaderActions?.call(id, actions);
+        }
+      });
+    }
     final actions = <Widget>[
       if (document && _bodyEditable && widget.onToggleReadable != null)
         TextButton.icon(
@@ -786,63 +1091,79 @@ class EntryEditorState extends State<EntryEditor> {
       entry.section.label,
       ...ancestorsOf(entry, widget.entries).reversed.map((e) => e.title),
     ].join(' / ');
-    final header = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: colors.line)),
-      ),
-      child: LayoutBuilder(
-        builder: (context, bounds) => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    final header = _markdownDocument
+        ? Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            child: Wrap(
+              alignment: WrapAlignment.end,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                if (widget.onBack != null && !document)
-                  IconButton(
-                    onPressed: widget.onBack,
-                    tooltip: 'Zurück zu den Inhalten',
-                    icon: const Icon(LucideIcons.arrowLeft, size: 16),
-                  ),
-                Expanded(
-                  child: Tooltip(
-                    message: path,
-                    child: Text(
-                      document ? path : entry.kind.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 11, color: colors.soft),
-                    ),
-                  ),
-                ),
-                if (bounds.maxWidth > 620) ...actions,
-                IconButton(
-                  key: const ValueKey('file-info'),
-                  tooltip: 'Dateiinformationen',
-                  isSelected: _showInfo,
-                  onPressed: () => setState(() => _showInfo = !_showInfo),
-                  icon: Icon(LucideIcons.info, size: 15, color: colors.soft),
-                ),
-                if (widget.actionMenu != null) widget.actionMenu!,
+                Text(entry.title, style: const TextStyle(fontSize: 12)),
+                _markdownActions(),
               ],
             ),
-            if (bounds.maxWidth <= 620 && actions.isNotEmpty)
-              Wrap(
-                spacing: 4,
-                runSpacing: 2,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: actions,
+          )
+        : Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: colors.line)),
+            ),
+            child: LayoutBuilder(
+              builder: (context, bounds) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      if (widget.onBack != null && !document)
+                        IconButton(
+                          onPressed: widget.onBack,
+                          tooltip: 'Zurück zu den Inhalten',
+                          icon: const Icon(LucideIcons.arrowLeft, size: 16),
+                        ),
+                      Expanded(
+                        child: Tooltip(
+                          message: path,
+                          child: Text(
+                            document ? path : entry.kind.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 11, color: colors.soft),
+                          ),
+                        ),
+                      ),
+                      if (bounds.maxWidth > 620) ...actions,
+                      IconButton(
+                        key: const ValueKey('file-info'),
+                        tooltip: 'Dateiinformationen',
+                        isSelected: _showInfo,
+                        onPressed: () => setState(() => _showInfo = !_showInfo),
+                        icon: Icon(
+                          LucideIcons.info,
+                          size: 15,
+                          color: colors.soft,
+                        ),
+                      ),
+                      if (widget.actionMenu != null) widget.actionMenu!,
+                    ],
+                  ),
+                  if (bounds.maxWidth <= 620 && actions.isNotEmpty)
+                    Wrap(
+                      spacing: 4,
+                      runSpacing: 2,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: actions,
+                    ),
+                  if (_readOnly)
+                    Text(
+                      entry.inTrash
+                          ? 'Im Papierkorb · schreibgeschützt'
+                          : 'Archiviert · schreibgeschützt',
+                      style: TextStyle(fontSize: 11, color: colors.soft),
+                    ),
+                ],
               ),
-            if (_readOnly)
-              Text(
-                entry.inTrash
-                    ? 'Im Papierkorb · schreibgeschützt'
-                    : 'Archiviert · schreibgeschützt',
-                style: TextStyle(fontSize: 11, color: colors.soft),
-              ),
-          ],
-        ),
-      ),
-    );
+            ),
+          );
     final binary = entry.kind == EntryKind.file && !_bodyEditable;
     final content = binary
         ? FilePreview(
@@ -867,7 +1188,7 @@ class EntryEditorState extends State<EntryEditor> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      if (entry.kind != EntryKind.file) ...[
+                      if (!document) ...[
                         TextField(
                           key: const ValueKey('entry-title'),
                           controller: _title,
@@ -901,7 +1222,7 @@ class EntryEditorState extends State<EntryEditor> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        header,
+        if (!widget.headerInTabStrip || !_markdownDocument) header,
         if (_showInfo)
           ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 180),
@@ -910,6 +1231,16 @@ class EntryEditorState extends State<EntryEditor> {
                 padding: const EdgeInsets.all(12),
                 child: _metadata(),
               ),
+            ),
+          ),
+        if (_readOnly && _markdownDocument)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+            child: Text(
+              entry.inTrash
+                  ? 'Im Papierkorb · schreibgeschützt'
+                  : 'Archiviert · schreibgeschützt',
+              style: TextStyle(fontSize: 11, color: colors.soft),
             ),
           ),
         Expanded(child: content),

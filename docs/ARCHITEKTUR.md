@@ -105,10 +105,45 @@ Vorschautabs und ungespeicherte Editorentwürfe werden nicht serialisiert.
 Nur ein Editor ist gleichzeitig aktiv; Wechsel laufen über den vorhandenen
 Speicherschutz. Editorcontroller bleiben bei Resize und Fokuswechsel erhalten.
 Bearbeitungsmodus/Scrollposition und PDF-Transformation werden nur flüchtig
-während der Sitzung gemerkt. Ein begrenzter Inhaltsbereich trennt Dateikopf,
-Textscrollen und Dateivorschauen; keine allgemeine 760-Pixel- oder PDF-Höhenbegrenzung.
+während der Sitzung gemerkt. Markdown-Dokumentaktionen werden ab 0.10.0 vom
+EntryEditor nach dem Frame über einen dokumentgebundenen Notifier direkt in den
+Dateitabstreifen veröffentlicht; keine zweite Markdown-Kopfzeile. Andere
+Editoren/Vorschauen behalten ihren Kopf. Der Inhaltsbereich begrenzt Textscrollen
+und Dateivorschauen; keine allgemeine 760-Pixel- oder PDF-Höhenbegrenzung.
 Symbolleiste und Explorer sind getrennt; die gewünschte Breite wird unabhängig
 von der am jeweiligen Fenster möglichen Breite gespeichert.
+
+## Markdown-Editor ab 0.10.0
+
+`entry_editor.dart` hält weiterhin den vollständigen kanonischen Textcontroller
+sowie Revision und Bodyhash. `markdown_editor.dart` zeigt denselben Entwurf in
+Live, Quelltext oder Lesen. Lokale Block- und Zellcontroller schreiben jede
+Eingabe synchron in den Quellcontroller; Speichern wartet nicht auf Fokusverlust.
+Das bestehende `saveSnapshot` bleibt für Text, Titel und Checkboxänderungen
+maßgeblich. MCP-, Archiv-/Papierkorb-, Konflikt- und Wechselschutz bleiben erhalten.
+
+`markdown_source.dart` liefert Quellbereiche statt das Dokument neu zu
+serialisieren. Unberührte Leerzeichen, Zeilenenden und Syntax bleiben bestehen;
+gezielte Checkboxänderungen ersetzen ihr Quellzeichen. Interaktiv sind nur die
+vom Renderer tatsächlich als Kästchen dargestellten Listenpunkte; komplexe
+lose/verschachtelte Listen können reine Darstellung bleiben. Sicher erkannte Tabellen
+haben lokale Zell-/Strukturaktionen unter Erhalt von Spaltenausrichtung und
+unberührten Zelltexten; unsichere Konstrukte bleiben über Quelltext bearbeitbar.
+Dokumentweite Referenzdefinitionen werden beim Rendern einzelner Blöcke ergänzt.
+
+Return erzeugt im normalen Absatz eine Markdown-Absatzgrenze, Shift+Return einen
+harten Zeilenumbruch. Listen und Code haben eigene Zeilenregeln. Benachbarte
+gerenderte Blöcke liegen in gemeinsamen SelectionAreas; aktive Eingabefelder
+bleiben für ihre native Tastatursteuerung außerhalb dieser Bereiche. Cmd/Ctrl+A im
+Live-Textfeld wechselt für Gesamtauswahl und blockübergreifende Bearbeitung zum Quelltext.
+Die begrenzte lokale Undo/Redo-Historie umfasst Text, Auswahl, Checkboxen und
+Tabellenaktionen über Moduswechsel/Speichern hinweg; ein Dokumentreload setzt
+sie zurück. Diese flüchtige Historie ersetzt weder Textversionen noch Sicherung.
+
+Die Bedienänderung benötigt weder Datenmigration noch neue Speicherformate:
+Schema 6, Sitzungsformat 2, Sicherungsformat 3 und interne UUID-Links bleiben.
+TXT und Aufgaben-/Containerbeschreibungen behalten ihre bisherigen Formulare.
+[Bedienvertrag und Abnahme](MARKDOWN_EDITOR_UMSETZUNGSPLAN.md).
 
 ## Aufgabenabschluss
 

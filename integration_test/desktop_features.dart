@@ -313,7 +313,11 @@ void registerDesktopFeatureTests() {
         await tester.tap(row);
         await tester.pumpAndSettle();
         expect(find.text('Wichtige Referenz.'), findsOneWidget);
-        expect(find.widgetWithText(TextButton, 'Bearbeiten'), findsNothing);
+        expect(find.byKey(const ValueKey('editor-save')), findsNothing);
+        expect(
+          find.byKey(const ValueKey('markdown-table-insert')),
+          findsNothing,
+        );
         await tester.tapAt(
           tester.getCenter(row),
           buttons: kSecondaryMouseButton,

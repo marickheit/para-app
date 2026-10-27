@@ -40,7 +40,9 @@ Oben A, B oder C wählen; im Explorer vier Dateiformate ausprobieren.
   Dateiwechsel; Neuanlage bleibt beim Explorer. Cmd/Ctrl+O öffnet den Dateiwechsel.
 - Explizites Speichern bleibt erhalten. Ein Punkt kennzeichnet geänderten Text.
   Wechseln, Tab schließen oder Variante wechseln fragt bei Änderungen nach
-  Speichern, Verwerfen oder Abbrechen. Kein Beschluss zu Autosave oder Live Preview.
+  Speichern, Verwerfen oder Abbrechen. Diese Studie traf keinen Beschluss zu
+  Autosave oder Live Preview. Markdown-Live wurde später für
+  [Editor 0.10.0](../MARKDOWN_EDITOR_UMSETZUNGSPLAN.md) bestätigt und umgesetzt.
 - Verlauf und Dateiinfo bleiben kleine Buttons. Papierkorb bleibt links unter Aufgaben.
 
 ## Grenzen und offene Entscheidungen

@@ -126,6 +126,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   double _explorerWidth = 270;
   final _documents = DocumentTabs();
   final _editorMemory = EditorViewMemory();
+  final _editorHeaderActions = ValueNotifier<({String id, Widget actions})?>(
+    null,
+  );
   final _tabScroll = ScrollController();
   final _explorerScroll = ScrollController();
   final _tabKeys = <String, GlobalKey>{};
@@ -351,6 +354,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     _contextSubscription.cancel();
     _workspaceFocus.dispose();
     _tabScroll.dispose();
+    _editorHeaderActions.dispose();
     for (final focus in _tabFocus.values) {
       focus.dispose();
     }
@@ -2524,201 +2528,237 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     final c = WorkspaceColors(context);
     final active = _hasDocument ? _selectedId : null;
     final visible = _documents.ids.where((id) => _find(id) != null).toList();
-    return Container(
-      key: const ValueKey('document-tabs'),
-      height: 42,
-      decoration: BoxDecoration(
-        color: c.sidebar,
-        border: Border(bottom: BorderSide(color: c.line)),
-      ),
-      child: Row(
-        children: [
-          if (!sidebarShown)
-            IconButton(
-              key: const ValueKey('sidebar-toggle'),
-              tooltip: wide ? 'Seitenleiste einblenden' : 'Navigation öffnen',
-              onPressed: _toggleSidebar,
-              icon: const Icon(LucideIcons.panelLeftOpen, size: 17),
+    Widget tabRow(Widget? inlineActions) => Row(
+      children: [
+        if (!sidebarShown)
+          IconButton(
+            key: const ValueKey('sidebar-toggle'),
+            tooltip: wide ? 'Seitenleiste einblenden' : 'Navigation öffnen',
+            onPressed: _toggleSidebar,
+            icon: const Icon(LucideIcons.panelLeftOpen, size: 17),
+          ),
+        if (sidebarShown)
+          IconButton(
+            key: const ValueKey('explorer-toggle'),
+            tooltip: _explorerVisible
+                ? 'Explorer ausblenden'
+                : 'Explorer einblenden',
+            onPressed: () =>
+                setState(() => _explorerVisible = !_explorerVisible),
+            icon: Icon(
+              _explorerVisible
+                  ? LucideIcons.panelLeftClose
+                  : LucideIcons.panelLeftOpen,
+              size: 17,
             ),
-          if (sidebarShown)
-            IconButton(
-              key: const ValueKey('explorer-toggle'),
-              tooltip: _explorerVisible
-                  ? 'Explorer ausblenden'
-                  : 'Explorer einblenden',
-              onPressed: () =>
-                  setState(() => _explorerVisible = !_explorerVisible),
-              icon: Icon(
-                _explorerVisible
-                    ? LucideIcons.panelLeftClose
-                    : LucideIcons.panelLeftOpen,
-                size: 17,
-              ),
-            ),
-          Expanded(
-            child: SingleChildScrollView(
-              controller: _tabScroll,
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  for (final id in visible)
-                    Builder(
-                      builder: (context) {
-                        final entry = _find(id)!;
-                        final path = [
-                          entry.section.label,
-                          ...ancestorsOf(entry, [
-                            ..._entries,
-                            ..._trashEntries,
-                          ]).reversed.map((e) => e.title),
-                          entryFileLabel(entry),
-                        ].join(' / ');
-                        return Listener(
-                          onPointerDown: (e) {
-                            if (e.buttons == 4) _closeDocument(id);
-                          },
-                          child: Container(
-                            key: _tabKeys.putIfAbsent(id, () => GlobalKey()),
-                            width: 190,
-                            decoration: BoxDecoration(
-                              color: active == id ? c.paper : null,
-                              border: Border(
-                                top: BorderSide(
-                                  color: active == id
-                                      ? c.accent
-                                      : Colors.transparent,
-                                  width: 2,
-                                ),
-                                right: BorderSide(color: c.line),
+          ),
+        Expanded(
+          child: SingleChildScrollView(
+            controller: _tabScroll,
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final id in visible)
+                  Builder(
+                    builder: (context) {
+                      final entry = _find(id)!;
+                      final path = [
+                        entry.section.label,
+                        ...ancestorsOf(entry, [
+                          ..._entries,
+                          ..._trashEntries,
+                        ]).reversed.map((e) => e.title),
+                        entryFileLabel(entry),
+                      ].join(' / ');
+                      return Listener(
+                        onPointerDown: (e) {
+                          if (e.buttons == 4) _closeDocument(id);
+                        },
+                        child: Container(
+                          key: _tabKeys.putIfAbsent(id, () => GlobalKey()),
+                          width: 190,
+                          decoration: BoxDecoration(
+                            color: active == id ? c.paper : null,
+                            border: Border(
+                              top: BorderSide(
+                                color: active == id
+                                    ? c.accent
+                                    : Colors.transparent,
+                                width: 2,
                               ),
+                              right: BorderSide(color: c.line),
                             ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Tooltip(
-                                    message: path,
-                                    child: Focus(
-                                      focusNode: _tabFocus.putIfAbsent(
-                                        id,
-                                        () => FocusNode(),
-                                      ),
-                                      onKeyEvent: (_, event) {
-                                        if (event is KeyUpEvent ||
-                                            ![
-                                              LogicalKeyboardKey.arrowLeft,
-                                              LogicalKeyboardKey.arrowRight,
-                                            ].contains(event.logicalKey)) {
-                                          return KeyEventResult.ignored;
-                                        }
-                                        final index = visible.indexOf(id);
-                                        final step =
-                                            event.logicalKey ==
-                                                LogicalKeyboardKey.arrowRight
-                                            ? 1
-                                            : -1;
-                                        final next =
-                                            visible[(index +
-                                                    step +
-                                                    visible.length) %
-                                                visible.length];
-                                        _stepDocument(next);
-                                        return KeyEventResult.handled;
-                                      },
-                                      child: InkWell(
-                                        key: ValueKey('document-tab-$id'),
-                                        onTap: () => _tapDocument(entry),
-                                        child: Semantics(
-                                          selected: active == id,
-                                          button: true,
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 10,
-                                              vertical: 9,
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                Icon(
-                                                  fileIcon(entry),
-                                                  size: 14,
-                                                  color: c.soft,
-                                                ),
-                                                const SizedBox(width: 7),
-                                                Expanded(
-                                                  child: Text(
-                                                    '${entryFileLabel(entry)}${active == id && _documentDirty ? ' ●' : ''}',
-                                                    maxLines: 1,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    style: TextStyle(
-                                                      fontSize: 11,
-                                                      fontStyle:
-                                                          _documents.preview ==
-                                                              id
-                                                          ? FontStyle.italic
-                                                          : FontStyle.normal,
-                                                    ),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Tooltip(
+                                  message: path,
+                                  child: Focus(
+                                    focusNode: _tabFocus.putIfAbsent(
+                                      id,
+                                      () => FocusNode(),
+                                    ),
+                                    onKeyEvent: (_, event) {
+                                      if (event is KeyUpEvent ||
+                                          ![
+                                            LogicalKeyboardKey.arrowLeft,
+                                            LogicalKeyboardKey.arrowRight,
+                                          ].contains(event.logicalKey)) {
+                                        return KeyEventResult.ignored;
+                                      }
+                                      final index = visible.indexOf(id);
+                                      final step =
+                                          event.logicalKey ==
+                                              LogicalKeyboardKey.arrowRight
+                                          ? 1
+                                          : -1;
+                                      final next =
+                                          visible[(index +
+                                                  step +
+                                                  visible.length) %
+                                              visible.length];
+                                      _stepDocument(next);
+                                      return KeyEventResult.handled;
+                                    },
+                                    child: InkWell(
+                                      key: ValueKey('document-tab-$id'),
+                                      onTap: () => _tapDocument(entry),
+                                      child: Semantics(
+                                        selected: active == id,
+                                        button: true,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 9,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                fileIcon(entry),
+                                                size: 14,
+                                                color: c.soft,
+                                              ),
+                                              const SizedBox(width: 7),
+                                              Expanded(
+                                                child: Text(
+                                                  '${entryFileLabel(entry)}${active == id && _documentDirty ? ' ●' : ''}',
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontStyle:
+                                                        _documents.preview == id
+                                                        ? FontStyle.italic
+                                                        : FontStyle.normal,
                                                   ),
                                                 ),
-                                              ],
-                                            ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
-                                IconButton(
-                                  key: ValueKey('close-document-$id'),
-                                  tooltip: '${entryFileLabel(entry)} schließen',
-                                  onPressed: () => _closeDocument(id),
-                                  icon: const Icon(LucideIcons.x, size: 13),
-                                ),
-                              ],
-                            ),
+                              ),
+                              IconButton(
+                                key: ValueKey('close-document-$id'),
+                                tooltip: '${entryFileLabel(entry)} schließen',
+                                onPressed: () => _closeDocument(id),
+                                icon: const Icon(LucideIcons.x, size: 13),
+                              ),
+                            ],
                           ),
-                        );
-                      },
-                    ),
-                ],
-              ),
-            ),
-          ),
-          if (visible.isNotEmpty)
-            PopupMenuButton<String>(
-              tooltip: 'Offene Dateien',
-              icon: const Icon(LucideIcons.chevronDown, size: 16),
-              onSelected: (value) {
-                if (value == 'keep') {
-                  setState(() => _documents.keep(active!));
-                } else {
-                  final entry = _find(value);
-                  if (entry != null) _open(entry, preview: true);
-                }
-              },
-              itemBuilder: (_) => [
-                if (active != null && _documents.preview == active)
-                  const PopupMenuItem(
-                    value: 'keep',
-                    child: Text('Tab behalten'),
-                  ),
-                for (final id in visible)
-                  PopupMenuItem(
-                    value: id,
-                    child: Text(
-                      '${entryFileLabel(_find(id)!)} · ${_find(id)!.section.label}',
-                      maxLines: 2,
-                    ),
+                        ),
+                      );
+                    },
                   ),
               ],
             ),
-          IconButton(
-            tooltip: 'Datei wechseln',
-            onPressed: () => _showSearch(filesOnly: true),
-            icon: const Icon(LucideIcons.plus, size: 17),
           ),
-          if (sidebarShown && !_explorerVisible) _newMenu(),
-        ],
-      ),
+        ),
+        if (visible.isNotEmpty)
+          PopupMenuButton<String>(
+            tooltip: 'Offene Dateien',
+            icon: const Icon(LucideIcons.chevronDown, size: 16),
+            onSelected: (value) {
+              if (value == 'keep') {
+                setState(() => _documents.keep(active!));
+              } else {
+                final entry = _find(value);
+                if (entry != null) _open(entry, preview: true);
+              }
+            },
+            itemBuilder: (_) => [
+              if (active != null && _documents.preview == active)
+                const PopupMenuItem(value: 'keep', child: Text('Tab behalten')),
+              for (final id in visible)
+                PopupMenuItem(
+                  value: id,
+                  child: Text(
+                    '${entryFileLabel(_find(id)!)} · ${_find(id)!.section.label}',
+                    maxLines: 2,
+                  ),
+                ),
+            ],
+          ),
+        IconButton(
+          tooltip: 'Datei wechseln',
+          onPressed: () => _showSearch(filesOnly: true),
+          icon: const Icon(LucideIcons.plus, size: 17),
+        ),
+        if (sidebarShown && !_explorerVisible) _newMenu(),
+        ?inlineActions,
+      ],
+    );
+    return ValueListenableBuilder<({String id, Widget actions})?>(
+      valueListenable: _editorHeaderActions,
+      builder: (context, header, _) {
+        // A late publication from the previous editor must never expose actions
+        // for a different document after a tab or navigation change.
+        final actions = active != null && header?.id == active
+            ? header!.actions
+            : null;
+        return LayoutBuilder(
+          builder: (context, bounds) {
+            final wrapped = bounds.maxWidth < 620;
+            return Container(
+              key: const ValueKey('document-tabs'),
+              decoration: BoxDecoration(
+                color: c.sidebar,
+                border: Border(bottom: BorderSide(color: c.line)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(
+                    height: 41,
+                    child: tabRow(
+                      !wrapped && actions != null
+                          ? ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 340),
+                              child: actions,
+                            )
+                          : null,
+                    ),
+                  ),
+                  if (wrapped && actions != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(6, 0, 6, 4),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: actions,
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -2917,6 +2957,15 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       onOpen: _open,
       memory: _editorMemory,
       readable: _readable,
+      headerInTabStrip: _hasDocument,
+      onHeaderActions: (id, actions) {
+        if (!mounted || !_hasDocument || _selectedId != id) return;
+        // EntryEditor publishes after its frame. Updating this notifier only
+        // rebuilds the strip, avoiding a parent/editor rebuild feedback loop.
+        final changedDocument = _editorHeaderActions.value?.id != id;
+        _editorHeaderActions.value = (id: id, actions: actions);
+        if (changedDocument) _revealDocument(id);
+      },
       onToggleReadable: () => setState(() => _readable = !_readable),
       onEditorState: (id, dirty, editing) {
         if (!mounted || _selectedId != id) return;

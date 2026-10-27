@@ -1,6 +1,6 @@
 # Eingangsordner – Implementierungsplan
 
-Implementierter Vertrag seit 0.8.0+11, weiterhin gültig in 0.9.2. Die folgenden
+Implementierter Vertrag seit 0.8.0+11, weiterhin gültig in 0.10.0. Die folgenden
 Prüfergebnisse/Installationsangaben sind versionsgebundene Nachweise für 0.8.0;
 aktueller Gesamtstand: [UMSETZUNGSPLAN.md](UMSETZUNGSPLAN.md).
 

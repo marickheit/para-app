@@ -1,6 +1,6 @@
 # P.A.R.A. Workspace
 
-Lokale Flutter-App 0.9.2 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS und Linux.
+Lokale Flutter-App 0.10.0 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS und Linux.
 Linux-x64-Release und native Abläufe für Oberfläche, Arbeitsbereiche und Anlage
 sind geprüft; den versionsgebundenen Prüfstand nennt der [Arbeitsstand](docs/UMSETZUNGSPLAN.md).
 Die neue native macOS-Abnahme und Android sind offen.
@@ -59,12 +59,49 @@ Die neue native macOS-Abnahme und Android sind offen.
   Aktion“, in globalen offenen Listen „Noch zu klären“ vorbelegt; „Warten auf“
   und „Irgendwann“ belegen ihren Status vor. Nach Anlage öffnet die App die Aufgabe
   in der passenden Ansicht und setzt aktive Aufgabenfilter zurück.
-- **Bearbeiten:** Im Dateikopf „Bearbeiten“ wählen. Markdown hat Quelltext und
-  Vorschau; TXT wird als Text angezeigt. Speichern über Button oder Cmd/Ctrl+S.
-  Beim Wechsel bleiben ungespeicherte Änderungen durch Speichern/Verwerfen/Abbrechen geschützt.
-- **Dateiinfos:** Das kleine Info-Symbol zeigt Typ, Größe, Änderungsdatum,
-  Ablageort und Suchunterstützung. Unterstützte Dateien werden rechts angezeigt.
-  Bei anderen Formaten „Datei speichern …“ oder „Mit Standard-App öffnen“ verwenden.
+- **Markdown bearbeiten:** Notizen und bearbeitbare MD-Dateien starten in **Live**.
+  Kompakte 1,2-fache Zeilenhöhe und 6 Pixel Absatzabstand.
+  Inaktive Blöcke sind gerendert; Klick auf einen Textblock zeigt seine bearbeitbare
+  Markdown-Syntax, ohne farbige Blockmarkierung. Return beginnt einen neuen Absatz
+  und rendert den vorherigen; Shift+Return erzeugt einen sichtbaren Zeilenumbruch
+  innerhalb des Absatzes. Listen werden fortgesetzt, ein leeres Listenelement
+  beendet die Liste; Codeblöcke behalten normale Zeilenumbrüche.
+- **Drei Modi:** **Quelltext** bearbeitet das gesamte Markdown. **Lesen** rendert
+  den Text und lässt Links, Textauswahl und tatsächlich gerenderte Markdown-
+  Checkboxen bedienen. Bei komplexen verschachtelten oder losen Listen stellt
+  der Renderer nicht jedes Kästchen interaktiv dar; der vollständige Quelltext
+  bleibt bearbeitbar. Abgehakte Checkboxen sind Textänderungen und benötigen
+  Speichern.
+  Moduswechsel erhält den Entwurf. Cmd/Ctrl+A im Live-Textfeld öffnet den gesamten
+  Quelltext mit Gesamtauswahl; blockübergreifend bearbeiten im Quelltext.
+  Benachbarte gerenderte Absätze lassen sich gemeinsam auswählen und kopieren;
+  ein aktives Eingabefeld bildet eine eigene Auswahlgrenze.
+- **Kompakter Editorkopf:** Moduswahl, **Aa**, Tabellenbutton und Speichern liegen
+  direkt neben den Dateitabs; schmale Fenster dürfen umbrechen. Aa bietet
+  Formatierungen, externe/interne Links, Syntaxhilfe und Rückgängig/Wiederholen.
+  Cmd/Ctrl+Z macht Textänderungen rückgängig, Cmd/Ctrl+Shift+Z wiederholt sie.
+  Die gemeinsame Texthistorie umfasst auch Checkboxen und Tabellenaktionen und
+  bleibt bei Moduswechsel und Speichern bestehen; ein tatsächliches Neuladen
+  des Inhalts setzt sie zurück. Sie ist kein gespeicherter Versionsverlauf.
+- **Tabellen:** Über den Tabellenbutton im 8×6-Raster mit der Maus die Größe wählen
+  und anklicken; Tastaturfokus markiert ebenfalls die Größe. Die erste Zeile ist
+  die Kopfzeile. In Live eine Zelle anklicken und direkt bearbeiten. Die dann
+  eingeblendeten Buttons fügen Zeilen darunter oder Spalten rechts hinzu und
+  löschen die ausgewählte Datenzeile/Spalte. Kopfzeile und mindestens eine Spalte
+  bleiben erhalten. Tab/Enter wechselt zur nächsten vorhandenen Zelle,
+  Shift+Tab zurück; „Fertig“ oder Escape beendet die Zellenbearbeitung.
+  Unsicher erkannte Tabellen über Quelltext bearbeiten. Keine Excel-Formeln.
+- **Speichern und andere Inhalte:** Button oder Cmd/Ctrl+S speichert ausdrücklich;
+  beim Wechsel schützt Speichern/Verwerfen/Abbrechen den offenen Entwurf.
+  TXT sowie Aufgaben- und Containerbeschreibungen behalten „Bearbeiten“/„Vorschau“
+  beziehungsweise ihre bisherigen Formulare. Archiv/Papierkorb bleiben in allen
+  Modi schreibgeschützt, einschließlich Checkboxen.
+- **Dateiinfos und Titel:** In Markdown unter „Weitere Dateiaktionen“ (drei Punkte)
+  „Dateiinformationen“, „Versionsverlauf“, „Lesebreite“/„Volle Breite“ oder bei
+  Notizen „Notiz umbenennen“ wählen. Eine Titeländerung anschließend speichern.
+  TXT und andere Dateivorschauen behalten ihre bisherigen Symbole. Infos zeigen
+  Typ, Größe, Änderungsdatum, Ablageort und Suchunterstützung. Bei nicht darstellbaren
+  Formaten „Datei speichern …“ oder „Mit Standard-App öffnen“ verwenden.
 - **Import:** Dateien oder ganze Ordner auswählen oder aus Finder/Dateimanager
   auf eine aktive Inbox, ein Projekt, einen Bereich, Ressourcen oder einen Ordner
   ziehen. Kopien bleiben im Arbeitsbereich; die Originale werden nicht geändert.
@@ -96,8 +133,8 @@ Die neue native macOS-Abnahme und Android sind offen.
   bleibt als Alternative erhalten. Unscharfe Namen sowie Notiz-/Dateitext und Kontext
   werden durchsucht. Pfeiltasten wählen, Enter öffnet, Esc schließt.
   Cmd/Ctrl+O sucht Dateien, Notizen und Ordner ausschließlich nach Namen.
-- **Verknüpfen:** Im Markdown-Editor über das Link-Symbol einen Inhalt auswählen.
-  Links und Rückverweise bleiben beim Umbenennen/Verschieben gültig.
+- **Verknüpfen:** Im Markdown-Editor unter Aa → „Interne Verknüpfung“ einen Inhalt
+  auswählen. Links und Rückverweise bleiben beim Umbenennen/Verschieben gültig.
 - **Archiv:** Jahr und Herkunft aufklappen, anschließend ursprüngliche Ordner.
   Archivierte Inhalte sind schreibgeschützt. Rechtsklick „Wiederherstellen“ holt
   einzelne Inhalte an einen aktiven Zielort zurück. Projektabschluss archiviert das Projekt.
@@ -109,8 +146,9 @@ Die neue native macOS-Abnahme und Android sind offen.
   bei ihrer Wiederherstellung im Papierkorb. Fehlt der bisherige Ablageort, ein anderes
   Ziel wählen. „Papierkorb leeren“ oben und „Endgültig entfernen …“ im Kontextmenü
   zeigen eine Bestätigung mit Umfang und Rückverweisen. Keine automatische Leerung.
-- **Textversionen:** Das Uhr-/Verlaufssymbol im Notiz- oder Textdateikopf öffnet
-  gespeicherte Textstände mit Zeitstempel und Vorschau. Eine andere Version wählen
+- **Textversionen:** In Notizen/MD unter „Weitere Dateiaktionen“ → „Versionsverlauf“,
+  bei TXT über das Verlaufssymbol gespeicherte Textstände mit Zeitstempel und
+  Vorschau öffnen. Eine andere Version wählen
   und „Text wiederherstellen“ bestätigen; der jüngere Text bleibt im Verlauf.
   Name, Ablage und weitere Metadaten bleiben erhalten. Ungespeicherte Änderungen
   vorher speichern, verwerfen oder abbrechen. Im Archiv/Papierkorb Verlauf nur ansehen.
@@ -297,8 +335,9 @@ Versionen müssen ältere Arbeitsbereiche direkt lesen oder verlustfrei migriere
 das gilt auch für Links, Papierkorb und Textverlauf. Die verbindlichen
 Entwicklungsregeln stehen in [AGENTS.md](AGENTS.md).
 
-Aktuell: Schema 6, getestete Migrationen aus Schema 1–5 und vollständiger
-Sicherungsexport. Vor einer nötigen Datenmigration erstellt die App automatisch
+Der Markdown-Editor ab 0.10.0 benötigt keine Datenmigration; Schema 6,
+Sicherungsformat 3 und Sitzungsformat 2 bleiben erhalten. Aktuell: getestete
+Migrationen aus Schema 1–5 und vollständiger Sicherungsexport. Vor einer nötigen Datenmigration erstellt die App automatisch
 eine vollständige Rückfallkopie unter `.migration-backups/` im jeweiligen Root.
 Unbekannte neuere Datenformate und paralleles Öffnen werden abgefangen.
 Regelmäßige automatische Sicherungen und eine geführte Auswahl von Sicherungsständen
@@ -312,3 +351,5 @@ Arbeitsbereiche, Sicherungen und Build-Ergebnisse sind ausgeschlossen.
 
 [Dateitabs, Fokus und verstellbarer Explorer: Umsetzung und Prüfungen](docs/DATEI_TABS_UMSETZUNGSPLAN.md).
 Die [Designstudie](docs/mockups/DATEI_TABS.md) enthält Beispieldaten; Splits wie C bleiben zurückgestellt.
+
+[Markdown-Editor: Bedienvertrag, Grenzen und Prüfungen](docs/MARKDOWN_EDITOR_UMSETZUNGSPLAN.md).

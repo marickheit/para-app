@@ -91,7 +91,7 @@ void main() {
     final repo = _EditorRepository(_entry(EntryKind.note));
     await tester.pumpWidget(_editor(repo));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Bearbeiten').first);
+    await tester.tap(find.byKey(const ValueKey('markdown-mode-raw')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).last, 'unsaved draft');
     await _assertBlocked(repo, 'text');
@@ -139,7 +139,7 @@ void main() {
       final repo = _EditorRepository(_entry(EntryKind.note));
       await tester.pumpWidget(_editor(repo));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Bearbeiten').first);
+      await tester.tap(find.byKey(const ValueKey('markdown-mode-raw')));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const ValueKey('markdown-body')),

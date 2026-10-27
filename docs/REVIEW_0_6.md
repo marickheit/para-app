@@ -1,6 +1,6 @@
 # Review 0.6
 
-Versionsgebundener Review-Nachweis für 0.6; keine aktuelle Abnahme von 0.9.2.
+Versionsgebundener Review-Nachweis für 0.6; keine Abnahme der aktuellen App-Version.
 Aktuelle Bedienung: [README](../README.md), Prüfstand: [Arbeitsstand](UMSETZUNGSPLAN.md).
 
 Für die damalige Review wurde die Release-App mit einem getrennten Beispielarbeitsbereich

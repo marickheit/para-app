@@ -7,6 +7,13 @@ import 'package:para_workspace/data/local_workspace_repository.dart';
 import 'package:para_workspace/domain/workspace.dart';
 import 'target_features.dart' show captureSurface;
 
+Future<void> _openTextHistory(WidgetTester tester) async {
+  await tester.tap(find.byTooltip('Weitere Dateiaktionen'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Versionsverlauf'));
+  await tester.pumpAndSettle();
+}
+
 void registerRecoveryFeatureTests() {
   testWidgets(
     'text history restores safely and linked trash is recoverable and can be emptied',
@@ -53,14 +60,13 @@ void registerRecoveryFeatureTests() {
         );
         await tester.tap(find.byKey(ValueKey('tree-entry-${target.id}')));
         await tester.pumpAndSettle();
-        await tester.tap(find.widgetWithText(TextButton, 'Bearbeiten'));
+        await tester.tap(find.byKey(const ValueKey('markdown-mode-raw')));
         await tester.pumpAndSettle();
         await tester.enterText(
           find.byKey(const ValueKey('markdown-body')),
           'Ungespeicherter Entwurf.',
         );
-        await tester.tap(find.byKey(const ValueKey('note-history')));
-        await tester.pumpAndSettle();
+        await _openTextHistory(tester);
         expect(find.text('Änderungen speichern?'), findsOneWidget);
         await tester.tap(find.widgetWithText(TextButton, 'Verwerfen'));
         await tester.pumpAndSettle();
@@ -69,8 +75,7 @@ void registerRecoveryFeatureTests() {
         await tester.pumpAndSettle();
         expect(find.text('Ungespeicherter Entwurf.'), findsNothing);
         expect((await repo.readNote(target.id)).text, 'Neuere Ideen.');
-        await tester.tap(find.byKey(const ValueKey('note-history')));
-        await tester.pumpAndSettle();
+        await _openTextHistory(tester);
         expect(find.text('Versionsverlauf'), findsOneWidget);
         await tester.tap(find.byKey(const ValueKey('version-picker')));
         await tester.pumpAndSettle();
@@ -107,10 +112,13 @@ void registerRecoveryFeatureTests() {
         await tester.tap(find.text('Raumideen').last);
         await tester.pumpAndSettle();
         expect(find.text('Im Papierkorb · schreibgeschützt'), findsOneWidget);
-        expect(find.widgetWithText(TextButton, 'Bearbeiten'), findsNothing);
+        expect(find.byKey(const ValueKey('editor-save')), findsNothing);
+        expect(
+          find.byKey(const ValueKey('markdown-table-insert')),
+          findsNothing,
+        );
         await captureSurface(tester, 'para-0.5-trash');
-        await tester.tap(find.byKey(const ValueKey('note-history')));
-        await tester.pumpAndSettle();
+        await _openTextHistory(tester);
         expect(
           tester
               .widget<FilledButton>(

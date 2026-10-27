@@ -1,6 +1,6 @@
 # MCP: Ablage bearbeiten und Kontext begrenzen
 
-Stand: 26. Oktober 2026. Implementierter Vertrag in App 0.9.2/MCP 0.3.0,
+Stand: 27. Oktober 2026. Implementierter Vertrag in App 0.10.0/MCP 0.3.0,
 seit App 0.8.1. Die Nachweise unten gelten für die Erweiterungsabnahme 0.8.1;
 aktueller Gesamtstand: [UMSETZUNGSPLAN.md](UMSETZUNGSPLAN.md).
 

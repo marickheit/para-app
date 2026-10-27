@@ -1,2 +1,2 @@
 const workspaceSchemaVersion = 6;
-const workspaceAppVersion = '0.9.2+15';
+const workspaceAppVersion = '0.10.0+16';

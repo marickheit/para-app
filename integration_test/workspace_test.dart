@@ -87,7 +87,7 @@ void main() {
         await tester.tap(find.text('Raumideen').last);
         await tester.pumpAndSettle();
         expect(find.text('Eine zweite Notiz.'), findsOneWidget);
-        await tester.tap(find.widgetWithText(TextButton, 'Bearbeiten'));
+        await tester.tap(find.byKey(const ValueKey('markdown-mode-raw')));
         await tester.pumpAndSettle();
         await tester.enterText(
           find.byKey(const ValueKey('markdown-body')),

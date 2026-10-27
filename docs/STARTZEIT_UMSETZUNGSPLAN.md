@@ -1,6 +1,6 @@
 # Startzeit und inkrementeller Suchindex
 
-Aktueller Vertrag in 0.9.2, umgesetzt seit 0.9.1. Die Nachweise unten nennen den
+Aktueller Vertrag in 0.10.0, umgesetzt seit 0.9.1. Die Nachweise unten nennen den
 jeweiligen Prüfstand; aktuelle Version und Abnahme im [Arbeitsstand](UMSETZUNGSPLAN.md).
 
 ## Ziel und Umsetzung

@@ -142,3 +142,13 @@ Rückholung lösen einen erneuten Abgleich aus. Beschädigte/veraltete Cachemark
 ersetzen keine Inhalte und dürfen neu aufgebaut werden. Währenddessen bleiben
 die bisherigen Treffer/Links verfügbar. Unabhängige Rückholung wird zusammen
 mit UUIDs, Texten, Anhängen, Archiv, Papierkorb und Textversionen geprüft.
+
+## Markdown-Editor ab 0.10.0
+
+Die drei Ansichten, Tabellenhilfe und lokale Text-Undo-Historie ändern kein
+Datenformat: Schema 6, Sicherungsformat 3 und Sitzungsformat 2 bleiben erhalten.
+Es ist keine zusätzliche Migration erforderlich. Auch Checkboxänderungen in
+Lesen müssen ausdrücklich gespeichert werden. Die flüchtige Undo-Historie
+und ungespeicherte Entwürfe sind kein Bestandteil einer Sicherung; gespeicherte
+Texte und Textversionen bleiben über denselben Sicherungsexport enthalten.
+[Bedienung und Prüfstand](MARKDOWN_EDITOR_UMSETZUNGSPLAN.md).
