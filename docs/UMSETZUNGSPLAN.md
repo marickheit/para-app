@@ -1,6 +1,6 @@
 # Arbeitsstand
 
-Stand: 27. Oktober 2026 · Version 0.10.0+16.
+Stand: 28. Oktober 2026 · Version 0.10.2+18.
 
 Aktueller Umfang und Prüfnachweise; Fachdetails stehen in den verlinkten Verträgen.
 Die [Dokumentationsübersicht](README.md) ordnet aktuelle Anleitungen,
@@ -15,12 +15,14 @@ versionsgebundene Abnahmen und unverbindliche Entwürfe ein.
   Tabwechsel, Links und Neuanlage können den Zielpfad automatisch sichtbar machen.
   [Auswahl, Übersichten und Anlageziele](ANLEGEN_UMSETZUNGSPLAN.md).
 - **Dateifläche:** Vorschau-/dauerhafte Dateitabs über UUIDs, kompakter Kopf,
-  volle Breite/optionale Lesebreite, ziehbarer Explorer und Fokusmodus. Explizites
+  zentrierte Textlesebreite/wählbare volle Breite, ziehbarer Explorer und Fokusmodus. Explizites
   Speichern und Speicherschutz; gespeicherte Sitzung Format 2 mit gesicherter
   Übernahme von Format 1. [Bedienvertrag](DATEI_TABS_UMSETZUNGSPLAN.md).
 - **Markdown-Editor:** Live als Standard, Quelltext und Lesen mit bedienbaren
-  Checkboxen; Return rendert den abgeschlossenen Absatz. 1,2-fache Zeilenhöhe
-  und 6 Pixel Blockabstand. Tabellen in Inhaltsbreite mit begrenzten
+  Checkboxen; Return rendert den abgeschlossenen Absatz. 16 Pixel Text, 1,55-fache
+  Zeilenhöhe, 16 Pixel Blockabstand (innerhalb von Listen 4 Pixel) und deckende Fläche. Zentrierte 680-Pixel-Lesespalte;
+  gespeicherte Breitenwahl erhalten. Gültige YAML-Kopfdaten kompakt und verlustfrei
+  aufklappbar/bearbeitbar. Tabellen in Inhaltsbreite mit begrenzten
   Spalten, Textumbruch und horizontalem Scrollen. Gemeinsame kompakte
   Tab-/Aktionszeile, Aa-Menü, Tabellenraster und direkte Zell-/Strukturänderungen,
   textbezogenes Undo/Redo. Explizites Speichern, MCP-/Konflikt-/Wechselschutz und
@@ -51,6 +53,19 @@ versionsgebundene Abnahmen und unverbindliche Entwürfe ein.
   MCP-Paket 0.3.0, API 2, Bridge 1. [Vertrag](MCP.md).
 
 ## Prüfstand
+
+- **Listenabstand 0.10.2+18 · Linux:** 4 Pixel zwischen Listenpunkten in Live/Lesen,
+  Abschnittsabstände unverändert. Analyse ohne Befund, alle 179 Flutter-Tests
+  und beide nativen Linux-Editorfälle erfolgreich; kompakte und mehrzeilige Listen
+  visuell geprüft. Release installiert, 24 Paketdateien verglichen und installierten
+  Build isoliert gestartet. [Aktuelle Nachweise](EDITOR_LESBILD_PLAN.md).
+
+- **Lesebild 0.10.1+17 · Linux:** Analyse ohne Befund, alle 177 Flutter-Tests
+  und sieben native Linuxfälle erfolgreich. Rezeptdarstellung in Dunkel/Hell und
+  schmal geprüft; Quellerhalt, Breitenwahl und bisherige Editor-/Dateitababläufe
+  erfolgreich. Linux-Release installiert, 24 Paketdateien per SHA-256 geprüft,
+  installierter Build mit temporärem Root gestartet; Startverweis unverändert.
+  [Plan und Nachweise](EDITOR_LESBILD_PLAN.md).
 
 - **Editor 0.10.0:** Analyse ohne Befund, zuletzt alle 170 Flutter-Tests erfolgreich.
   28 native Linuxfälle einschließlich neuer Editorbedienung und bestehender

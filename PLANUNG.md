@@ -1,6 +1,6 @@
 # P.A.R.A. – Produktstand
 
-Stand: 27. Oktober 2026 · lokale App 0.10.0 für macOS und Linux.
+Stand: 28. Oktober 2026 · lokale App 0.10.2 für macOS und Linux.
 
 ## Ziel und Grundregeln
 
@@ -18,7 +18,8 @@ Stand: 27. Oktober 2026 · lokale App 0.10.0 für macOS und Linux.
 
 - **Oberfläche:** A mit Dateitabs und breiter Dateifläche umgesetzt; optionaler
   Fokusmodus B blendet nur den Explorer aus. Explorer per Kante in der Breite
-  verstellbar, Textlesebreite auf Wunsch. Vorschautabs, dauerhafte Tabs,
+  verstellbar, zentrierte Textlesebreite als neuer Standard; gespeicherte Wahl
+  erhalten. Vorschautabs, dauerhafte Tabs,
   Speicherschutz und gespeicherte Sitzung. [Bedienung und Prüfungen](docs/DATEI_TABS_UMSETZUNGSPLAN.md).
   Links Symbole oder Symbole mit Namen, daneben der vollständige Datei-/Ordnerbaum,
   rechts Containerübersicht oder Editor. Eine gemeinsame kompakte Kopfzeile
@@ -30,7 +31,11 @@ Stand: 27. Oktober 2026 · lokale App 0.10.0 für macOS und Linux.
   Auswahl Inhalte im grau markierten Ziel. Kontextmenüs gelten für ihren Container;
   Dialoge zeigen den Zielpfad und erlauben bei normalen Inhalten einen Zielwechsel.
 - **Editor:** Markdown-Notizen und kleine UTF-8-MD-Dateien mit Live (Standard),
-  Quelltext und Lesen. Live rendert inaktive Blöcke; Return schließt einen Absatz
+  Quelltext und Lesen. Zentrierter Markdown-Textkörper mit 680 Pixel Lesebreite,
+  deckender Fläche und 16 Pixel Text bei 1,55-facher Zeilenhöhe. Listenpunkte
+  haben 4 Pixel Zwischenraum; Abschnittsabstände bleiben großzügig. Gültige
+  YAML-Kopfdaten kompakt und vollständig aufklappbar; Quelltext unverändert.
+  Live rendert inaktive Blöcke; Return schließt einen Absatz
   ab, Shift+Return bricht im Absatz um. Keine grüne Blockmarkierung. Kompakte
   Aktionen direkt im Dateitabstreifen: Aa mit Format-/Linkhilfe und Undo/Redo,
   Tabellenraster und direkte Zell-/Zeilen-/Spaltenbearbeitung. Tabellen in

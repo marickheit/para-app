@@ -62,6 +62,156 @@ Future<void> modifiedKey(
 
 void main() {
   for (final mode in [MarkdownEditorMode.live, MarkdownEditorMode.read]) {
+    testWidgets('compact lists keep section gaps and source offsets in $mode', (
+      t,
+    ) async {
+      const source =
+          'Before\n\n- First\n- Second\n  - Nested\n- Third\n\nAfter\n\n'
+          '1. Ordered one\n2. Ordered two\n\n'
+          '- [ ] First task\n\nBetween\n\n- [ ] Last task\n\n[ref]: https://example.com\n';
+      final h = Harness(source);
+      h.view.value = (mode, false);
+      await t.pumpWidget(h.app());
+      await t.pumpAndSettle();
+      final first = t.getTopLeft(find.text('First')).dy;
+      final second = t.getTopLeft(find.text('Second')).dy;
+      expect(second - first, inInclusiveRange(28, 30));
+      expect(
+        t.getTopLeft(find.text('After')).dy -
+            t.getBottomLeft(find.text('Third')).dy,
+        greaterThanOrEqualTo(16),
+      );
+      expect(
+        t
+                .getTopLeft(
+                  find
+                      .ancestor(
+                        of: find.text('Ordered two'),
+                        matching: find.byType(Row),
+                      )
+                      .first,
+                )
+                .dy -
+            t
+                .getBottomLeft(
+                  find
+                      .ancestor(
+                        of: find.text('Ordered one'),
+                        matching: find.byType(Row),
+                      )
+                      .first,
+                )
+                .dy,
+        closeTo(4, 0.1),
+      );
+      expect(find.text('Nested'), findsOneWidget);
+      await t.ensureVisible(find.byType(Checkbox).last);
+      await t.tap(find.byType(Checkbox).last);
+      await t.pumpAndSettle();
+      expect(
+        h.source.text,
+        source.replaceFirst('- [ ] Last task', '- [x] Last task'),
+      );
+      h.key.currentState!.undo();
+      await t.pumpAndSettle();
+      expect(h.source.text, source);
+      await h.close(t);
+    });
+  }
+  for (final mode in [MarkdownEditorMode.live, MarkdownEditorMode.read]) {
+    testWidgets(
+      'front matter stays lossless and checkbox offsets survive in $mode',
+      (t) async {
+        const source =
+            '---\r\ntype: recipe\r\ntags: [pasta, vegetarian]\r\n'
+            'custom: keep me\r\n---\r\n\r\n# Recipe\r\n\r\n- [ ] Cook\r\n';
+        final h = Harness(source);
+        h.view.value = (mode, false);
+        await t.pumpWidget(h.app());
+        await t.pumpAndSettle();
+        final summary = find.text('recipe · pasta · vegetarian');
+        expect(
+          t.getTopLeft(find.text('Recipe')).dy,
+          lessThan(t.getTopLeft(summary).dy),
+        );
+        expect(h.source.text, source);
+        expect(h.changes, 0);
+        expect(h.edits, 0);
+        await t.tap(find.byKey(const ValueKey('markdown-properties-toggle')));
+        await t.pumpAndSettle();
+        expect(find.textContaining('custom: keep me'), findsOneWidget);
+        await t.tap(find.byType(Checkbox));
+        await t.pumpAndSettle();
+        expect(h.source.text, source.replaceFirst('[ ]', '[x]'));
+        h.key.currentState!.undo();
+        await t.pumpAndSettle();
+        expect(h.source.text, source);
+        h.view.value = (mode, true);
+        await t.pumpAndSettle();
+        expect(t.widget<Checkbox>(find.byType(Checkbox)).onChanged, isNull);
+        expect(
+          find.byKey(const ValueKey('markdown-properties-edit')),
+          findsNothing,
+        );
+        await h.close(t);
+      },
+    );
+  }
+  testWidgets(
+    'metadata editing preserves body and supports undo and raw mode',
+    (t) async {
+      const source =
+          '---\ntype: recipe\ntags: [pasta]\n---\n\n# Recipe\n\nBody';
+      final h = Harness(source);
+      await t.pumpWidget(h.app());
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const ValueKey('markdown-properties-toggle')));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const ValueKey('markdown-properties-edit')));
+      await t.pumpAndSettle();
+      final field = find.byKey(const ValueKey('markdown-live-block'));
+      await t.enterText(field, '---\ntype: note\ntags: [pasta]\n---');
+      await t.pumpAndSettle();
+      expect(h.source.text, source.replaceFirst('recipe', 'note'));
+      await t.sendKeyEvent(LogicalKeyboardKey.escape);
+      await t.pumpAndSettle();
+      expect(find.text('note · pasta'), findsOneWidget);
+      h.key.currentState!.undo();
+      await t.pumpAndSettle();
+      expect(h.source.text, source);
+      h.view.value = (MarkdownEditorMode.raw, false);
+      await t.pumpAndSettle();
+      expect(
+        t
+            .widget<TextField>(find.byKey(const ValueKey('markdown-body')))
+            .controller!
+            .text,
+        source,
+      );
+      await h.close(t);
+    },
+  );
+  testWidgets('arrow navigation follows title then metadata presentation', (
+    t,
+  ) async {
+    final h = Harness('---\ntype: recipe\n---\n\n# Recipe\n\nBody');
+    await t.pumpWidget(h.app());
+    await t.pumpAndSettle();
+    await activate(t, 'Recipe');
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await t.pumpAndSettle();
+    final field = find.byKey(const ValueKey('markdown-live-block'));
+    expect(
+      t.widget<TextField>(field).controller!.text,
+      '---\ntype: recipe\n---',
+    );
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await t.pumpAndSettle();
+    expect(t.widget<TextField>(field).controller!.text, '# Recipe');
+    expect(h.changes, 0);
+    await h.close(t);
+  });
+  for (final mode in [MarkdownEditorMode.live, MarkdownEditorMode.read]) {
     testWidgets('tables use bounded content width and scroll in $mode', (
       t,
     ) async {

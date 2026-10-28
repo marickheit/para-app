@@ -14,6 +14,7 @@ import 'dialogs.dart';
 import 'task_details.dart';
 import 'note_history.dart';
 import 'markdown_editor.dart';
+import 'markdown_document_style.dart';
 
 class EditorViewMemory {
   final views =
@@ -32,7 +33,7 @@ class EntryEditor extends StatefulWidget {
     this.busy = false,
     this.actionMenu,
     this.memory,
-    this.readable = false,
+    this.readable = true,
     this.onToggleReadable,
     this.onEditorState,
     this.headerInTabStrip = false,
@@ -1180,11 +1181,20 @@ class EntryEditorState extends State<EntryEditor> {
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   maxWidth: !document || widget.readable
-                      ? 760
+                      ? (_markdownDocument
+                            ? MarkdownDocumentStyle.columnWidth
+                            : 760)
                       : double.infinity,
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: _markdownDocument
+                      ? EdgeInsets.fromLTRB(
+                          MediaQuery.sizeOf(context).width < 700 ? 20 : 32,
+                          48,
+                          MediaQuery.sizeOf(context).width < 700 ? 20 : 32,
+                          64,
+                        )
+                      : const EdgeInsets.all(24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -1243,7 +1253,15 @@ class EntryEditorState extends State<EntryEditor> {
               style: TextStyle(fontSize: 11, color: colors.soft),
             ),
           ),
-        Expanded(child: content),
+        Expanded(
+          child: _markdownDocument
+              ? ColoredBox(
+                  key: const ValueKey('markdown-document-surface'),
+                  color: MarkdownDocumentStyle.surface(context),
+                  child: content,
+                )
+              : content,
+        ),
       ],
     );
   }

@@ -1,7 +1,61 @@
 import 'package:markdown/markdown.dart' as md;
+import 'package:yaml/yaml.dart';
 
 /// Offsets always address the original source; rendering never rewrites it.
-enum MarkdownBlockKind { paragraph, heading, list, code, table, other }
+enum MarkdownBlockKind {
+  paragraph,
+  heading,
+  list,
+  code,
+  table,
+  metadata,
+  other,
+}
+
+/// Only a closed, valid YAML map at the very start is front matter. Rendering
+/// never serializes it: comments, unknown fields, BOM and line endings survive.
+class MarkdownFrontMatter {
+  const MarkdownFrontMatter(this.block, this.summary);
+  final MarkdownSourceBlock block;
+  final String summary;
+
+  static MarkdownFrontMatter? tryParse(String source) {
+    final lines = _lines(source);
+    if (lines.isEmpty ||
+        lines.first.content.replaceFirst('\uFEFF', '') != '---') {
+      return null;
+    }
+    final end = lines.skip(1).where((l) => l.content == '---').firstOrNull;
+    if (end == null) return null;
+    try {
+      final data = loadYaml(source.substring(lines.first.next, end.start));
+      if (data is! YamlMap || data.isEmpty) return null;
+      final values = <String>[];
+      void add(Object? value) {
+        if (value is String || value is num || value is bool) {
+          final text = value.toString().replaceAll(RegExp(r'\s+'), ' ').trim();
+          if (text.isNotEmpty && !values.contains(text)) values.add(text);
+        }
+      }
+
+      add(data['type']);
+      final tags = data['tags'];
+      if (tags is YamlList) {
+        for (final tag in tags) {
+          add(tag);
+        }
+      } else {
+        add(tags);
+      }
+      return MarkdownFrontMatter(
+        MarkdownSourceBlock(0, end.end, MarkdownBlockKind.metadata),
+        values.isEmpty ? 'Eigenschaften' : values.join(' · '),
+      );
+    } on YamlException {
+      return null;
+    }
+  }
+}
 
 class MarkdownSourceBlock {
   const MarkdownSourceBlock(this.start, this.end, this.kind);
@@ -72,6 +126,13 @@ List<MarkdownSourceBlock> markdownBlocks(String source) {
   final lines = _lines(source);
   final result = <MarkdownSourceBlock>[];
   var i = 0;
+  final metadata = MarkdownFrontMatter.tryParse(source);
+  if (metadata != null) {
+    result.add(metadata.block);
+    while (i < lines.length && lines[i].start < metadata.block.end) {
+      i++;
+    }
+  }
   while (i < lines.length) {
     if (lines[i].content.trim().isEmpty) {
       i++;
@@ -286,7 +347,9 @@ String markdownReferenceDefinitions(String source) {
   md.Document(
     extensionSet: md.ExtensionSet.gitHubFlavored,
     blockSyntaxes: [_ReferenceCollector(result)],
-  ).parse(source);
+  ).parse(
+    source.substring(MarkdownFrontMatter.tryParse(source)?.block.end ?? 0),
+  );
   return result.toString();
 }
 

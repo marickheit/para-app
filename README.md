@@ -1,6 +1,6 @@
 # P.A.R.A. Workspace
 
-Lokale Flutter-App 0.10.0 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS und Linux.
+Lokale Flutter-App 0.10.2 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS und Linux.
 Linux-x64-Release und native Abläufe für Oberfläche, Arbeitsbereiche und Anlage
 sind geprüft; den versionsgebundenen Prüfstand nennt der [Arbeitsstand](docs/UMSETZUNGSPLAN.md).
 Die neue native macOS-Abnahme und Android sind offen.
@@ -16,8 +16,11 @@ Die neue native macOS-Abnahme und Android sind offen.
   behält den Tab. Suche/Links/Neuanlage öffnen dauerhafte Tabs. Kreuz, mittlere
   Maustaste oder Cmd/Ctrl+W schließen die aktive Datei; ungespeicherte Änderungen
   bleiben geschützt. Die Liste „Offene Dateien“ erreicht auch viele Tabs.
-- **Dateifläche:** Text und Vorschauen nutzen die verfügbare Fläche. „Lesebreite“
-  begrenzt Text auf Wunsch auf 760 Pixel; „Volle Breite“ hebt das wieder auf.
+- **Dateifläche:** Markdown startet zentriert mit bis zu 680 Pixel Textbreite
+  und seitlich bis zu 32 Pixel Innenabstand. TXT verwendet in Lesebreite bis zu
+  760 Pixel einschließlich Rändern. „Volle Breite“ hebt die Begrenzung auf,
+  „Lesebreite“ schaltet sie wieder ein. Die Einstellung gilt gemeinsam für
+  Textansichten; bereits gespeicherte Breitenentscheidungen bleiben erhalten.
   PDF hat einen eigenen Scroll-/Zoombereich, Bilder werden proportional eingepasst.
 - **Explorer-Breite und Fokus:** Rechte Kante des Dateibaums ziehen (220–520 Pixel,
   abhängig von der Fensterbreite). Doppelklick setzt auf 270 Pixel zurück; am
@@ -60,12 +63,22 @@ Die neue native macOS-Abnahme und Android sind offen.
   und „Irgendwann“ belegen ihren Status vor. Nach Anlage öffnet die App die Aufgabe
   in der passenden Ansicht und setzt aktive Aufgabenfilter zurück.
 - **Markdown bearbeiten:** Notizen und bearbeitbare MD-Dateien starten in **Live**.
-  Kompakte 1,2-fache Zeilenhöhe und 6 Pixel Absatzabstand.
+  Deckende Dokumentfläche, 16 Pixel Fließtext mit 1,55-facher Zeilenhöhe und
+  16 Pixel Blockabstand; innerhalb von Aufzählungen und nummerierten Listen
+  nur 4 Pixel zwischen Einträgen. Überschriften haben zusätzliche Luft. Quelltext verwendet
+  15 Pixel Monospace, Tabellenzellen dieselbe Lesetypografie wie Fließtext.
   Inaktive Blöcke sind gerendert; Klick auf einen Textblock zeigt seine bearbeitbare
   Markdown-Syntax, ohne farbige Blockmarkierung. Return beginnt einen neuen Absatz
   und rendert den vorherigen; Shift+Return erzeugt einen sichtbaren Zeilenumbruch
   innerhalb des Absatzes. Listen werden fortgesetzt, ein leeres Listenelement
   beendet die Liste; Codeblöcke behalten normale Zeilenumbrüche.
+- **Markdown-Kopfdaten:** Ein gültiger YAML-Map-Kopf zwischen `---` am
+  Dateianfang erscheint kompakt; `type` und `tags` bilden die Kurzzeile. Ein
+  unmittelbar folgender H1-Titel steht in Live/Lesen vor dieser Zeile. Über den
+  Pfeil alle Originalfelder anzeigen, in Live über „Eigenschaften bearbeiten“
+  den vollständigen Kopf ändern. Kommentare, unbekannte Felder und Quellreihenfolge
+  bleiben erhalten. Ungültige/unvollständige Köpfe bleiben normales Markdown;
+  Quelltext zeigt immer das Original. Keine zusätzliche Datenablage.
 - **Drei Modi:** **Quelltext** bearbeitet das gesamte Markdown. **Lesen** rendert
   den Text und lässt Links, Textauswahl und tatsächlich gerenderte Markdown-
   Checkboxen bedienen. Bei komplexen verschachtelten oder losen Listen stellt
@@ -296,6 +309,7 @@ flutter test
 flutter test -d macos integration_test/workspace_test.dart
 # Auf Linux: -d linux; neue Auswahl-/Anlageabläufe separat prüfen:
 flutter test -d linux integration_test/creation_test.dart
+flutter test -d linux integration_test/editor_readability_test.dart
 ```
 
 Nach Änderungen an Drift-Tabellen die Bindings erneut erzeugen.

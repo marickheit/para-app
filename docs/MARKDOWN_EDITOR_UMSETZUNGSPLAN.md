@@ -1,15 +1,26 @@
 # Markdown-Editor: Umsetzung und Prüfung
 
-Status: implementiert und lokal als Linux-Release 0.10.0+16 installiert.
-Stand: 27. Oktober 2026.
+Status: Lesebild 0.10.2+18 implementiert, unter Linux geprüft und installiert;
+aktuelle Nachweise im verlinkten Lesebildplan, frühere Installationsnachweise unten.
+Stand: 28. Oktober 2026.
+Aktueller [Lesebildplan nach Mock 1](EDITOR_LESBILD_PLAN.md).
 Grundlage ist der abgestimmte [Entwurf](mockups/MARKDOWN_EDITOR.md) mit der
 nachträglichen Präzisierung: keine grüne Blockmarkierung, Return schließt den
 Absatz ab und rendert ihn, Shift+Return bleibt innerhalb des Absatzes.
 
 ## Bedienung
 
-- Fließtext, Quelltext und Tabellenzellen verwenden 1,2-fache Zeilenhöhe;
-  gerenderte Blöcke haben 6 Pixel Abstand.
+- Fließtext, Live-Eingabe und Tabellenzellen: 16 Pixel bei 1,55-facher Zeilenhöhe.
+  Quelltext: 15 Pixel Monospace bei gleicher Zeilenhöhe. Blockabstand 16 Pixel, innerhalb von Aufzählungen/nummerierten Listen 4 Pixel;
+  H1 30 Pixel, H2 22 Pixel, weitere Überschriften abgestuft mit Zusatzabstand.
+- Deckende neutrale Dokumentfläche; zentrierte Lesespalte mit 680 Pixel Text und
+  bis zu 32 Pixel seitlichem Innenabstand, oben 48 Pixel. Schmale Fenster passen
+  die Ränder an. Neue Sitzungen starten in Lesebreite; gespeicherte Breitenwahl
+  bleibt erhalten. „Volle Breite“ und „Lesebreite“ gelten gemeinsam für Textansichten.
+- Gültige YAML-Map-Kopfdaten am Anfang kompakt anzeigen, unmittelbar folgenden
+  H1-Titel davor darstellen. `type`/`tags` liefern eine Kurzzeile; alle Originalfelder
+  sind aufklappbar, in Live als vollständiger Block bearbeitbar. Quelltext, Kommentare,
+  unbekannte Felder und Originaloffsets erhalten; ungültige Köpfe bleiben Markdown.
 - Drei Modi: Live (Standard), Quelltext, Lesen. Moduswechsel erhält denselben
   ungespeicherten Text; explizites Speichern und Wechselschutz bleiben.
 - Live zeigt inaktive Markdown-Blöcke gerendert, den aktiven Textblock als
@@ -66,7 +77,7 @@ Absatz ab und rendert ihn, Shift+Return bleibt innerhalb des Absatzes.
   laden. Tabellenzellen unterstützen Standard-Markdown-Text, keine Formeln oder
   Excel-Dateien. TXT/Binärvorschauen und Metadatenformulare bleiben erhalten.
 
-## Ablauf und Abnahme
+## Frühere Durchführung und Abnahme 0.10.0
 
 1. Plan unabhängig durch Subagenten auf Architektur, Bedienung und Datenerhalt
    prüfen; Befunde vor Umsetzung einarbeiten.
@@ -124,9 +135,10 @@ Subagenten geprüft; abschließend keine verbleibenden Blocker.
   außerhalb der gerenderten Auswahlbereiche.
 - Native macOS-Abnahme des neuen Editors ist offen.
 
-## Aktuelle Nachprüfung der kompakten Abstände · Linux · 27. Oktober 2026
+## Frühere Nachprüfung der kompakten Abstände · Linux · 27. Oktober 2026
 
-- 1,2-fache Zeilenhöhe und 6 Pixel Blockabstand implementiert.
+- Damaliger Stand: 1,2-fache Zeilenhöhe und 6 Pixel Blockabstand;
+  seit 0.10.1 durch das oben beschriebene Lesebild ersetzt.
 - Analyse ohne Befund; alle 168 Flutter-Tests und sieben MCP-Tests erfolgreich.
 - Nativer Markdown-Editortest mit temporärem Root erneut erfolgreich;
   Live-/Tabellen-/Raster-/Schmalansicht anhand der Testbilder geprüft.
@@ -144,7 +156,7 @@ Subagenten geprüft; abschließend keine verbleibenden Blocker.
 - Release neu gebaut und installiert, 25 Paketdateien per SHA-256 verglichen.
   Installierten Build mit isolierten XDG-Verzeichnissen und Schema 6 gestartet.
 
-## Lokale Installation
+## Frühere lokale Installation 0.10.0+16
 
 - Linux-Release 0.10.0+16 ohne `PARA_DATA_DIR`-/`PARA_CONFIG_DIR`-Buildoverride
   unter `$HOME/.local/opt/para-workspace` installiert. Vorhandener Starter und

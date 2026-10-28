@@ -6,7 +6,7 @@ kein Gesprächsprotokoll. Bei neuen Entscheidungen diese Beschreibung aktualisie
 ## Grundlage und Status
 
 Die Symbolleisten-/Explorer-Grundlage ist seit Flutter 0.4 umgesetzt; der aktuelle
-Vertrag beschreibt 0.10.0:
+Vertrag beschreibt 0.10.1:
 Anordnung, Farben, Symbole, Abstände, Editor, gemeinsame Kopfzeile, Dateiaktionen,
 Aufgabenansichten und schmale Navigation orientieren sich eng am Mockup.
 
@@ -67,8 +67,10 @@ nativen Datei-Drops. Die Beispieldaten wurden nicht in den Nutzerarbeitsbereich 
 
 - Die Symbolleiste ist 56 bzw. 164 Pixel breit; der Explorer startet bei 270 Pixel
   und ist zwischen 220 und 520 Pixel verstellbar, abhängig vom Fenster.
-  Dateifläche breit, Textlesebreite optional 760 Pixel. Schmale Fenster nutzen
-  eine überlagerte Navigation.
+  Dateivorschauen breit; Text ohne gespeicherte Breitenwahl zentriert. Markdown
+  verwendet 680 Pixel Textbreite plus bis zu 32 Pixel Innenabstand je Seite, TXT
+  bis zu 760 Pixel einschließlich Rändern. Volle Breite bleibt wählbar, gespeicherte
+  Entscheidungen bleiben erhalten. Schmale Fenster nutzen eine überlagerte Navigation.
 - Menü unten öffnet Daten & Sicherung oder Einstellungen für Aufgaben/Kontexte;
   die Einstellungen enthalten außerdem Eingangsordner und KI-Anbindung.
 - MD und TXT sind mit explizitem Speichern bearbeitbar. UTF-8-/Größenprüfung und

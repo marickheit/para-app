@@ -14,7 +14,7 @@ anzugleichen und Verweise zu prüfen.
 | Architektur, Daten und Kompatibilität | [Architektur](ARCHITEKTUR.md), [Arbeitsbereiche](ARBEITSBEREICHE.md), [Sicherung/Rückholung](SICHERUNG.md) |
 | Oberfläche und Grenzen | [UI-Anforderungen](UI_UMZUG.md), [kritische Bewertung/Vorschläge](UI_REVIEW.md) |
 | Auswahl, Baum und Anlageziele | [Bedienvertrag/Prüfungen](ANLEGEN_UMSETZUNGSPLAN.md), [umgesetzter Umfang/verbleibender Vorschlag](ANLEGEN_VORSCHLAG.md) |
-| Markdown-Editor, Tabellen und Text-Undo | [Bedienvertrag, Reviews und Prüfungen](MARKDOWN_EDITOR_UMSETZUNGSPLAN.md) |
+| Markdown-Editor, Tabellen und Text-Undo | [Bedienvertrag, Reviews und Prüfungen](MARKDOWN_EDITOR_UMSETZUNGSPLAN.md), [Lesebild nach Mock 1](EDITOR_LESBILD_PLAN.md) |
 | Dateitabs, Fokus, Resize und Sitzung | [Bedienvertrag/Prüfungen](DATEI_TABS_UMSETZUNGSPLAN.md) |
 | Start und Suchindex | [Abgleich, Cache und Prüfungen](STARTZEIT_UMSETZUNGSPLAN.md) |
 | Aufgabenangaben und unbestätigte GTD-Vorschläge | [GTD-Ausbau](GTD_AUSBAU.md) |

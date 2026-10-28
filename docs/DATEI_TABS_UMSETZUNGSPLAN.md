@@ -1,6 +1,6 @@
 # Dateifläche, Tabs und verstellbarer Explorer
 
-Stand: 27. Oktober 2026 · aktueller Bedienvertrag in Flutter 0.10.0, umgesetzt
+Stand: 28. Oktober 2026 · aktueller Bedienvertrag in Flutter 0.10.1, umgesetzt
 seit 0.9.0. A mit optionalem B und verstellbarem Explorer. Die versionsgebundenen
 Nachweise am Ende gelten für 0.9.0+13; aktueller [Prüfstand](UMSETZUNGSPLAN.md).
 
@@ -26,11 +26,12 @@ Plans. Sie konkretisieren die Auswahl; Mock-Beispieldaten sind keine Produktvorg
   Schmale Fenster dürfen die Zeile umbrechen. Andere Vorschauen/TXT behalten
   ihren Dateikopf. Containeransichten behalten Übersicht/Inhalte/Aufgaben.
   [Aktueller Markdown-Editorvertrag](MARKDOWN_EDITOR_UMSETZUNGSPLAN.md).
-- Der Inhalt erhält die restliche Fensterfläche mit etwa 24 Pixel Außenabstand
-  bei Texten. Die bisherige allgemeine Begrenzung auf 760 Pixel entfällt.
-- Markdown und TXT starten breit. Eine Aktion „Lesebreite“ begrenzt auf Wunsch nur
-  den Textkörper auf 760 Pixel; Kopfzeile und Dateivorschauen bleiben breit.
-  Einstellung zunächst gemeinsam für Textansichten im Arbeitsbereich merken.
+- Der Inhalt erhält die restliche Fensterfläche; Kopfzeile und Dateivorschauen
+  bleiben breit. Seit 0.10.1 startet Text ohne gespeicherte Breitenwahl zentriert.
+- Markdown-Lesespalte: 680 Pixel Text plus bis zu 32 Pixel Innenabstand je Seite,
+  oben 48 Pixel. TXT-Lesebreite: 760 Pixel einschließlich 24 Pixel Innenabstand.
+  „Volle Breite“ hebt die Begrenzung auf, „Lesebreite“ stellt sie wieder her.
+  Gemeinsame Einstellung für Textansichten im Arbeitsbereich; gespeicherte Wahl erhalten.
 - PDF nutzt die verfügbare Höhe und Breite statt eines 520 Pixel hohen Kastens.
   Seitenbreite als Ausgangsansicht; Zoom und Scrollen innerhalb der PDF-Vorschau.
 - Rasterbilder und SVG proportional in die verfügbare Fläche einpassen; keine

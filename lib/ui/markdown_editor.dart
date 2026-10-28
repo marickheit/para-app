@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'markdown_source.dart';
 import 'workspace_style.dart';
+import 'markdown_document_style.dart';
 
 enum MarkdownEditorMode { live, raw, read }
 
@@ -44,6 +45,75 @@ class _TextState {
 }
 
 class MarkdownEditorState extends State<MarkdownEditor> {
+  bool _metadataExpanded = false;
+
+  Widget _frontMatter(MarkdownFrontMatter metadata) {
+    final colors = WorkspaceColors(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                metadata.summary,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 14, height: 1.5, color: colors.soft),
+              ),
+            ),
+            IconButton(
+              key: const ValueKey('markdown-properties-toggle'),
+              tooltip: _metadataExpanded
+                  ? 'Eigenschaften ausblenden'
+                  : 'Alle Eigenschaften anzeigen',
+              onPressed: () =>
+                  setState(() => _metadataExpanded = !_metadataExpanded),
+              icon: Icon(
+                _metadataExpanded ? Icons.expand_less : Icons.expand_more,
+                size: 16,
+              ),
+            ),
+          ],
+        ),
+        if (_metadataExpanded) ...[
+          Text(
+            metadata.block.text(_source.text),
+            key: const ValueKey('markdown-properties-source'),
+            style: MarkdownDocumentStyle.source.copyWith(color: colors.soft),
+          ),
+          if (widget.mode == MarkdownEditorMode.live && !_locked)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                key: const ValueKey('markdown-properties-edit'),
+                onPressed: () {
+                  if (!_locked) _activate(metadata.block);
+                },
+                child: const Text('Eigenschaften bearbeiten'),
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+
+  bool _isDocumentTitle(MarkdownSourceBlock block) =>
+      block.kind == MarkdownBlockKind.heading &&
+      (RegExp(r'^ {0,3}#(?:\s|$)').hasMatch(block.text(_source.text)) ||
+          RegExp(r'\r?\n {0,3}=+[ \t]*$').hasMatch(block.text(_source.text)));
+
+  List<MarkdownSourceBlock> _presentationBlocks() {
+    final blocks = markdownBlocks(_source.text);
+    if (blocks.length > 1 &&
+        blocks.first.kind == MarkdownBlockKind.metadata &&
+        _isDocumentTitle(blocks[1])) {
+      final title = blocks.removeAt(1);
+      blocks.insert(0, title);
+    }
+    return blocks;
+  }
+
   final _local = TextEditingController();
   final _localFocus = FocusNode();
   final _liveFieldRender = GlobalKey();
@@ -92,6 +162,7 @@ class MarkdownEditorState extends State<MarkdownEditor> {
     }
     if (oldWidget.epoch != widget.epoch ||
         oldWidget.controller != widget.controller) {
+      _metadataExpanded = false;
       _undo.clear();
       _redo.clear();
       _cellValue = _restoreCellValue = null;
@@ -504,16 +575,22 @@ class MarkdownEditorState extends State<MarkdownEditor> {
         _activateAt(at);
         return KeyEventResult.handled;
       }
+      final displayed = _presentationBlocks();
+      final currentIndex = displayed.indexWhere((b) => b.start == _start);
+      final above = currentIndex > 0 ? displayed[currentIndex - 1] : null;
+      final below = currentIndex >= 0 && currentIndex + 1 < displayed.length
+          ? displayed[currentIndex + 1]
+          : null;
       if (event.logicalKey == LogicalKeyboardKey.arrowUp &&
           _visualLine(sel.extent)?.start == 0 &&
-          previous != null) {
-        _activate(previous);
+          above != null) {
+        _activate(above);
         return KeyEventResult.handled;
       }
       if (event.logicalKey == LogicalKeyboardKey.arrowDown &&
           _visualLine(sel.extent)?.end == _local.text.length &&
-          next != null) {
-        _activate(next, offset: 0);
+          below != null) {
+        _activate(below, offset: 0);
         return KeyEventResult.handled;
       }
     }
@@ -522,7 +599,8 @@ class MarkdownEditorState extends State<MarkdownEditor> {
     }
     if (keyboard.isShiftPressed ||
         _kind == MarkdownBlockKind.code ||
-        _kind == MarkdownBlockKind.other) {
+        _kind == MarkdownBlockKind.other ||
+        _kind == MarkdownBlockKind.metadata) {
       final newline =
           keyboard.isShiftPressed && _kind == MarkdownBlockKind.paragraph
           ? '  $_newline'
@@ -590,6 +668,7 @@ class MarkdownEditorState extends State<MarkdownEditor> {
     int start,
     String references, {
     bool allowChecks = true,
+    bool compactList = false,
   }) {
     final checks = markdownCheckboxes(data, renderOrder: true);
     var checkbox = 0;
@@ -634,25 +713,85 @@ class MarkdownEditorState extends State<MarkdownEditor> {
         label: Text(alt ?? title ?? 'Bildverweis'),
       ),
       styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-        p: TextStyle(fontSize: 13, height: 1.2, color: colors.ink),
-        h1: const TextStyle(
-          fontSize: 25,
-          height: 1.2,
-          fontWeight: FontWeight.w500,
+        p: MarkdownDocumentStyle.body.copyWith(
+          color: MarkdownDocumentStyle.ink(context),
         ),
-        h2: const TextStyle(
-          fontSize: 16,
-          height: 1.5,
-          fontWeight: FontWeight.w500,
+        h1: MarkdownDocumentStyle.heading(1),
+        h2: MarkdownDocumentStyle.heading(2),
+        h3: MarkdownDocumentStyle.heading(3),
+        h4: MarkdownDocumentStyle.heading(4),
+        h5: MarkdownDocumentStyle.heading(5),
+        h6: MarkdownDocumentStyle.heading(6),
+        h1Padding: const EdgeInsets.only(bottom: 4),
+        h2Padding: const EdgeInsets.only(top: 10, bottom: 2),
+        h3Padding: const EdgeInsets.only(top: 8, bottom: 2),
+        blockSpacing: compactList
+            ? MarkdownDocumentStyle.listGap
+            : MarkdownDocumentStyle.blockGap,
+        listBullet: MarkdownDocumentStyle.body,
+        listIndent: 24,
+        tableHead: MarkdownDocumentStyle.body.copyWith(
+          fontWeight: FontWeight.w600,
         ),
-        h3: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-        h1Padding: EdgeInsets.zero,
-        h2Padding: const EdgeInsets.only(top: 5),
-        blockSpacing: 6,
-        listBullet: const TextStyle(fontSize: 13),
+        tableBody: MarkdownDocumentStyle.body,
+        tableCellsPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 8,
+        ),
+        tableBorder: TableBorder.all(
+          color: MarkdownDocumentStyle.line(context),
+        ),
+        tableHeadAlign: TextAlign.left,
+        code: MarkdownDocumentStyle.source.copyWith(
+          backgroundColor: colors.sidebar,
+        ),
+        horizontalRuleDecoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(color: MarkdownDocumentStyle.line(context)),
+          ),
+        ),
         tableColumnWidth: const _ContentColumnWidth(),
         tableScrollbarThumbVisibility: true,
       ),
+    );
+  }
+
+  // The renderer uses one spacing value for both sections and list items.
+  // Scope the compact value to list fragments, retaining original offsets and
+  // document-wide references for checkbox callbacks and links.
+  Widget _readingMarkdown(String data, int start, String references) {
+    final lists = markdownBlocks(
+      data,
+    ).where((block) => block.kind == MarkdownBlockKind.list);
+    final fragments = <Widget>[];
+    var cursor = 0;
+    void append(String text, int offset, {bool compactList = false}) {
+      if (text.trim().isEmpty) return;
+      fragments.add(
+        Padding(
+          padding: EdgeInsets.only(
+            top: fragments.isEmpty ? 0 : MarkdownDocumentStyle.blockGap,
+          ),
+          child: _markdown(
+            text,
+            start + offset,
+            references,
+            compactList: compactList,
+          ),
+        ),
+      );
+    }
+
+    for (final list in lists) {
+      append(data.substring(cursor, list.start), cursor);
+      append(list.text(data), list.start, compactList: true);
+      cursor = list.end;
+    }
+    if (cursor == 0) return _markdown(data, start, references);
+    append(data.substring(cursor), cursor);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: fragments,
     );
   }
 
@@ -671,11 +810,12 @@ class MarkdownEditorState extends State<MarkdownEditor> {
       readOnly: _locked,
       minLines: 1,
       maxLines: null,
-      style: TextStyle(
-        fontFamily: _kind == MarkdownBlockKind.code ? 'monospace' : null,
-        fontSize: 13,
-        height: 1.2,
-      ),
+      style:
+          (_kind == MarkdownBlockKind.code ||
+                      _kind == MarkdownBlockKind.metadata
+                  ? MarkdownDocumentStyle.source
+                  : MarkdownDocumentStyle.body)
+              .copyWith(color: MarkdownDocumentStyle.ink(context)),
       decoration: const InputDecoration(
         isDense: true,
         contentPadding: EdgeInsets.zero,
@@ -686,7 +826,7 @@ class MarkdownEditorState extends State<MarkdownEditor> {
       ),
     ),
   );
-  Widget _inlineCell(String value, String references) {
+  Widget _inlineCell(String value, String references, {bool header = false}) {
     final document = md.Document(
       extensionSet: md.ExtensionSet.gitHubFlavored,
       encodeHtml: false,
@@ -705,7 +845,7 @@ class MarkdownEditorState extends State<MarkdownEditor> {
             child: Text(
               node.textContent,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 16,
                 color: WorkspaceColors(context).accent,
                 decoration: TextDecoration.underline,
               ),
@@ -731,7 +871,10 @@ class MarkdownEditorState extends State<MarkdownEditor> {
 
     return Text.rich(
       TextSpan(children: document.parseInline(value).map(span).toList()),
-      style: const TextStyle(fontSize: 13, height: 1.2),
+      style: MarkdownDocumentStyle.body.copyWith(
+        color: MarkdownDocumentStyle.ink(context),
+        fontWeight: header ? FontWeight.w600 : FontWeight.w400,
+      ),
     );
   }
 
@@ -840,13 +983,17 @@ class MarkdownEditorState extends State<MarkdownEditor> {
           child: Table(
             key: ValueKey('markdown-table-${block.start}'),
             defaultColumnWidth: const _ContentColumnWidth(),
-            border: TableBorder.all(color: colors.line),
+            border: TableBorder.all(color: MarkdownDocumentStyle.line(context)),
             defaultVerticalAlignment: TableCellVerticalAlignment.middle,
             children: [
               for (var r = 0; r < cells.length; r++)
                 TableRow(
                   decoration: r == 0
-                      ? BoxDecoration(color: colors.sidebar)
+                      ? BoxDecoration(
+                          color: MarkdownDocumentStyle.line(
+                            context,
+                          ).withValues(alpha: 0.2),
+                        )
                       : null,
                   children: [
                     for (var c = 0; c < cells[r].length; c++)
@@ -889,8 +1036,8 @@ class MarkdownEditorState extends State<MarkdownEditor> {
                                     )
                                   : null,
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 6,
+                                horizontal: 12,
+                                vertical: 8,
                               ),
                               child: cellSelected
                                   ? _TableCellInput(
@@ -974,6 +1121,7 @@ class MarkdownEditorState extends State<MarkdownEditor> {
                                   : _inlineCell(
                                       cells[r][c].isEmpty ? ' ' : cells[r][c],
                                       references,
+                                      header: r == 0,
                                     ),
                             ),
                           );
@@ -1016,10 +1164,8 @@ class MarkdownEditorState extends State<MarkdownEditor> {
         readOnly: _locked,
         minLines: 18,
         maxLines: null,
-        style: const TextStyle(
-          fontFamily: 'monospace',
-          fontSize: 13,
-          height: 1.2,
+        style: MarkdownDocumentStyle.source.copyWith(
+          color: MarkdownDocumentStyle.ink(context),
         ),
         decoration: const InputDecoration(
           border: InputBorder.none,
@@ -1030,15 +1176,50 @@ class MarkdownEditorState extends State<MarkdownEditor> {
         ),
       );
     } else if (widget.mode == MarkdownEditorMode.read) {
+      final metadata = MarkdownFrontMatter.tryParse(_source.text);
+      final blocks = metadata == null
+          ? <MarkdownSourceBlock>[]
+          : markdownBlocks(_source.text);
+      final title = blocks.length > 1 && _isDocumentTitle(blocks[1])
+          ? blocks[1]
+          : null;
+      final bodyStart = title?.end ?? metadata?.block.end ?? 0;
       content = SelectionArea(
-        child: _markdown(
-          _source.text.isEmpty ? '_Noch kein Text._' : _source.text,
-          0,
-          '',
-        ),
+        child: metadata == null
+            ? _readingMarkdown(
+                _source.text.isEmpty ? '_Noch kein Text._' : _source.text,
+                0,
+                markdownReferenceDefinitions(_source.text),
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (title != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _markdown(
+                        title.text(_source.text),
+                        title.start,
+                        markdownReferenceDefinitions(_source.text),
+                      ),
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      bottom: MarkdownDocumentStyle.blockGap,
+                    ),
+                    child: _frontMatter(metadata),
+                  ),
+                  _readingMarkdown(
+                    _source.text.substring(bodyStart),
+                    bodyStart,
+                    markdownReferenceDefinitions(_source.text),
+                  ),
+                ],
+              ),
       );
     } else {
-      final blocks = markdownBlocks(_source.text);
+      final blocks = _presentationBlocks();
+      final metadata = MarkdownFrontMatter.tryParse(_source.text);
       final references = markdownReferenceDefinitions(_source.text);
       final children = <Widget>[];
       final selectable = <Widget>[];
@@ -1080,8 +1261,12 @@ class MarkdownEditorState extends State<MarkdownEditor> {
             ? MarkdownSourceTable.tryParse(block.text(_source.text))
             : null;
         final rendered = Padding(
-          padding: const EdgeInsets.only(bottom: 6),
-          child: table != null
+          padding: const EdgeInsets.only(
+            bottom: MarkdownDocumentStyle.blockGap,
+          ),
+          child: block.kind == MarkdownBlockKind.metadata && metadata != null
+              ? _frontMatter(metadata)
+              : table != null
               ? _table(block, table, references)
               : GestureDetector(
                   behavior: HitTestBehavior.opaque,
@@ -1090,6 +1275,7 @@ class MarkdownEditorState extends State<MarkdownEditor> {
                     block.text(_source.text),
                     block.start,
                     references,
+                    compactList: block.kind == MarkdownBlockKind.list,
                   ),
                 ),
         );
@@ -1232,7 +1418,9 @@ class _TableCellInputState extends State<_TableCellInput> {
       ],
       minLines: 1,
       maxLines: null,
-      style: const TextStyle(fontSize: 13, height: 1.2),
+      style: MarkdownDocumentStyle.body.copyWith(
+        color: MarkdownDocumentStyle.ink(context),
+      ),
       decoration: const InputDecoration(
         isDense: true,
         contentPadding: EdgeInsets.zero,

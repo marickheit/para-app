@@ -242,9 +242,9 @@ void main() {
       expect(t.takeException(), isNull);
       await tap(t, tree(note));
       await tap(t, find.byTooltip('Weitere Dateiaktionen'));
-      await tap(t, find.text('Lesebreite'));
+      await tap(t, find.text('Volle Breite'));
       await tap(t, find.byTooltip('Weitere Dateiaktionen'));
-      expect(find.text('Volle Breite'), findsOneWidget);
+      expect(find.text('Lesebreite'), findsOneWidget);
       await t.sendKeyEvent(LogicalKeyboardKey.escape);
       await settle(t);
       await t.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);

@@ -109,7 +109,10 @@ während der Sitzung gemerkt. Markdown-Dokumentaktionen werden ab 0.10.0 vom
 EntryEditor nach dem Frame über einen dokumentgebundenen Notifier direkt in den
 Dateitabstreifen veröffentlicht; keine zweite Markdown-Kopfzeile. Andere
 Editoren/Vorschauen behalten ihren Kopf. Der Inhaltsbereich begrenzt Textscrollen
-und Dateivorschauen; keine allgemeine 760-Pixel- oder PDF-Höhenbegrenzung.
+und Dateivorschauen. Markdown ist ab 0.10.1 standardmäßig auf 680 Pixel Textbreite
+plus 64 Pixel Innenabstand begrenzt, TXT auf 760 Pixel einschließlich Rändern;
+volle Breite bleibt wählbar. Gespeicherte Entscheidungen bleiben erhalten, bei
+fehlendem Sitzungswert gilt Lesebreite. PDF bleibt ohne feste Höhenbegrenzung.
 Symbolleiste und Explorer sind getrennt; die gewünschte Breite wird unabhängig
 von der am jeweiligen Fenster möglichen Breite gespeichert.
 
@@ -134,6 +137,16 @@ begrenzt auf 72–320 Pixel einschließlich Zellabstand. Lange Texte umbrechen;
 horizontale Scrollbereiche mit eigenen Controllern halten breite Tabellen
 innerhalb der Editorfläche. Die Breiten sind reine Darstellung ohne Formatänderung.
 Dokumentweite Referenzdefinitionen werden beim Rendern einzelner Blöcke ergänzt.
+
+`markdown_document_style.dart` bündelt Dokumenttypografie, deckende neutrale Fläche
+und Lesespaltenmaß. Listenfragmente verwenden ab 0.10.2 einen eigenen Abstand
+von 4 Pixel statt des allgemeinen 16-Pixel-Blockabstands. Die Leseansicht trennt
+nur diese Fragmente ab; Quelloffsets und dokumentweite Referenzen bleiben erhalten. Gültige geschlossene YAML-Map-Köpfe erkennt `markdown_source.dart`
+mit `yaml`, ohne sie zurückzuschreiben. Live/Lesen zeigen einen unmittelbar folgenden
+H1-Titel vor der kompakten Metadatenzeile; alle Bearbeitungen adressieren weiterhin
+die ursprünglichen Quelloffsets. Vollständige Kopfdaten sind aufklappbar und als
+Live-Quellblock bearbeitbar; Referenzdefinitionen aus YAML werden nicht in den
+Dokumenttext übernommen. Ungültige Köpfe bleiben normales Markdown.
 
 Return erzeugt im normalen Absatz eine Markdown-Absatzgrenze, Shift+Return einen
 harten Zeilenumbruch. Listen und Code haben eigene Zeilenregeln. Benachbarte

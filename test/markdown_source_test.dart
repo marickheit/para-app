@@ -2,6 +2,54 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:para_workspace/ui/markdown_source.dart';
 
 void main() {
+  group('front matter', () {
+    test('valid map preserves BOM, CRLF, comments and unknown fields', () {
+      const source =
+          '\uFEFF---\r\ntype: recipe\r\ntags:\r\n  - pasta\r\n'
+          '# retain this comment\r\ncustom: {nested: yes}\r\n---\r\n\r\n# Title\r\n';
+      final metadata = MarkdownFrontMatter.tryParse(source)!;
+      expect(metadata.summary, 'recipe · pasta');
+      final blocks = markdownBlocks(source);
+      expect(blocks.map((b) => b.kind), [
+        MarkdownBlockKind.metadata,
+        MarkdownBlockKind.heading,
+      ]);
+      expect(metadata.block.text(source), startsWith('\uFEFF---\r\n'));
+      expect(source.substring(metadata.block.end), '\r\n\r\n# Title\r\n');
+      expect(
+        metadata.block.text(source),
+        contains('# retain this comment\r\n'),
+      );
+    });
+    test(
+      'rules, invalid YAML and unclosed headers remain ordinary Markdown',
+      () {
+        for (final source in [
+          '---\n\nText\n---\nEnd',
+          '---\ntags: [broken\n---\n# Title',
+          '---\ntype: recipe\n# Title',
+          '\n---\ntype: recipe\n---',
+          '---\n- item\n---',
+        ]) {
+          expect(MarkdownFrontMatter.tryParse(source), isNull);
+          expect(
+            markdownBlocks(
+              source,
+            ).any((b) => b.kind == MarkdownBlockKind.metadata),
+            isFalse,
+          );
+        }
+      },
+    );
+    test('metadata link definitions cannot leak into document rendering', () {
+      const source =
+          '---\ncustom: |\n  [fake]: https://wrong.test\n---\n\n'
+          '[real]: https://right.test\n';
+      final definitions = markdownReferenceDefinitions(source);
+      expect(definitions, contains('https://right.test'));
+      expect(definitions, isNot(contains('https://wrong.test')));
+    });
+  });
   group('source blocks', () {
     test(
       'all ranges point into original CRLF Unicode source without rewriting',

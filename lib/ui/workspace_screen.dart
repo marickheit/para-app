@@ -121,7 +121,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   String? _selectedId;
   String _tab = 'content';
   bool _sidebarVisible = true;
-  bool _explorerVisible = true, _readable = false, _resizing = false;
+  bool _explorerVisible = true, _readable = true, _resizing = false;
   bool _sessionBlocked = false, _navigationPending = false;
   double _explorerWidth = 270;
   final _documents = DocumentTabs();
@@ -220,7 +220,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
           _railExpanded = data['railExpanded'] == true;
           _explorerVisible = data['explorerVisible'] != false;
           _explorerWidth = (data['explorerWidth'] as num?)?.toDouble() ?? 270;
-          _readable = data['readable'] == true;
+          _readable = data['readable'] != false;
           final valid = {for (final e in entries.where(_isDocument)) e.id};
           final savedTabs =
               (data['documentTabs'] as List?)?.cast<String>() ??
