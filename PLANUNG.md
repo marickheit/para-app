@@ -1,6 +1,6 @@
 # P.A.R.A. – Produktstand
 
-Stand: 28. Oktober 2026 · lokale App 0.10.2 für macOS und Linux.
+Stand: 28. Oktober 2026 · lokale App 0.11.0 für macOS und Linux.
 
 ## Ziel und Grundregeln
 
@@ -42,7 +42,11 @@ Stand: 28. Oktober 2026 · lokale App 0.10.2 für macOS und Linux.
   Inhaltsbreite mit begrenzten Spalten, Textumbruch und horizontalem Scrollen. Gerenderte Checkboxen
   auch in Lesen änderbar; Änderungen weiterhin ausdrücklich speichern und beim Wechsel
   schützen. Infos, Verlauf, Lesebreite und Notiztitel im Menü „Weitere Dateiaktionen“.
-  TXT sowie Aufgaben-/Containerformulare behalten ihre bisherige Bedienung.
+  Projekte, Bereiche, Ressourcensammlungen und Ordner verwenden denselben Editor
+  für Beschreibungen; Übersichten rendern Markdown als schreibgeschützte Vorschau.
+  Name, Projektergebnis und Termin bleiben eigene Felder. TXT sowie Aufgaben-/
+  Ideenformulare behalten ihre bisherige Bedienung.
+  [Beschreibung und Prüfungen](docs/MARKDOWN_BESCHREIBUNGEN_PLAN.md).
   Umbenennen erhält UUIDs und Links. [Bedienvertrag/Prüfungen](docs/MARKDOWN_EDITOR_UMSETZUNGSPLAN.md).
 - **Vorschau:** PDF, Rasterbilder, SVG und CSV. Andere Dateien als Kopie speichern
   oder mit der Standard-App öffnen. CSV-Vorschau und Inhaltssuche haben Grenzen,

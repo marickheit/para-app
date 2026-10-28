@@ -7,7 +7,7 @@ import '../services/file_formats.dart';
 import 'file_preview.dart';
 import 'workspace_style.dart';
 import 'package:path/path.dart' as p;
-import 'package:url_launcher/url_launcher.dart';
+import 'workspace_links.dart';
 import '../domain/workspace.dart';
 import 'common.dart';
 import 'dialogs.dart';
@@ -97,6 +97,7 @@ class EntryEditorState extends State<EntryEditor> {
       _bodyEditable &&
       !_plainText &&
       {EntryKind.note, EntryKind.file}.contains(widget.entry.kind);
+  bool get _markdownBody => _markdownDocument || widget.entry.kind.isContainer;
   bool _preview = true;
   bool _bodyEditable = true;
   bool _showInfo = false;
@@ -124,7 +125,7 @@ class EntryEditorState extends State<EntryEditor> {
     );
     final id = widget.entry.id,
         dirty = _dirty,
-        editing = (_markdownDocument ? _editorTouched : !_preview) && !_loading;
+        editing = (_markdownBody ? _editorTouched : !_preview) && !_loading;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && widget.entry.id == id) {
         widget.onEditorState?.call(id, dirty, editing);
@@ -360,7 +361,7 @@ class EntryEditorState extends State<EntryEditor> {
     );
     if (entry == null || !mounted) return;
     if (_locked) return;
-    if (_markdownDocument) {
+    if (_markdownBody) {
       _markdownKey.currentState?.insertText(markdownLink(entry));
       return;
     }
@@ -395,32 +396,12 @@ class EntryEditorState extends State<EntryEditor> {
     if (changed && mounted) await _load();
   }
 
-  Future<void> _tapLink(String? href) async {
-    if (href == null) return;
-    final id = entryIdFromLink(href);
-    if (id != null) {
-      final target = widget.entries.where((e) => e.id == id).firstOrNull;
-      if (target == null) {
-        showMessage(context, 'Der verknüpfte Inhalt ist nicht verfügbar.');
-      } else {
-        await widget.onOpen(target);
-      }
-      return;
-    }
-    final uri = Uri.tryParse(href);
-    if (uri == null || !{'https', 'http', 'mailto'}.contains(uri.scheme)) {
-      showMessage(context, 'Dieser Link wird nicht unterstützt.');
-      return;
-    }
-    try {
-      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!opened && mounted) {
-        showMessage(context, 'Der Link konnte nicht geöffnet werden.');
-      }
-    } catch (error) {
-      if (mounted) showMessage(context, errorLabel(error));
-    }
-  }
+  Future<void> _tapLink(String? href) => openWorkspaceLink(
+    context,
+    href,
+    entries: widget.entries,
+    onOpen: widget.onOpen,
+  );
 
   Future<void> _pickDueDate() async {
     final date = await showDatePicker(
@@ -592,7 +573,7 @@ class EntryEditorState extends State<EntryEditor> {
       _reportEditor();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        if (_markdownDocument) {
+        if (_markdownBody) {
           _markdownKey.currentState?.focusEditor();
         } else {
           _bodyFocus.requestFocus();
@@ -871,7 +852,9 @@ class EntryEditorState extends State<EntryEditor> {
           width: 30,
           height: 32,
           child: PopupMenuButton<String>(
-            tooltip: 'Weitere Dateiaktionen',
+            tooltip: _markdownDocument
+                ? 'Weitere Dateiaktionen'
+                : 'Weitere Beschreibungsaktionen',
             padding: EdgeInsets.zero,
             icon: const Icon(LucideIcons.ellipsis, size: 15),
             onSelected: (value) {
@@ -886,13 +869,18 @@ class EntryEditorState extends State<EntryEditor> {
                   value: 'width',
                   child: Text(widget.readable ? 'Volle Breite' : 'Lesebreite'),
                 ),
-              const PopupMenuItem(
-                value: 'history',
-                child: Text('Versionsverlauf'),
-              ),
-              const PopupMenuItem(
+              if (_markdownDocument)
+                const PopupMenuItem(
+                  value: 'history',
+                  child: Text('Versionsverlauf'),
+                ),
+              PopupMenuItem(
                 value: 'info',
-                child: Text('Dateiinformationen'),
+                child: Text(
+                  _markdownDocument
+                      ? 'Dateiinformationen'
+                      : 'Inhaltsinformationen',
+                ),
               ),
               if (!_readOnly && widget.entry.kind == EntryKind.note)
                 const PopupMenuItem(
@@ -902,14 +890,14 @@ class EntryEditorState extends State<EntryEditor> {
             ],
           ),
         ),
-        if (widget.actionMenu != null)
+        if (_markdownDocument && widget.actionMenu != null)
           SizedBox(width: 30, child: widget.actionMenu!),
       ],
     );
   }
 
   Widget _bodyView() {
-    if (_markdownDocument) {
+    if (_markdownBody) {
       return MarkdownEditor(
         key: _markdownKey,
         controller: _body,
@@ -1033,61 +1021,66 @@ class EntryEditorState extends State<EntryEditor> {
         }
       });
     }
-    final actions = <Widget>[
-      if (document && _bodyEditable && widget.onToggleReadable != null)
-        TextButton.icon(
-          key: const ValueKey('readable-toggle'),
-          onPressed: widget.onToggleReadable,
-          icon: const Icon(LucideIcons.moveHorizontal, size: 15),
-          label: Text(
-            widget.readable ? 'Volle Breite' : 'Lesebreite',
-            style: const TextStyle(fontSize: 11),
-          ),
-        ),
-      if (document && _bodyEditable)
-        IconButton(
-          key: const ValueKey('note-history'),
-          tooltip: 'Versionsverlauf',
-          icon: const Icon(LucideIcons.history, size: 15),
-          onPressed: _saving || widget.busy ? null : _showHistory,
-        ),
-      if (_dirty)
-        Text(
-          'Ungespeichert',
-          style: TextStyle(fontSize: 11, color: colors.accent),
-        ),
-      if (!_readOnly && _bodyEditable)
-        TextButton.icon(
-          onPressed: _locked
-              ? null
-              : () => setState(() {
-                  _editRequested = _preview;
-                  _preview = !_preview;
-                  _reportEditor();
-                }),
-          icon: Icon(_preview ? LucideIcons.pencil : LucideIcons.eye, size: 15),
-          label: Text(
-            _preview ? 'Bearbeiten' : 'Vorschau',
-            style: const TextStyle(fontSize: 11),
-          ),
-        ),
-      if (!_readOnly && (!_preview || _dirty))
-        TextButton.icon(
-          key: const ValueKey('editor-save'),
-          onPressed: _dirty && !_locked ? save : null,
-          icon: const Icon(LucideIcons.save, size: 15),
-          label: Text(
-            _saving ? 'Speichert …' : 'Speichern',
-            style: const TextStyle(fontSize: 11),
-          ),
-        ),
-      if (!_readOnly && !_preview && !_plainText && _bodyEditable)
-        IconButton(
-          onPressed: _locked ? null : _insertLink,
-          tooltip: 'Verknüpfung einfügen',
-          icon: const Icon(LucideIcons.link, size: 15),
-        ),
-    ];
+    final actions = _markdownBody
+        ? <Widget>[_markdownActions()]
+        : <Widget>[
+            if (document && _bodyEditable && widget.onToggleReadable != null)
+              TextButton.icon(
+                key: const ValueKey('readable-toggle'),
+                onPressed: widget.onToggleReadable,
+                icon: const Icon(LucideIcons.moveHorizontal, size: 15),
+                label: Text(
+                  widget.readable ? 'Volle Breite' : 'Lesebreite',
+                  style: const TextStyle(fontSize: 11),
+                ),
+              ),
+            if (document && _bodyEditable)
+              IconButton(
+                key: const ValueKey('note-history'),
+                tooltip: 'Versionsverlauf',
+                icon: const Icon(LucideIcons.history, size: 15),
+                onPressed: _saving || widget.busy ? null : _showHistory,
+              ),
+            if (_dirty)
+              Text(
+                'Ungespeichert',
+                style: TextStyle(fontSize: 11, color: colors.accent),
+              ),
+            if (!_readOnly && _bodyEditable)
+              TextButton.icon(
+                onPressed: _locked
+                    ? null
+                    : () => setState(() {
+                        _editRequested = _preview;
+                        _preview = !_preview;
+                        _reportEditor();
+                      }),
+                icon: Icon(
+                  _preview ? LucideIcons.pencil : LucideIcons.eye,
+                  size: 15,
+                ),
+                label: Text(
+                  _preview ? 'Bearbeiten' : 'Vorschau',
+                  style: const TextStyle(fontSize: 11),
+                ),
+              ),
+            if (!_readOnly && (!_preview || _dirty))
+              TextButton.icon(
+                key: const ValueKey('editor-save'),
+                onPressed: _dirty && !_locked ? save : null,
+                icon: const Icon(LucideIcons.save, size: 15),
+                label: Text(
+                  _saving ? 'Speichert …' : 'Speichern',
+                  style: const TextStyle(fontSize: 11),
+                ),
+              ),
+            if (!_readOnly && !_preview && !_plainText && _bodyEditable)
+              IconButton(
+                onPressed: _locked ? null : _insertLink,
+                tooltip: 'Verknüpfung einfügen',
+                icon: const Icon(LucideIcons.link, size: 15),
+              ),
+          ];
     final path = [
       entry.section.label,
       ...ancestorsOf(entry, widget.entries).reversed.map((e) => e.title),
@@ -1133,17 +1126,19 @@ class EntryEditorState extends State<EntryEditor> {
                         ),
                       ),
                       if (bounds.maxWidth > 620) ...actions,
-                      IconButton(
-                        key: const ValueKey('file-info'),
-                        tooltip: 'Dateiinformationen',
-                        isSelected: _showInfo,
-                        onPressed: () => setState(() => _showInfo = !_showInfo),
-                        icon: Icon(
-                          LucideIcons.info,
-                          size: 15,
-                          color: colors.soft,
+                      if (!_markdownBody)
+                        IconButton(
+                          key: const ValueKey('file-info'),
+                          tooltip: 'Dateiinformationen',
+                          isSelected: _showInfo,
+                          onPressed: () =>
+                              setState(() => _showInfo = !_showInfo),
+                          icon: Icon(
+                            LucideIcons.info,
+                            size: 15,
+                            color: colors.soft,
+                          ),
                         ),
-                      ),
                       if (widget.actionMenu != null) widget.actionMenu!,
                     ],
                   ),
@@ -1180,17 +1175,17 @@ class EntryEditorState extends State<EntryEditor> {
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxWidth: !document || widget.readable
-                      ? (_markdownDocument
+                  maxWidth: (!_markdownBody && !document) || widget.readable
+                      ? (_markdownBody
                             ? MarkdownDocumentStyle.columnWidth
                             : 760)
                       : double.infinity,
                 ),
                 child: Padding(
-                  padding: _markdownDocument
+                  padding: _markdownBody
                       ? EdgeInsets.fromLTRB(
                           MediaQuery.sizeOf(context).width < 700 ? 20 : 32,
-                          48,
+                          document ? 48 : 24,
                           MediaQuery.sizeOf(context).width < 700 ? 20 : 32,
                           64,
                         )
@@ -1221,6 +1216,13 @@ class EntryEditorState extends State<EntryEditor> {
                         const SizedBox(height: 18),
                       ],
                       ..._detailFields(),
+                      if (entry.kind.isContainer) ...[
+                        Text(
+                          'Beschreibung',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                       _bodyView(),
                       _linkRelations(),
                     ],
@@ -1254,7 +1256,7 @@ class EntryEditorState extends State<EntryEditor> {
             ),
           ),
         Expanded(
-          child: _markdownDocument
+          child: _markdownBody
               ? ColoredBox(
                   key: const ValueKey('markdown-document-surface'),
                   color: MarkdownDocumentStyle.surface(context),

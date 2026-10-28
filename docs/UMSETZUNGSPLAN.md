@@ -1,6 +1,6 @@
 # Arbeitsstand
 
-Stand: 28. Oktober 2026 · Version 0.10.2+18.
+Stand: 28. Oktober 2026 · Version 0.11.0+19.
 
 Aktueller Umfang und Prüfnachweise; Fachdetails stehen in den verlinkten Verträgen.
 Die [Dokumentationsübersicht](README.md) ordnet aktuelle Anleitungen,
@@ -28,6 +28,10 @@ versionsgebundene Abnahmen und unverbindliche Entwürfe ein.
   textbezogenes Undo/Redo. Explizites Speichern, MCP-/Konflikt-/Wechselschutz und
   gesperrte Archive/Papierkörbe bleiben. Keine Formatmigration.
   [Bedienvertrag, Reviews und Prüfstand](MARKDOWN_EDITOR_UMSETZUNGSPLAN.md).
+- **Beschreibungen:** Projekte, Bereiche, Ressourcensammlungen und Ordner
+  verwenden denselben Markdown-Editor wie Notizen. Strukturierte Felder bleiben
+  separat; Übersichten rendern schreibgeschützt mit bedienbaren Links.
+  Kein Datenformatwechsel. [Umfang/Prüfungen](MARKDOWN_BESCHREIBUNGEN_PLAN.md).
 - **Suche/Start:** Vorhandenen Index sofort verwenden, geänderte Dateien und neue
   PDFs im Hintergrund auswerten. Unveränderte Dateien nicht erneut auslesen;
   offene Suche erhält neue Treffer und Status. Abgeleiteter Suchcache Format 1.
@@ -53,6 +57,14 @@ versionsgebundene Abnahmen und unverbindliche Entwürfe ein.
   MCP-Paket 0.3.0, API 2, Bridge 1. [Vertrag](MCP.md).
 
 ## Prüfstand
+
+- **Markdown-Beschreibungen 0.11.0+19 · Linux:** Analyse ohne Befund, alle
+  184 Flutter-Tests und sieben MCP-Tests erfolgreich. Neuer nativer Ablauf für
+  alle vier Containertypen sowie zehn bestehende Anlage-/Auswahlfälle erfolgreich.
+  Breite/schmale Darstellung visuell geprüft. Linux-Release installiert,
+  24 Paketdateien geprüft und installierten Build isoliert mit Schema 6 gestartet;
+  Startverweis unverändert. Native macOS-Abnahme offen.
+  [Plan und Nachweise](MARKDOWN_BESCHREIBUNGEN_PLAN.md).
 
 - **Listenabstand 0.10.2+18 · Linux:** 4 Pixel zwischen Listenpunkten in Live/Lesen,
   Abschnittsabstände unverändert. Analyse ohne Befund, alle 179 Flutter-Tests

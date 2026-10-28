@@ -92,6 +92,11 @@ Werkzeuge auf App-Inhalte zu, nicht über SQLite, Dateien oder Shell-Umgehungen.
   Feste oberste Ebene in Bereiche beziehungsweise Ressourcen; keine Eltern-ID,
   frei wählbare Kategorie oder Projektpflichtfelder. `create_folder` braucht
   neben Titel/Request-ID ein ausdrückliches Ziel (`parent_id` oder `section`).
+- Beschreibungen von Projekten, Bereichen, Ressourcensammlungen und Ordnern
+  sind Markdown im bestehenden Textfeld. Mit `read_text` lesen und über
+  `edit_text`/`update_text` gezielt ändern; kein neuer Inhalt oder Dateianhang nötig.
+  Strukturierte Projektfelder bleiben separat; offene Entwürfe in der App nicht
+  überschreiben. Die App verwendet dafür denselben Editorschutz wie bei Notizen.
 - `update_entry` ändert Titel aller Inhaltstypen (auch Dateinamen); `goal` und
   `due_date` nur bei Projekten. Mindestens ein Änderungsfeld, aktuelle Revision
   und Request-ID angeben. Ausgelassene Felder und Beschreibung bleiben erhalten.

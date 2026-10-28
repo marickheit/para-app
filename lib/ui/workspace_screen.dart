@@ -20,6 +20,9 @@ import 'file_drop.dart';
 import 'common.dart';
 import 'dialogs.dart';
 import 'entry_editor.dart';
+import 'markdown_preview.dart';
+import 'markdown_document_style.dart';
+import 'workspace_links.dart';
 import 'workspace_search.dart';
 import 'document_tabs.dart';
 import 'explorer_resize.dart';
@@ -1188,25 +1191,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         );
         return;
       }
-      if (entry.kind == EntryKind.folder) {
-        final title = await showRenameDialog(context, entry.title);
-        if (title != null && mounted) {
-          await _run('Ordner wird umbenannt …', () async {
-            final body = await widget.repository.readNote(entry.id);
-            await widget.repository.save(
-              id: entry.id,
-              expectedRevision: entry.revision,
-              expectedBodyHash: body.hash,
-              draft: EntryDraft(title: title, body: body.text),
-            );
-            await _refresh();
-          });
-        }
-        return;
-      }
       await _open(_find(entry.id) ?? entry, guarded: false);
       if (!mounted) return;
       setState(() {
+        _rootId = entry.id;
         _selectedId = entry.id;
         _tab = 'overview';
       });
@@ -3120,15 +3108,36 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
           future: widget.repository.readNote(root.id),
           builder: (context, snapshot) => Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Text(
-              snapshot.hasError
-                  ? 'Beschreibung konnte nicht geladen werden.'
-                  : snapshot.data?.text.isNotEmpty == true
-                  ? snapshot.data!.text
-                  : snapshot.connectionState == ConnectionState.waiting
-                  ? 'Beschreibung wird geladen …'
-                  : 'Noch keine Beschreibung.',
-            ),
+            child:
+                snapshot.hasError ||
+                    snapshot.connectionState == ConnectionState.waiting ||
+                    snapshot.data?.text.isNotEmpty != true
+                ? Text(
+                    snapshot.hasError
+                        ? 'Beschreibung konnte nicht geladen werden.'
+                        : snapshot.connectionState == ConnectionState.waiting
+                        ? 'Beschreibung wird geladen …'
+                        : 'Noch keine Beschreibung.',
+                  )
+                : Align(
+                    alignment: Alignment.centerLeft,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 680),
+                      child: ColoredBox(
+                        color: MarkdownDocumentStyle.surface(context),
+                        child: MarkdownPreview(
+                          key: ValueKey('description-preview-${root.id}'),
+                          text: snapshot.data!.text,
+                          onLink: (href) => openWorkspaceLink(
+                            context,
+                            href,
+                            entries: [..._entries, ..._trashEntries],
+                            onOpen: _open,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
           ),
         ),
         Wrap(
@@ -3292,6 +3301,13 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                   folder.title,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
+              ),
+              TextButton(
+                key: ValueKey('folder-description-${folder.id}'),
+                onPressed: isArchived(folder, _entries)
+                    ? null
+                    : () => _entryAction(folder, 'edit'),
+                child: const Text('Beschreibung'),
               ),
               _entryMenu(folder),
             ],
@@ -3644,8 +3660,6 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       ? _contents(root, constraints.maxWidth)
       : _tab == 'tasks'
       ? _tasks(root, constraints.maxWidth)
-      : root.kind == EntryKind.folder
-      ? _folderContents(root)
       : _overview(root);
 
   @override

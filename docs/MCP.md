@@ -1,6 +1,6 @@
 # KI-Anbindung über MCP
 
-Stand: App 0.10.0, MCP-Paket 0.3.0, API-Funktionsstand 2 (seit App 0.8.1). MCP läuft lokal mit der geöffneten App auf macOS und Linux.
+Stand: App 0.11.0, MCP-Paket 0.3.0, API-Funktionsstand 2 (seit App 0.8.1). MCP läuft lokal mit der geöffneten App auf macOS und Linux.
 Der Server liegt im Repository unter `mcp/`. Er öffnet selbst keine Nutzdaten.
 
 ## Einrichten
@@ -137,6 +137,12 @@ sind nicht erlaubt. `create_folder` benötigt zusätzlich `parent_id` oder
 erlaubt und dürfen nicht geleert werden. Beschreibungen bleiben erhalten;
 Dateien lassen sich einschließlich Binäranhängen bytegleich umbenennen.
 
+Beschreibungstexte von Projekten, Bereichen, Ressourcensammlungen und Ordnern
+werden in der App ab 0.11.0 als Markdown angezeigt und bearbeitet. MCP liest und
+ändert weiterhin denselben unveränderten Text über `read_text`/`edit_text`/
+`update_text`; kein zusätzlicher Texttyp, Parameter oder API-/Formatwechsel.
+Ungespeicherte Beschreibungen sind durch denselben Editorschutz gesperrt.
+
 `edit_text` benötigt ID, Revision, vollständigen Text-Hash, Request-ID,
 `operation` und `text`. `append` hängt exakt an, ohne automatischen Zeilenumbruch.
 `replace` benötigt zusätzlich ein nichtleeres `old_text`, das im aktuellen Text
@@ -160,8 +166,9 @@ Inhalt. Veraltete Angaben überschreiben nichts; erneut lesen und Änderung neu
 bewerten. Notiz- und unterstützter Dateitext verwendet denselben Textverlauf wie
 Speichern in der App. Auch ungespeicherte Live-, Tabellen- und Checkboxänderungen
 im Markdown-Editor blockieren MCP-Schreibzugriffe auf denselben Inhalt; ein reiner
-Moduswechsel speichert nichts. Aufgabenbeschreibungen haben weiterhin keinen
-eigenen Textverlauf; der vorhandene App-Umfang bleibt maßgeblich.
+Moduswechsel speichert nichts. Das gilt ab 0.11.0 auch für Containerbeschreibungen.
+Aufgaben- und Containerbeschreibungen haben weiterhin keinen zusätzlichen
+Textversionszugang; der vorhandene App-Umfang bleibt maßgeblich.
 
 ## Grenzen und Fehler
 

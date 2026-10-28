@@ -1,6 +1,8 @@
 # Markdown-Editor: Umsetzung und Prüfung
 
-Status: Lesebild 0.10.2+18 implementiert, unter Linux geprüft und installiert;
+Status: gemeinsamer Editor für Notizen/MD und Containerbeschreibungen ab 0.11.0,
+unter Linux einschließlich neuer Beschreibungsabläufe geprüft und installiert;
+Lesebild 0.10.2+18 zuvor unter Linux geprüft und installiert;
 aktuelle Nachweise im verlinkten Lesebildplan, frühere Installationsnachweise unten.
 Stand: 28. Oktober 2026.
 Aktueller [Lesebildplan nach Mock 1](EDITOR_LESBILD_PLAN.md).
@@ -10,11 +12,17 @@ Absatz ab und rendert ihn, Shift+Return bleibt innerhalb des Absatzes.
 
 ## Bedienung
 
+- Projekte, Bereiche, Ressourcensammlungen und Ordner nutzen ab 0.11.0 denselben
+  Markdown-Editor mit Live/Quelltext/Lesen im bestehenden Formular. Name, Ergebnis
+  und Datum bleiben separate Felder. Übersichten verwenden denselben Renderer
+  mit schreibgeschützten Checkboxen. [Beschreibung und Nachweise](MARKDOWN_BESCHREIBUNGEN_PLAN.md).
+
 - Fließtext, Live-Eingabe und Tabellenzellen: 16 Pixel bei 1,55-facher Zeilenhöhe.
   Quelltext: 15 Pixel Monospace bei gleicher Zeilenhöhe. Blockabstand 16 Pixel, innerhalb von Aufzählungen/nummerierten Listen 4 Pixel;
   H1 30 Pixel, H2 22 Pixel, weitere Überschriften abgestuft mit Zusatzabstand.
 - Deckende neutrale Dokumentfläche; zentrierte Lesespalte mit 680 Pixel Text und
-  bis zu 32 Pixel seitlichem Innenabstand, oben 48 Pixel. Schmale Fenster passen
+  bis zu 32 Pixel seitlichem Innenabstand, oben bei Dokumenten 48 Pixel,
+  bei Beschreibungsformularen 24 Pixel vor dem Titel-/Feldbereich. Schmale Fenster passen
   die Ränder an. Neue Sitzungen starten in Lesebreite; gespeicherte Breitenwahl
   bleibt erhalten. „Volle Breite“ und „Lesebreite“ gelten gemeinsam für Textansichten.
 - Gültige YAML-Map-Kopfdaten am Anfang kompakt anzeigen, unmittelbar folgenden

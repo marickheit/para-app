@@ -25,7 +25,11 @@ Stand: 26. Oktober 2026. Auswahl/Anlage ab 0.7.3; getrennte Baumbedienung in 0.9
   Irgendwann belegen passend vor; andere offene Listen starten in Noch zu klären.
   Erfolgreich angelegte Aufgaben werden angezeigt, störende Filter zurückgesetzt.
 - Übersicht ist eigener Kopfzeilenreiter; Beschreibung kann darüber bearbeitet
-  werden. Ungespeicherte Texte blockieren auch Auswahlwechsel und Abwählen.
+  werden. Seit 0.11.0 rendern Übersichten Markdown schreibgeschützt; Container-
+  beschreibungen verwenden Live/Quelltext/Lesen im vorhandenen Formular.
+  Ordner öffnen ihre Beschreibung auch über den Button in der Inhaltsansicht;
+  Umbenennen bleibt separat. Ungespeicherte Texte blockieren auch Auswahlwechsel
+  und Abwählen. [Beschreibung und Nachweise](MARKDOWN_BESCHREIBUNGEN_PLAN.md).
 
 ## Umsetzung
 

@@ -10,8 +10,10 @@ import 'package:para_workspace/ui/task_details.dart';
 // Controlled async boundary: real repository/stdio behavior is exercised in
 // mcp_test.dart. Here delays and UI-only edits can be reproduced deterministically.
 class _EditorRepository implements WorkspaceRepository {
-  _EditorRepository(this.entry);
+  _EditorRepository(this.entry, {this.text = 'saved text'});
   final Entry entry;
+  final String text;
+  EntryDraft? savedDraft;
   Completer<EntrySnapshot>? delayed;
   int snapshotReads = 0;
   @override
@@ -22,7 +24,7 @@ class _EditorRepository implements WorkspaceRepository {
   Future<EntrySnapshot> readSnapshot(String id) async {
     snapshotReads++;
     return delayed == null
-        ? EntrySnapshot(entry, const NoteSnapshot('saved text', 'hash'))
+        ? EntrySnapshot(entry, NoteSnapshot(text, 'hash'))
         : delayed!.future;
   }
 
@@ -32,10 +34,14 @@ class _EditorRepository implements WorkspaceRepository {
     required int expectedRevision,
     required String expectedBodyHash,
     required EntryDraft draft,
-  }) async => EntrySnapshot(
-    _entry(entry.kind, revision: 2),
-    NoteSnapshot(draft.body, 'saved-hash'),
-  );
+  }) async {
+    savedDraft = draft;
+    return EntrySnapshot(
+      _entry(entry.kind, revision: 2),
+      NoteSnapshot(draft.body, 'saved-hash'),
+    );
+  }
+
   @override
   Stream<List<TaskContext>> watchContexts() => Stream.value([]);
   @override
@@ -55,7 +61,8 @@ Entry _entry(EntryKind kind, {int revision = 1}) => Entry(
   completed: false,
   taskState: TaskState.next,
   context: '',
-  goal: '',
+  goal: kind == EntryKind.project ? 'Nachprüfbares Ergebnis' : '',
+  dueDate: kind == EntryKind.project ? DateTime(2027, 1, 15) : null,
   revision: revision,
   updatedAt: DateTime.utc(2026),
   searchText: 'saved text',
@@ -85,6 +92,61 @@ Future<void> _assertBlocked(_EditorRepository repo, String request) async {
 }
 
 void main() {
+  for (final kind in [
+    EntryKind.project,
+    EntryKind.area,
+    EntryKind.resource,
+    EntryKind.folder,
+  ]) {
+    testWidgets(
+      '$kind description uses shared modes, draft protection and save',
+      (tester) async {
+        const source =
+            '# Beschreibung\r\n\r\n- [ ] Prüfen\r\n\r\n| A | B |\r\n| --- | --- |\r\n| Alt | Wert |\r\n';
+        final repo = _EditorRepository(_entry(kind), text: source);
+        await tester.pumpWidget(_editor(repo));
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const ValueKey('markdown-mode-live')),
+          findsOneWidget,
+        );
+        expect(find.text('Bearbeiten'), findsNothing);
+        expect(repo.savedDraft, isNull);
+        await tester.tap(find.byKey(const ValueKey('markdown-mode-raw')));
+        await tester.pumpAndSettle();
+        final body = find.byKey(const ValueKey('markdown-body'));
+        expect(tester.widget<TextField>(body).controller!.text, source);
+        await tester.enterText(body, '$source\r\nErgänzung');
+        await tester.pumpAndSettle();
+        await _assertBlocked(repo, 'container-${kind.name}');
+        await tester.tap(find.byKey(const ValueKey('markdown-mode-read')));
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(find.byType(Checkbox));
+        await tester.tap(find.byType(Checkbox));
+        await tester.pumpAndSettle();
+        final state = tester.state<EntryEditorState>(find.byType(EntryEditor));
+        final leave = state.canLeave();
+        await tester.pumpAndSettle();
+        expect(find.text('Änderungen speichern?'), findsOneWidget);
+        await tester.tap(find.text('Abbrechen'));
+        await tester.pumpAndSettle();
+        expect(await leave, isFalse);
+        await tester.tap(find.byKey(const ValueKey('editor-save')));
+        await tester.pumpAndSettle();
+        expect(
+          repo.savedDraft!.body,
+          '${source.replaceFirst('[ ]', '[x]')}\r\nErgänzung',
+        );
+        expect(repo.savedDraft!.title, repo.entry.title);
+        expect(repo.savedDraft!.goal, repo.entry.goal);
+        expect(repo.savedDraft!.dueDate, repo.entry.dueDate);
+        await tester.tap(find.byTooltip('Weitere Beschreibungsaktionen'));
+        await tester.pumpAndSettle();
+        expect(find.text('Versionsverlauf'), findsNothing);
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+  }
   testWidgets('unsaved text blocks MCP without replacing the draft', (
     tester,
   ) async {

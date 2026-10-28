@@ -1,6 +1,6 @@
 # P.A.R.A. Workspace
 
-Lokale Flutter-App 0.10.2 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS und Linux.
+Lokale Flutter-App 0.11.0 für Dateien, Markdown-Notizen und GTD-Aufgaben auf macOS und Linux.
 Linux-x64-Release und native Abläufe für Oberfläche, Arbeitsbereiche und Anlage
 sind geprüft; den versionsgebundenen Prüfstand nennt der [Arbeitsstand](docs/UMSETZUNGSPLAN.md).
 Die neue native macOS-Abnahme und Android sind offen.
@@ -48,6 +48,14 @@ Die neue native macOS-Abnahme und Android sind offen.
   Beschreibung, Ergebnis/Termin (bei Projekten), nächsten Aktionen und Unterlagen.
   Kopfzeilenreiter wechseln zwischen Übersicht, Inhalten und Aufgaben. Klick auf
   den Namen im Kopf führt zur Übersicht; Beschreibungen dort zum Bearbeiten öffnen.
+- **Beschreibungen:** Projekte, Bereiche, Ressourcensammlungen und Ordner
+  verwenden Markdown mit demselben Editor wie Notizen: Live, Quelltext, Lesen,
+  Formatmenü, Tabellen und Undo/Redo. In der Übersicht sind Texte formatiert und
+  auswählbar, Links bedienbar und Checkboxen schreibgeschützt. Zum Ändern
+  „Beschreibung öffnen“ beziehungsweise „Ergebnis, Datum & Beschreibung“ wählen;
+  Ordner bieten auch „Beschreibung“ in ihrer Inhaltsansicht und „Beschreibung
+  bearbeiten“ im Kontextmenü. „Ordner umbenennen“ bleibt separat. Name, Projektergebnis
+  und Termin bleiben eigene Felder. Änderungen ausdrücklich speichern.
 - **Anlegen:** Plus und Cmd/Ctrl+N bieten dieselbe Typauswahl. Ohne ausgewählten
   Container stehen in Projekte/Bereiche/Ressourcen nur die jeweiligen Haupttypen
   zur Verfügung. Mit Auswahl entstehen Notizen, Aufgaben, Ordner, Textdateien
@@ -62,7 +70,7 @@ Die neue native macOS-Abnahme und Android sind offen.
   Aktion“, in globalen offenen Listen „Noch zu klären“ vorbelegt; „Warten auf“
   und „Irgendwann“ belegen ihren Status vor. Nach Anlage öffnet die App die Aufgabe
   in der passenden Ansicht und setzt aktive Aufgabenfilter zurück.
-- **Markdown bearbeiten:** Notizen und bearbeitbare MD-Dateien starten in **Live**.
+- **Markdown bearbeiten:** Notizen, bearbeitbare MD-Dateien und Containerbeschreibungen starten in **Live**.
   Deckende Dokumentfläche, 16 Pixel Fließtext mit 1,55-facher Zeilenhöhe und
   16 Pixel Blockabstand; innerhalb von Aufzählungen und nummerierten Listen
   nur 4 Pixel zwischen Einträgen. Überschriften haben zusätzliche Luft. Quelltext verwendet
@@ -90,7 +98,8 @@ Die neue native macOS-Abnahme und Android sind offen.
   Benachbarte gerenderte Absätze lassen sich gemeinsam auswählen und kopieren;
   ein aktives Eingabefeld bildet eine eigene Auswahlgrenze.
 - **Kompakter Editorkopf:** Moduswahl, **Aa**, Tabellenbutton und Speichern liegen
-  direkt neben den Dateitabs; schmale Fenster dürfen umbrechen. Aa bietet
+  bei Dateien direkt neben den Dateitabs, bei Beschreibungen im Formularkopf;
+  schmale Fenster dürfen umbrechen. Aa bietet
   Formatierungen, externe/interne Links, Syntaxhilfe und Rückgängig/Wiederholen.
   Cmd/Ctrl+Z macht Textänderungen rückgängig, Cmd/Ctrl+Shift+Z wiederholt sie.
   Die gemeinsame Texthistorie umfasst auch Checkboxen und Tabellenaktionen und
@@ -108,9 +117,14 @@ Die neue native macOS-Abnahme und Android sind offen.
   Unsicher erkannte Tabellen über Quelltext bearbeiten. Keine Excel-Formeln.
 - **Speichern und andere Inhalte:** Button oder Cmd/Ctrl+S speichert ausdrücklich;
   beim Wechsel schützt Speichern/Verwerfen/Abbrechen den offenen Entwurf.
-  TXT sowie Aufgaben- und Containerbeschreibungen behalten „Bearbeiten“/„Vorschau“
-  beziehungsweise ihre bisherigen Formulare. Archiv/Papierkorb bleiben in allen
+  TXT sowie Aufgaben- und Ideenbeschreibungen behalten „Bearbeiten“/„Vorschau“
+  beziehungsweise ihre bisherigen Formulare. Container sind keine Dateitabs;
+  ihre Markdown-Beschreibung bleibt Teil des Formulars. Archiv/Papierkorb bleiben in allen
   Modi schreibgeschützt, einschließlich Checkboxen.
+- **Beschreibungsaktionen:** Im Drei-Punkte-Menü „Weitere Beschreibungsaktionen“
+  stehen Lesebreite/volle Breite und Inhaltsinformationen. Container haben keinen
+  zusätzlichen gespeicherten Textversionsverlauf. Archiv/Papierkorb bleiben
+  einschließlich Text, Tabellen, Checkboxen und strukturierter Felder schreibgeschützt.
 - **Dateiinfos und Titel:** In Markdown unter „Weitere Dateiaktionen“ (drei Punkte)
   „Dateiinformationen“, „Versionsverlauf“, „Lesebreite“/„Volle Breite“ oder bei
   Notizen „Notiz umbenennen“ wählen. Eine Titeländerung anschließend speichern.
@@ -310,6 +324,7 @@ flutter test -d macos integration_test/workspace_test.dart
 # Auf Linux: -d linux; neue Auswahl-/Anlageabläufe separat prüfen:
 flutter test -d linux integration_test/creation_test.dart
 flutter test -d linux integration_test/editor_readability_test.dart
+flutter test -d linux integration_test/markdown_descriptions_test.dart
 ```
 
 Nach Änderungen an Drift-Tabellen die Bindings erneut erzeugen.

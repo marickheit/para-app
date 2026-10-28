@@ -1,12 +1,12 @@
 # Zieloberfläche und Umzug nach Flutter
 
-Stand: 27. Oktober 2026. Verbindliche Nutzeranforderungen und Abnahmekriterien,
+Stand: 28. Oktober 2026. Verbindliche Nutzeranforderungen und Abnahmekriterien,
 kein Gesprächsprotokoll. Bei neuen Entscheidungen diese Beschreibung aktualisieren.
 
 ## Grundlage und Status
 
 Die Symbolleisten-/Explorer-Grundlage ist seit Flutter 0.4 umgesetzt; der aktuelle
-Vertrag beschreibt 0.10.1:
+Vertrag beschreibt 0.11.0:
 Anordnung, Farben, Symbole, Abstände, Editor, gemeinsame Kopfzeile, Dateiaktionen,
 Aufgabenansichten und schmale Navigation orientieren sich eng am Mockup.
 
@@ -31,6 +31,10 @@ nativen Datei-Drops. Die Beispieldaten wurden nicht in den Nutzerarbeitsbereich 
 - Unterstützte Dateien im Hauptbereich rendern, Metadaten auf Abruf zeigen:
   bei Markdown über „Weitere Dateiaktionen“ → „Dateiinformationen“, bei anderen
   Vorschauen über das Info-Symbol. Für andere Formate lokale Dateiaktionen.
+- Beschreibungen von Projekten, Bereichen, Ressourcensammlungen und Ordnern
+  als Markdown-Vorschau anzeigen und mit Live/Quelltext/Lesen bearbeiten.
+  Strukturierte Felder getrennt erhalten, Änderungen ausdrücklich speichern;
+  Übersicht sowie Archiv/Papierkorb bleiben schreibgeschützt.
 - Markdown-Notizen anlegen, bearbeiten und anzeigen. Auch gängige Textdateien,
   insbesondere TXT, intern bearbeiten. Weitere Textformate einzeln festlegen;
   daraus folgt keine Bearbeitung beliebiger Binär-/Office-Dateien.

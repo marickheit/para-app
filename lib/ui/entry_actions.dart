@@ -33,8 +33,13 @@ List<EntryAction> availableEntryActions(Entry entry, List<Entry> entries) {
             isEditableTextName(entry.fileName ?? '')))
       const EntryAction('edit', 'Bearbeiten'),
     if (!archived &&
-        (entry.kind == EntryKind.note || entry.kind == EntryKind.file))
-      const EntryAction('rename', 'Umbenennen …'),
+        (entry.kind == EntryKind.note ||
+            entry.kind == EntryKind.file ||
+            entry.kind == EntryKind.folder))
+      EntryAction(
+        'rename',
+        entry.kind == EntryKind.folder ? 'Ordner umbenennen' : 'Umbenennen …',
+      ),
     if (!archived && entry.kind == EntryKind.task) ...[
       if (entry.taskState.isClosed)
         const EntryAction('task-resume', 'Wieder aufnehmen')
@@ -44,12 +49,7 @@ List<EntryAction> availableEntryActions(Entry entry, List<Entry> entries) {
       ],
     ],
     if (!archived && entry.kind.isContainer)
-      EntryAction(
-        'edit',
-        entry.kind == EntryKind.folder
-            ? 'Ordner umbenennen'
-            : 'Beschreibung bearbeiten',
-      ),
+      const EntryAction('edit', 'Beschreibung bearbeiten'),
     if (!archived &&
         !{
           EntryKind.project,

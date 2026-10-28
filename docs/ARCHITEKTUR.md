@@ -159,7 +159,18 @@ sie zurück. Diese flüchtige Historie ersetzt weder Textversionen noch Sicherun
 
 Die Bedienänderung benötigt weder Datenmigration noch neue Speicherformate:
 Schema 6, Sitzungsformat 2, Sicherungsformat 3 und interne UUID-Links bleiben.
-TXT und Aufgaben-/Containerbeschreibungen behalten ihre bisherigen Formulare.
+Ab 0.11.0 trennt `EntryEditor` Markdown-Fähigkeit (`_markdownBody`) und
+Dateidokumentkopf (`_markdownDocument`). Projekte, Bereiche, Ressourcen und Ordner
+nutzen denselben `MarkdownEditor`, behalten aber Titel-/Projektfelder und ihren
+Formularkopf. Nur Notizen/MD veröffentlichen Aktionen im Dateitabstreifen.
+`MarkdownPreview` hält in Übersichten einen eigenen schreibgeschützten Controller
+mit demselben Renderer; dort werden weder Entwürfe erzeugt noch Checkboxen geändert.
+`workspace_links.dart` bündelt Linkauflösung und erlaubte externe Protokolle;
+Inhaltswechsel laufen weiter durch den zentralen Speicherschutz. Ordner haben
+getrennte Beschreibungs- und Umbenennaktionen, ihre Inhaltsansicht bleibt erreichbar.
+Speicherpfade bleiben `notes/<UUID>.md`, die bestehenden Snapshot-/MCP-/Hash- und
+Revisionsprüfungen gelten auch für Beschreibungsänderungen. Kein zusätzlicher
+Container-Textversionszugang. TXT sowie Aufgaben-/Ideenformulare bleiben erhalten.
 [Bedienvertrag und Abnahme](MARKDOWN_EDITOR_UMSETZUNGSPLAN.md).
 
 ## Aufgabenabschluss

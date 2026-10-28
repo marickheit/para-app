@@ -1,6 +1,6 @@
 # MCP-Anbindung – Architektur und Vertrag
 
-Stand: 27. Oktober 2026 · App 0.10.0, MCP 0.3.0, API-Funktionsstand 2.
+Stand: 28. Oktober 2026 · App 0.11.0, MCP 0.3.0, API-Funktionsstand 2.
 Kern seit 0.7, automatische Ablage seit 0.7.1 und erweiterte Werkzeuge seit 0.8.1.
 Tatsächliche Bedienung und Grenzen: [MCP.md](MCP.md); Prüfstand: [MCP_UMSETZUNG.md](MCP_UMSETZUNG.md).
 
